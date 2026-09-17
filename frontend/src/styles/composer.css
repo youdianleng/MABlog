@@ -1,0 +1,229 @@
+.editor-layout {
+  position: relative;
+  margin-top: 22px;
+}
+.editor-viewport {
+  overflow: auto;
+  min-height: 600px;
+  max-height: 80vh;
+  background:
+    repeating-linear-gradient(0deg, #ded6c8 0 1px, transparent 1px 20px),
+    repeating-linear-gradient(90deg, #ded6c8 0 1px, #eee8dc 1px 20px);
+  padding: 35px;
+}
+.editor-zoom-space,
+.editor-zoom-surface {
+  position: relative;
+}
+.editor-zoom-surface {
+  transform-origin: top left;
+}
+.canvas-zoom-status {
+  display: block;
+  margin: 8px 0 -12px;
+  color: #756b5e;
+  text-align: right;
+}
+.editor-canvas {
+  position: relative;
+  background: #fffdf6;
+  border: 1px solid #bdb19e;
+}
+.canvas-resize-help {
+  margin: 12px 0 0;
+  color: #756b5e;
+  font-size: 12px;
+}
+/* React Rnd supplies the larger pointer targets; these marks make all eight canvas handles visible. */
+.canvas-resize-handle {
+  z-index: 30 !important;
+}
+.canvas-resize-handle::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1px solid #fffaf0;
+  background: #a44143;
+  box-shadow: 0 0 0 1px #a44143;
+}
+.canvas-resize-n::after,
+.canvas-resize-s::after { left: 50%; transform: translateX(-50%); }
+.canvas-resize-e::after,
+.canvas-resize-w::after { top: 50%; transform: translateY(-50%); }
+.canvas-resize-n::after { top: -5px; }
+.canvas-resize-s::after { bottom: -5px; }
+.canvas-resize-e::after { right: -5px; }
+.canvas-resize-w::after { left: -5px; }
+.canvas-resize-ne::after { top: -5px; right: -5px; }
+.canvas-resize-se::after { right: -5px; bottom: -5px; }
+.canvas-resize-sw::after { bottom: -5px; left: -5px; }
+.canvas-resize-nw::after { top: -5px; left: -5px; }
+.editor-block {
+  border: 1px dashed #bca786;
+  background: #fffdf6eb;
+  height: 100%;
+  overflow: hidden;
+}
+.editor-block.selected {
+  outline: 2px solid #ad4547;
+}
+.drag-handle {
+  cursor: move;
+  padding: 4px 9px;
+  background: #e7dac6;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  height: 27px;
+}
+.block-drag-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.block-delete-button {
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 22px;
+  border-radius: 2px;
+  color: #7d3a3b;
+  cursor: pointer;
+}
+.block-delete-button:hover,
+.block-delete-button:focus-visible {
+  color: #fffaf0;
+  background: #a44143;
+}
+.block-delete-button:focus-visible {
+  outline: 2px solid #a44143;
+  outline-offset: 2px;
+}
+.block-body {
+  height: calc(100% - 27px);
+  overflow: auto;
+  padding: 12px;
+}
+.editor-sidebar {
+  background: #fffcf5;
+  border: 1px solid #dbd0bf;
+  padding: 18px;
+  overflow: auto;
+}
+.editor-settings-menu {
+  position: absolute;
+  z-index: 80;
+  top: 12px;
+  right: 12px;
+}
+.editor-settings-menu > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid #bca786;
+  border-radius: 3px;
+  color: #342d25;
+  background: #fffaf0f2;
+  box-shadow: 0 5px 16px #4f3a241f;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+.editor-settings-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.editor-settings-menu > summary:hover,
+.editor-settings-menu > summary:focus-visible {
+  border-color: #993c3d;
+  color: #993c3d;
+}
+.editor-settings-menu > summary:focus-visible {
+  outline: 2px solid #993c3d;
+  outline-offset: 3px;
+}
+.editor-settings-menu[open] > summary {
+  border-color: #993c3d;
+  color: #fffaf0;
+  background: #993c3d;
+}
+.editor-settings-chevron {
+  transition: transform 180ms ease;
+}
+.editor-settings-menu[open] .editor-settings-chevron {
+  transform: rotate(180deg);
+}
+.editor-settings-menu .editor-sidebar {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(380px, calc(100vw - 56px));
+  max-height: min(72vh, 720px);
+  box-shadow: 0 16px 38px #3e2c1a2e;
+}
+.editor-sidebar h3 {
+  font-size: 22px;
+  margin: 15px 0;
+}
+.editor-sidebar label {
+  margin: 9px 0;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.field-grid input {
+  padding: 5px;
+}
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  border-bottom: 1px solid #ddd1be;
+  padding: 8px 0;
+}
+.editor-toolbar button {
+  padding: 5px 9px;
+  font-size: 12px;
+  border: 1px solid #d9cdb9;
+  border-radius: 3px;
+}
+.ProseMirror {
+  min-height: 120px;
+  outline: none;
+}
+.layer-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #ddd0ba;
+  padding: 8px;
+  font-size: 11px;
+  margin: 4px 0;
+}
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 15px;
+}
+.review-card {
+  border: 1px solid #d8cdbb;
+  padding: 18px;
+  background: #fffaf0;
+  overflow: auto;
+}
+.review-preview {
+  max-height: 280px;
+  overflow: auto;
+  margin: 15px 0;
+  background: white;
+  padding: 12px;
+}

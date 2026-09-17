@@ -1,0 +1,134 @@
+{
+  "description": "Synthetic bilingual MAblog stories used to measure whether the configured embedding model places the intended post in the top five.",
+  "documents": [
+    {
+      "key": "night_garden_en",
+      "language": "en",
+      "title": "The garden after midnight",
+      "summary": "A patient fox guides a traveler through moonlit wisteria.",
+      "category": "anime",
+      "author": "Hana",
+      "content": "A red fox waits at the first stone step until midnight. Blue butterflies drift through pale wisteria while the moon illuminates a hidden garden shrine.",
+      "link_label": "Field notes from the shrine",
+      "image_alt": "Fox beneath moonlit wisteria"
+    },
+    {
+      "key": "floating_library_en",
+      "language": "en",
+      "title": "A library between worlds",
+      "summary": "Paper birds carry unfinished stories between floating islands.",
+      "category": "general",
+      "author": "Sora",
+      "content": "The librarian offers a slim blue volume. When it opens, the reader hears the ocean and sees paper birds crossing the cloud-filled archive.",
+      "link_label": "Open the blue volume",
+      "image_alt": "Floating library above clouds"
+    },
+    {
+      "key": "river_lanterns_en",
+      "language": "en",
+      "title": "Lanterns across quiet water",
+      "summary": "Small wishes become a constellation beneath an old bridge.",
+      "category": "travel",
+      "author": "Akira",
+      "content": "At dusk, villagers place handwritten wishes inside paper lanterns and send them across a calm lake. Their reflections gather under the wooden bridge like stars.",
+      "link_label": "Read the lake journal",
+      "image_alt": "Paper lanterns reflected in a lake"
+    },
+    {
+      "key": "crimson_path_en",
+      "language": "en",
+      "title": "Letters from the crimson path",
+      "summary": "An autumn pilgrimage begins with a forgotten letter and umbrella.",
+      "category": "travel",
+      "author": "Ren",
+      "content": "Red maple leaves cover the temple corridor. A traveler carrying a paper umbrella finds a letter beneath a stone and follows the road usually passed in a hurry.",
+      "link_label": "Follow the pilgrimage",
+      "image_alt": "Paper umbrella on an autumn temple path"
+    },
+    {
+      "key": "mountain_gate_en",
+      "language": "en",
+      "title": "Where the mountains remember",
+      "summary": "A slow walk beyond the last torii gate at sunset.",
+      "category": "travel",
+      "author": "Miyori",
+      "content": "Stone lanterns lead beyond a red torii gate toward a mountain village above the clouds. The traveler arrives slowly while the last afternoon light fades.",
+      "link_label": "Take the mountain path",
+      "image_alt": "Torii gate in a mountain sunset"
+    },
+    {
+      "key": "jardin_lunar_es",
+      "language": "es",
+      "title": "El jardín de las luciérnagas",
+      "summary": "Un refugio secreto despierta bajo la luna de verano.",
+      "category": "anime",
+      "author": "Luna",
+      "content": "Las luciérnagas plateadas rodean un estanque tranquilo. Una joven sigue flores blancas hasta un santuario escondido donde canta un ruiseñor bajo la luna.",
+      "link_label": "Notas del jardín nocturno",
+      "image_alt": "Luciérnagas sobre un estanque lunar"
+    },
+    {
+      "key": "archivo_azul_es",
+      "language": "es",
+      "title": "El archivo de tinta azul",
+      "summary": "Mapas antiguos revelan islas que ya no aparecen en el mar.",
+      "category": "general",
+      "author": "Mar",
+      "content": "Una cartógrafa estudia mapas dibujados con tinta azul en un archivo silencioso. Las rutas señalan islas perdidas y un faro que desapareció entre la niebla.",
+      "link_label": "Consultar los mapas antiguos",
+      "image_alt": "Mapas azules de islas perdidas"
+    },
+    {
+      "key": "mercado_festival_es",
+      "language": "es",
+      "title": "Sabores del festival de verano",
+      "summary": "Un paseo por puestos de comida, música y fuegos artificiales.",
+      "category": "travel",
+      "author": "Nora",
+      "content": "El mercado nocturno huele a brochetas, té frío y dulces de fruta. Tambores acompañan el desfile antes de que los fuegos artificiales iluminen el río.",
+      "link_label": "Recorrer los puestos del festival",
+      "image_alt": "Mercado nocturno con fuegos artificiales"
+    },
+    {
+      "key": "tren_costa_es",
+      "language": "es",
+      "title": "El último tren de la costa",
+      "summary": "Un viaje lento entre acantilados, sal y pueblos pesqueros.",
+      "category": "travel",
+      "author": "Iris",
+      "content": "El tren bordea el mar al amanecer y cruza pequeños pueblos de pescadores. Desde la ventana se ven acantilados, redes secándose y una playa vacía.",
+      "link_label": "Mirar la ruta costera",
+      "image_alt": "Tren junto a acantilados y mar"
+    },
+    {
+      "key": "taller_robotica_es",
+      "language": "es",
+      "title": "Robots para el huerto urbano",
+      "summary": "Sensores y energía solar ayudan a cuidar plantas en la ciudad.",
+      "category": "technology",
+      "author": "Teo",
+      "content": "Un taller comunitario construye pequeños robots con sensores de humedad. Las máquinas usan paneles solares para regar tomates y hierbas en un huerto urbano.",
+      "link_label": "Ver el diseño del robot",
+      "image_alt": "Robot solar regando tomates"
+    }
+  ],
+  "cases": [
+    {"id": "en-01", "query": "a fox waiting on stone steps in a moonlit wisteria garden", "query_language": "en", "expected_key": "night_garden_en", "bilingual": false},
+    {"id": "en-02", "query": "paper birds and a blue book inside a library above the clouds", "query_language": "en", "expected_key": "floating_library_en", "bilingual": false},
+    {"id": "en-03", "query": "paper wishes floating on a lake beneath a wooden bridge", "query_language": "en", "expected_key": "river_lanterns_en", "bilingual": false},
+    {"id": "en-04", "query": "an autumn temple pilgrimage with a letter and umbrella", "query_language": "en", "expected_key": "crimson_path_en", "bilingual": false},
+    {"id": "es-01", "query": "un jardín secreto con luciérnagas junto a un estanque", "query_language": "es", "expected_key": "jardin_lunar_es", "bilingual": false},
+    {"id": "es-02", "query": "mapas antiguos de islas perdidas dibujados con tinta azul", "query_language": "es", "expected_key": "archivo_azul_es", "bilingual": false},
+    {"id": "es-03", "query": "puestos de comida tambores y fuegos artificiales cerca del río", "query_language": "es", "expected_key": "mercado_festival_es", "bilingual": false},
+    {"id": "es-04", "query": "sensores solares que riegan tomates en la ciudad", "query_language": "es", "expected_key": "taller_robotica_es", "bilingual": false},
+    {"id": "cross-en-es-01", "query": "a quiet pond surrounded by silver fireflies and white flowers", "query_language": "en", "expected_key": "jardin_lunar_es", "bilingual": true},
+    {"id": "cross-en-es-02", "query": "old navigation charts revealing lost islands and a vanished lighthouse", "query_language": "en", "expected_key": "archivo_azul_es", "bilingual": true},
+    {"id": "cross-en-es-03", "query": "a coastal railway passing fishing villages and empty beaches at dawn", "query_language": "en", "expected_key": "tren_costa_es", "bilingual": true},
+    {"id": "cross-en-es-04", "query": "community robots using moisture sensors and solar power for vegetables", "query_language": "en", "expected_key": "taller_robotica_es", "bilingual": true},
+    {"id": "cross-es-en-01", "query": "un zorro paciente entre glicinas y mariposas azules a medianoche", "query_language": "es", "expected_key": "night_garden_en", "bilingual": true},
+    {"id": "cross-es-en-02", "query": "una biblioteca flotante con pájaros de papel y un libro que suena como el océano", "query_language": "es", "expected_key": "floating_library_en", "bilingual": true},
+    {"id": "cross-es-en-03", "query": "deseos escritos dentro de faroles reflejados como estrellas en el lago", "query_language": "es", "expected_key": "river_lanterns_en", "bilingual": true},
+    {"id": "cross-es-en-04", "query": "una puerta torii roja y faroles de piedra en las montañas al atardecer", "query_language": "es", "expected_key": "mountain_gate_en", "bilingual": true}
+  ],
+  "thresholds": {"overall_top_five": 0.85, "bilingual_top_five": 0.80}
+}

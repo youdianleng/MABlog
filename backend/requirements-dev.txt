@@ -1,0 +1,9 @@
+-r requirements.txt
+iniconfig==2.3.0
+mypy==1.18.2
+mypy_extensions==1.1.0
+pathspec==0.12.1
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==9.1.1
+ruff==0.14.10

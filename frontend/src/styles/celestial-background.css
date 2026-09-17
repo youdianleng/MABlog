@@ -1,0 +1,191 @@
+.character-showcase {
+  /* Full-bleed sizing lets the approved background cover the complete Discover hero outside the page max-width. */
+  position: relative;
+  width: 100vw;
+  margin-top: -45px;
+  margin-left: calc(50% - 50vw);
+  padding: 45px max(48px, calc((100vw - 1320px) / 2 + 48px)) 34px;
+  overflow: hidden;
+  color: #f4ead8;
+  isolation: isolate;
+  contain: paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 790px;
+  background:
+    radial-gradient(circle at 50% 51%, #2a1720 0, transparent 18%),
+    radial-gradient(ellipse at 50% 58%, #15111c 0, transparent 50%),
+    linear-gradient(180deg, #09080c 0, #050508 72%, #08070b 100%);
+}
+
+.character-showcase::before,
+.character-showcase::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.character-showcase::before {
+  z-index: 0;
+  opacity: 0.08;
+  /* The embedded noise avoids another asset request and keeps the large black field from looking digitally flat. */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E");
+}
+
+.character-showcase::after {
+  z-index: 0;
+  background: radial-gradient(ellipse at center, transparent 34%, #020204b8 100%);
+}
+
+.home-celestial-background {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.home-orbit-system {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.home-orbit {
+  stroke: url(#home-orbit-gold);
+  vector-effect: non-scaling-stroke;
+}
+
+.home-orbit-outer {
+  stroke-width: 1.25;
+  opacity: 0.6;
+}
+
+.home-orbit-middle {
+  stroke-width: 1;
+  opacity: 0.46;
+}
+
+.home-orbit-inner {
+  stroke-width: 0.9;
+  opacity: 0.37;
+}
+
+.home-orbit-trace {
+  stroke: #ffe9a4;
+  stroke-width: 1;
+  stroke-dasharray: 3 102 28 186;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.54;
+}
+
+.home-orbit-crimson {
+  stroke: url(#home-orbit-crimson);
+  stroke-width: 0.9;
+  stroke-dasharray: 88 34;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.44;
+}
+
+.home-free-star {
+  color: #ffe9a4;
+  fill: currentColor;
+}
+
+.home-star-seed {
+  fill: #fff2b7;
+  opacity: 0.62;
+}
+
+.home-star-glyph {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Warm accents preserve the approved palette without continuously repainting the SVG. */
+.home-star-three .home-star-glyph { color: #ca7940; }
+.home-star-five .home-star-glyph { color: #cf7c42; }
+.home-star-seven .home-star-glyph { color: #c35c50; }
+
+.character-showcase .hero-intro {
+  z-index: 2;
+  padding-top: 36px;
+}
+
+.character-showcase .hero-intro .eyebrow {
+  color: #d5a052;
+  font-weight: 600;
+  letter-spacing: 3.4px;
+}
+
+.character-showcase .hero-intro h1 {
+  color: #f4ead8;
+  text-shadow: 0 8px 38px #000;
+}
+
+.character-showcase .hero-intro p {
+  color: #b7aa99;
+}
+
+.character-showcase .carousel-card {
+  border-color: #eee5d7;
+  background: #0d0b11;
+  box-shadow:
+    0 26px 75px #000c,
+    0 0 42px #bf8f4733;
+}
+
+.character-showcase .carousel-caption small {
+  color: #f4d98e;
+}
+
+.character-showcase .carousel-controls .icon-button {
+  border-color: #d9b66a73;
+  color: #f4ead8;
+  background: #0e0c12ed;
+}
+
+.character-showcase .carousel-controls .dot {
+  background: #bcae9a7d;
+}
+
+.character-showcase .carousel-controls .dot.active {
+  background: #a84549;
+}
+
+.character-showcase .empty {
+  position: relative;
+  z-index: 2;
+  border-color: #d9b66a73;
+  color: #f4ead8;
+  background: #0e0c12bd;
+}
+
+.character-showcase .empty p {
+  color: #b7aa99;
+}
+
+@media (max-width: 850px) {
+  .character-showcase {
+    margin-top: -30px;
+    padding: 30px 20px 28px;
+  }
+}
+
+@media (max-width: 520px) {
+  .character-showcase .hero-intro {
+    padding-top: 28px;
+  }
+
+  .character-showcase .hero-intro h1 {
+    font-size: clamp(38px, 12vw, 50px);
+    line-height: 1.08;
+  }
+
+  .home-celestial-background {
+    /* Preserve the centered rings on a portrait screen while letting their outer edges crop naturally. */
+    width: 165%;
+    max-width: none;
+    left: -32.5%;
+  }
+}

@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+pgvector
+alembic
+redis
+pwdlib[argon2]
+python-multipart
+email-validator
+bleach
+pillow
+httpx
+pypdf

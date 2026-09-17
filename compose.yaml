@@ -1,0 +1,173 @@
+name: mablog
+x-backend-environment: &backend-environment
+  DATABASE_URL: postgresql+psycopg://mablog:${POSTGRES_PASSWORD:-mablog-local-development}@db:5432/mablog
+  REDIS_URL: redis://redis:6379/0
+  SMTP_HOST: mailpit
+  APP_ENV: ${APP_ENV:-local}
+  APP_SECRET: ${APP_SECRET:-local-development-change-before-production-at-least-32-characters}
+  APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+  UPLOAD_DIR: /data/uploads
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+  OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+  OPENAI_ANSWER_MODEL: ${OPENAI_ANSWER_MODEL:-gpt-5.6-terra}
+  OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-45}
+  OPENAI_MAX_OUTPUT_TOKENS: ${OPENAI_MAX_OUTPUT_TOKENS:-500}
+  ANONYMOUS_ENHANCED_SEARCHES_PER_HOUR: ${ANONYMOUS_ENHANCED_SEARCHES_PER_HOUR:-10}
+  SIGNED_IN_ENHANCED_SEARCHES_PER_HOUR: ${SIGNED_IN_ENHANCED_SEARCHES_PER_HOUR:-60}
+  ANONYMOUS_KEYWORD_SEARCHES_PER_HOUR: ${ANONYMOUS_KEYWORD_SEARCHES_PER_HOUR:-60}
+  SIGNED_IN_KEYWORD_SEARCHES_PER_HOUR: ${SIGNED_IN_KEYWORD_SEARCHES_PER_HOUR:-300}
+  GLOBAL_ENHANCED_SEARCHES_PER_DAY: ${GLOBAL_ENHANCED_SEARCHES_PER_DAY:-500}
+  GLOBAL_INDEXED_PASSAGES_PER_DAY: ${GLOBAL_INDEXED_PASSAGES_PER_DAY:-10000}
+  SEARCH_CANDIDATE_LIMIT: ${SEARCH_CANDIDATE_LIMIT:-200}
+  SEARCH_TOKEN_SECONDS: ${SEARCH_TOKEN_SECONDS:-600}
+  SEARCH_RRF_K: ${SEARCH_RRF_K:-60}
+  SEARCH_LIKE_BOOST_CAP: ${SEARCH_LIKE_BOOST_CAP:-0.06}
+  SEARCH_FRESHNESS_BOOST_CAP: ${SEARCH_FRESHNESS_BOOST_CAP:-0.04}
+  SEARCH_FRESHNESS_HALF_LIFE_DAYS: ${SEARCH_FRESHNESS_HALF_LIFE_DAYS:-30}
+  INDEX_WORKER_POLL_SECONDS: ${INDEX_WORKER_POLL_SECONDS:-2}
+  CODE_TTL_SECONDS: ${CODE_TTL_SECONDS:-600}
+  CODE_MAX_ATTEMPTS: ${CODE_MAX_ATTEMPTS:-5}
+  CODE_RESEND_SECONDS: ${CODE_RESEND_SECONDS:-60}
+  IMAGE_LIMIT_MB: ${IMAGE_LIMIT_MB:-10}
+  VIDEO_LIMIT_MB: ${VIDEO_LIMIT_MB:-100}
+  PUBLIC_CACHE_SECONDS: ${PUBLIC_CACHE_SECONDS:-15}
+  LOCAL_ADMIN_ENABLED: ${LOCAL_ADMIN_ENABLED:-true}
+  LOCAL_ADMIN_USERNAME: ${LOCAL_ADMIN_USERNAME:-mablog_admin}
+  LOCAL_ADMIN_EMAIL: ${LOCAL_ADMIN_EMAIL:-admin@mablog.local}
+  LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:-mablog-admin-local-2026}
+  LOCAL_ADMIN_VERIFICATION_SECONDS: ${LOCAL_ADMIN_VERIFICATION_SECONDS:-315360000}
+  LOCAL_ADMIN_STEP_UP_BYPASS: ${LOCAL_ADMIN_STEP_UP_BYPASS:-true}
+  NEWS_MASTER_ENABLED: ${NEWS_MASTER_ENABLED:-true}
+  NEWS_SMALL_MODEL: ${NEWS_SMALL_MODEL:-gpt-5.6-luna}
+  NEWS_STRONG_MODEL: ${NEWS_STRONG_MODEL:-gpt-5.6-terra}
+  BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+  BRAVE_API_URL: ${BRAVE_API_URL:-https://api.search.brave.com/res/v1/web/search}
+  NEWS_TIMEZONE: ${NEWS_TIMEZONE:-Europe/Madrid}
+  NEWS_WEEKDAY: ${NEWS_WEEKDAY:-0}
+  NEWS_HOUR: ${NEWS_HOUR:-9}
+  NEWS_MINUTE: ${NEWS_MINUTE:-0}
+  NEWS_RUN_BUDGET_USD: ${NEWS_RUN_BUDGET_USD:-2}
+  NEWS_MONTH_BUDGET_USD: ${NEWS_MONTH_BUDGET_USD:-10}
+  NEWS_BRAVE_QUERY_BUDGET: ${NEWS_BRAVE_QUERY_BUDGET:-15}
+  NEWS_WORKER_POLL_SECONDS: ${NEWS_WORKER_POLL_SECONDS:-3}
+  NEWS_JOB_LEASE_SECONDS: ${NEWS_JOB_LEASE_SECONDS:-300}
+  NEWS_FETCH_TIMEOUT_SECONDS: ${NEWS_FETCH_TIMEOUT_SECONDS:-20}
+  NEWS_FETCH_MAX_BYTES: ${NEWS_FETCH_MAX_BYTES:-10485760}
+  NEWS_FETCH_MAX_REDIRECTS: ${NEWS_FETCH_MAX_REDIRECTS:-5}
+  NEWS_SNAPSHOT_SECONDS: ${NEWS_SNAPSHOT_SECONDS:-2592000}
+  NEWS_FAILED_RETENTION_SECONDS: ${NEWS_FAILED_RETENTION_SECONDS:-7776000}
+  NEWS_OPERATION_RETENTION_SECONDS: ${NEWS_OPERATION_RETENTION_SECONDS:-31536000}
+  ADMIN_STEP_UP_SECONDS: ${ADMIN_STEP_UP_SECONDS:-600}
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: mablog
+      POSTGRES_DB: mablog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mablog-local-development}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U mablog"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+  mailpit:
+    image: axllent/mailpit:v1.27
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mail_data:/data
+    ports:
+      - "127.0.0.1:8025:8025"
+  migrate:
+    build: ./backend
+    command: ["sh", "-c", "alembic upgrade head && python -m app.bootstrap"]
+    environment: *backend-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  backend:
+    build: ./backend
+    environment: *backend-environment
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    environment: *backend-environment
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  news-worker:
+    build: ./backend
+    command: ["python", "-m", "app.news_worker"]
+    environment: *backend-environment
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  test-db:
+    image: pgvector/pgvector:pg17
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: mablog
+      POSTGRES_DB: mablog_test
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mablog-local-development}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U mablog -d mablog_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  backend-tests:
+    build:
+      context: ./backend
+      target: test
+    profiles: ["test"]
+    environment:
+      <<: *backend-environment
+      DATABASE_URL: postgresql+psycopg://mablog:${POSTGRES_PASSWORD:-mablog-local-development}@test-db:5432/mablog_test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    command: ["python", "-m", "pytest", "tests", "-q"]
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+volumes:
+  postgres_data:
+  uploads:
+  mail_data:
+
+
