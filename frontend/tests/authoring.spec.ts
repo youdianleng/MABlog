@@ -80,6 +80,34 @@ test("registration, actual email verification, freeform draft, approval, publish
   await expect(page.getByAltText("Cover preview")).toBeVisible();
   await page.getByRole("button", { name: "Add block", exact: true }).click();
   await page.locator(".tiptap").fill("A real block, written in the browser.");
+  const headingMenu = page.getByRole("button", { name: "Heading level H1" });
+  await expect(headingMenu).toBeVisible();
+  await headingMenu.click();
+  await expect(page.getByRole("menuitem")).toHaveCount(6);
+  await page.getByRole("menuitem", { name: "H4", exact: true }).click();
+  await expect(page.locator(".tiptap h4")).toHaveText("A real block, written in the browser.");
+  await expect(page.getByRole("button", { name: "Heading level H4" })).toBeVisible();
+  await page.locator('.editor-block.selected input[type="file"]').setInputFiles("../backend/seed-assets/shrine.png");
+  const insertedImage = page.locator(".editor-block.selected .resizable-image-node img");
+  await expect(insertedImage).toBeVisible();
+  const imageBeforeResize = await insertedImage.boundingBox();
+  const imageResizeHandle = page.getByRole("button", { name: /Resize image/ });
+  await imageResizeHandle.scrollIntoViewIfNeeded();
+  const imageHandleBox = await imageResizeHandle.boundingBox();
+  await page.mouse.move(imageHandleBox!.x + imageHandleBox!.width / 2, imageHandleBox!.y + imageHandleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(imageHandleBox!.x - 70, imageHandleBox!.y + imageHandleBox!.height / 2, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(/** Wait for the pointer-up transaction to serialize the committed width. */ async function committedDragWidth() {
+    return Number(await insertedImage.getAttribute("width"));
+  }).toBeGreaterThan(0);
+  const draggedWidth = Number(await insertedImage.getAttribute("width"));
+  expect(draggedWidth).toBeLessThan(imageBeforeResize!.width);
+  await imageResizeHandle.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(/** Wait for TipTap to serialize the keyboard resize transaction. */ async function resizedWidth() {
+    return Number(await insertedImage.getAttribute("width"));
+  }).toBe(draggedWidth + 10);
   await page.getByLabel("Rotation °").fill("12");
   await page.getByRole("button", { name: "Draw block", exact: true }).click();
   const surface = await page.locator(".editor-canvas").boundingBox();

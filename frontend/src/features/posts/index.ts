@@ -3,4 +3,4 @@ export { Carousel } from "./carousel";
 export { CompositionReader } from "./composition-reader";
 export { PostCard } from "./post-card";
 export { PostGrid } from "./post-grid";
-export { useInfinitePosts } from "./use-infinite-posts";
+export { PostPagination } from "./post-pagination";

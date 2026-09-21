@@ -141,6 +141,24 @@ def test_public_post_pagination_is_bounded_and_stable(client):
     assert client.get("/api/posts?limit=0").status_code == 422
 
 
+def test_public_post_numbered_pages_are_limited_to_fifteen(client):
+    """Expose exact totals while returning no more than fifteen public posts per page."""
+    owner_id, _ = account("numberedpageowner")
+    with SessionLocal() as db:
+        for index in range(32):
+            document = Document().model_dump()
+            document["details"] = {"title": f"Numbered story {index}", "summary": "Numbered pagination fixture", "category": "travel"}
+            db.add(Post(author_id=owner_id, public=True, document=document, versions={}, published=now() - index))
+        db.commit()
+    first = client.get("/api/posts/page?page=1&page_size=15&category=travel").json()
+    second = client.get("/api/posts/page?page=2&page_size=15&category=travel").json()
+    final = client.get("/api/posts/page?page=3&page_size=15&category=travel").json()
+    assert [len(first["items"]), len(second["items"]), len(final["items"])] == [15, 15, 2]
+    assert {key: value for key, value in first.items() if key != "items"} == {"page": 1, "page_size": 15, "pages": 3, "total": 32}
+    assert not ({post["id"] for post in first["items"]} & {post["id"] for post in second["items"]})
+    assert client.get("/api/posts/page?page_size=16").status_code == 422
+
+
 def test_registration_codes_and_weekly_expiry(client, monkeypatch):
     """Verify activation, wrong-code handling, one-time consumption, and weekly logout."""
     messages = []
@@ -314,12 +332,14 @@ def test_sanitization_and_stale_creator_save(client):
     original = publishable(client, post)
     snapshot = client.get(f"/api/posts/{post}/draft").json()
     doc = copy.deepcopy(original)
-    doc["blocks"][0]["html"] = '<p onclick="alert(1)">Safe</p><script>alert(1)</script><img src="https://evil.invalid/pixel" onerror="alert(1)"><iframe src="https://evil.invalid"></iframe>'
+    doc["blocks"][0]["html"] = '<h4>Fourth level</h4><h5>Fifth level</h5><h6>Sixth level</h6><p onclick="alert(1)">Safe</p><script>alert(1)</script><img src="https://evil.invalid/pixel" width="640" onerror="alert(1)"><img width="9000"><iframe src="https://evil.invalid"></iframe>'
     save_document(client, post, doc)
     client.post(f"/api/posts/{post}/submit")
     result = client.get(f"/api/posts/{post}").json()["document"]
     text = next(b["html"] for b in result["blocks"] if b["id"] == "alpha")
     assert "onclick" not in text and "<script" not in text and "evil.invalid" not in text and "onerror" not in text
+    assert all(f"<h{level}>" in text for level in range(4, 7))
+    assert 'width="640"' in text and 'width="9000"' not in text
     doc["blocks"][0]["html"] = "<p>Stale overwrite</p>"
     save_document(client, post, doc, baseline=snapshot["baseline"], versions=snapshot["versions"])
     assert client.post(f"/api/posts/{post}/submit").status_code == 409

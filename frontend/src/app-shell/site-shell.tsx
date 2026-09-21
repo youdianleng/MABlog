@@ -16,7 +16,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t, locale, setLocale } = useLanguage();
   const { user, run, refresh } = useAccount();
-  const showFooterCallout = !path.startsWith("/compose/") && !path.startsWith("/review/") && !path.startsWith("/sharing/") && !path.startsWith("/admin/");
+  const showFooterCallout = path !== "/about" && path !== "/help" && !path.startsWith("/compose/") && !path.startsWith("/review/") && !path.startsWith("/sharing/") && !path.startsWith("/admin/");
 
   /** Create a personal post and navigate to its freeform composer. */
   async function createPost(): Promise<void> {

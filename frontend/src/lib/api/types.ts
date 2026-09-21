@@ -47,6 +47,15 @@ export interface Post {
   ai_news?: { source_count: number; verified_at: number; correction_note: string } | null;
 }
 
+/** One bounded public collection page returned with enough metadata to navigate it. */
+export interface PublicPostPage {
+  items: Post[];
+  page: number;
+  page_size: number;
+  pages: number;
+  total: number;
+}
+
 export interface AiNewsCitation {
   number: number;
   url: string;

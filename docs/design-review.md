@@ -88,7 +88,7 @@ Public profiles show username, display name, avatar, short biography, and public
 
 Start a new post with a 1200 by 900 canvas as an editable starting size. Provide drag handles and numeric fields for precise canvas/block sizing, position, and rotation; this starting size is not a fixed-width restriction. The canvas boundary can move across the composition without moving the blocks underneath it.
 
-Provide headings, bold/italic text, lists, links, image insertion, video insertion, and embedded video insertion inside blocks. Include undo/redo for unsaved editing, block duplication, and a layer list for selecting overlapping blocks. Preserve a logical content order separately from the visible front-to-back order, with controls to adjust it. This supports keyboard navigation and later text extraction.
+Provide an H1-default heading dropdown with explicit H1 through H6 choices, plus bold/italic text, lists, links, resizable image insertion, video insertion, and embedded video insertion inside blocks. Inserted images have a visible drag handle and a keyboard resizing alternative, and their bounded width persists in approved HTML. Include undo/redo for unsaved editing, block duplication, and a layer list for selecting overlapping blocks. Preserve a logical content order separately from the visible front-to-back order, with controls to adjust it. This supports keyboard navigation and later text extraction.
 
 ### D3. Editor permissions and review details
 
@@ -175,6 +175,22 @@ The first build contains the agreed blog, composer, collaboration, review, carou
 **Amendment, 2026-09-12:** Moving the canvas crop frame keeps it at the dropped workspace position. Frame movement and stored crop-origin movement use the same delta so blocks remain fixed in document space, and pressing the handle without moving does not create a geometry change.
 
 **Amendment, 2026-09-12:** The composer supports pointer-centered Ctrl + wheel zoom from 25% to 300% in 10% steps. Zoom is transient editor state and does not alter saved canvas or block geometry; drawing, dragging, and resizing convert pointer movement through the active scale.
+
+**Amendment, 2026-09-18:** Discover and the public collection use numbered navigation with no more than fifteen public posts on one page. The current page is visibly identified, previous/next and numbered controls are keyboard accessible, and the page plus collection category are represented in the URL. Category filtering occurs before the result total and page boundaries are calculated.
+
+**Amendment, 2026-09-18:** The account route reflects the current session. Signed-out visitors receive registration, sign-in, verification, and recovery controls; signed-in visitors receive the compact “Welcome to your atelier” card and a primary link to their workspace instead of seeing the authentication form again.
+
+**Amendment, 2026-09-18:** The About route uses a dedicated, bilingual editorial narrative instead of the generic information-page template. Its spacious mission-led rhythm is adapted from the supplied Lassie reference, while MAblog's asymmetric story gallery, cream/crimson/gold palette, celestial mark, dark principles panel, four-step publishing journey, and original copy keep the result specific to this product. The page describes only implemented behavior—private drafting, explicit collaboration, creator review, and public discovery—and ends with direct links to the workspace and public collection.
+
+**Follow-up, 2026-09-18:** The About page no longer uses fantasy-character artwork to represent the product. In response to the user's request for a more realistic view of MAblog, that gallery is replaced by a static editorial grid describing the implemented weekly AI newsroom, recent technology writing, and reader interests such as travel, personal essays, anime, and creative hobbies. The content cards link directly to the relevant public collection views and use typography, borders, and restrained Lucide icons instead of illustration or motion.
+
+**Follow-up, 2026-09-18:** The manifesto and content overview no longer place two oversized serif statements in immediate succession. The manifesto remains the page's dominant centered message; the following content area now begins after a quiet divider with a compact “Inside MAblog” heading and a short sans-serif summary. Reduced vertical spacing and the smaller two-column introduction establish a clear transition into the editorial cards without weakening the semantic H2/H3 hierarchy.
+
+**Amendment, 2026-09-18:** The Help route uses a dedicated bilingual support experience rather than the generic information-page template. It adapts the supplied rounded-panel reference into MAblog's visual system: a warm framed hero, a code-native two-lobe story path from private draft to review and publication, a compact anchored topic strip, four detailed workflow guides, and an explicit local Mailpit note. All destinations are real application routes or same-page anchors, the decorative workflow visual is excluded from the accessibility tree, and the route's own support composition replaces the shell's generic footer callout.
+
+**Follow-up, 2026-09-18:** Removed the four-card workflow-guide section from the Help route at the user's request. The quick-path strip now links directly to the relevant application destinations instead of removed same-page anchors, and the local Mailpit note follows the framed hero with deliberate spacing before the shared footer.
+
+**Follow-up, 2026-09-18:** Reworked the Help hero after the user found the first adaptation too close to its reference. The taupe rounded shell, large white pill panel, overlapping figure-eight artwork, and horizontal utility strip are removed. The current MAblog-specific composition uses a sharp asymmetric editorial grid: a dark story-desk narrative column, a light three-stage protected-workflow column, and a bordered two-column quick-route matrix, collapsing into one readable column on narrow screens.
 
 | Page | Main purpose |
 | --- | --- |

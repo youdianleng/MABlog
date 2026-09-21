@@ -81,7 +81,7 @@ Routes validate HTTP input and delegate shared rules to services. Permission che
 
 Search reads only approved `Post.document` passages. PostgreSQL applies publication, ownership, current grant, category, scope, and two-sided personal-cloud consent predicates inside lexical and vector candidate queries. The API fuses per-post ranks, signs continuation/evidence identifiers, and rechecks permissions before pagination or generation. A dedicated worker is the only component that writes embeddings; durable PostgreSQL jobs survive Redis or worker restarts.
 
-Public discovery routes server-render the first three-post page, then `features/posts/use-infinite-posts.ts` owns subsequent bounded requests and intersection observation. FastAPI applies category filtering before `offset`/`limit`, caps each request at 50 records, and preserves deterministic publication/id ordering so appended pages do not overlap. Profile and workspace grids remain finite account-scoped results rather than silently paginating permission-sensitive management views.
+Public discovery routes server-render numbered pages of at most fifteen posts. FastAPI applies approved category filtering before counting and offsetting, returns the filtered total and page count, and preserves deterministic publication/id ordering so pages do not overlap. `features/posts/post-pagination.tsx` provides the shared accessible navigation; page and collection-category state live in the URL so a result view can be linked, refreshed, and restored through browser history. Profile and workspace grids remain finite account-scoped results rather than silently paginating permission-sensitive management views.
 
 ## Rules for new work
 

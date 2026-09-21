@@ -66,6 +66,11 @@ test("default local administrator signs in without email verification", /** Veri
   expect(await (await login).json()).toEqual({ ok: true });
   await expect(page.getByRole("heading", { name: "Welcome to your atelier" })).toBeVisible();
   await expect(page.getByLabel("Verification code")).not.toBeVisible();
+  await page.goto("/public");
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "Welcome to your atelier" })).toBeVisible();
+  await expect(page.getByLabel("Email or username")).not.toBeVisible();
+  await expect(page.getByRole("link", { name: "Open my workspace" })).toHaveAttribute("href", "/workspace");
 });
 
 test("liking a story updates in place without refreshing the reader", /** Prevent the Discover shell from flashing while the like count is reconciled. */ async function stableLike({ page }) {

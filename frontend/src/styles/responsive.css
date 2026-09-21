@@ -97,9 +97,15 @@
 .category-menu button span { width: 20px; text-align: center; }
 .category-menu button:hover { background: #e5ddce; }
 .category-menu button[aria-pressed="true"] { background: #993c3d; border-color: #c69b63; color: #fffaf0; }
+.category-menu button:disabled { cursor: wait; opacity: 0.55; }
 .category-menu button:focus-visible { outline: 2px solid #993c3d; outline-offset: 3px; }
 .collection-results { min-width: 0; }
 .collection-layout .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 1500px) { .collection-layout .post-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .collection-layout { grid-template-columns: 1fr; gap: 24px; } .category-menu { position: static; } }
 @media (max-width: 520px) { .collection-layout .post-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) {
+  .post-pagination { gap: 8px; }
+  .post-pagination > button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .post-pagination-pages { order: -1; flex-basis: 100%; }
+}

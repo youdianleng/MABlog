@@ -6,3 +6,14 @@ export const categories = [
   { value: "anime", en: "Anime", es: "Anime", symbol: "✦" },
 ] as const;
 export type PostCategory = (typeof categories)[number]["value"];
+
+/** Accept only category keys represented by the shared collection taxonomy. */
+export function parsePostCategory(value: string | string[] | undefined): PostCategory | "" {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return categories.some(
+    /** Match the untrusted URL value against one stable category key. */
+    function isKnownCategory(category) {
+      return category.value === candidate;
+    },
+  ) ? candidate as PostCategory : "";
+}

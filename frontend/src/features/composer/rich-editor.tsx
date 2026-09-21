@@ -1,13 +1,26 @@
 "use client";
 import { useRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Node, mergeAttributes } from "@tiptap/core";
+import { Node, mergeAttributes, type Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import ImageExtension from "@tiptap/extension-image";
+import { DropdownMenu } from "radix-ui";
+import { ChevronDown } from "lucide-react";
 import { uploadMedia, Block } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import { useAccount } from "@/features/auth/account-context";
 import { useEditorSynchronization } from "./use-editor-synchronization";
+import { ResizableImageExtension } from "./resizable-image";
+
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+const HEADING_LEVELS: HeadingLevel[] = [1, 2, 3, 4, 5, 6];
+
+/** Return the selected heading level, using H1 as the toolbar's default action. */
+function currentHeadingLevel(editor: Editor): HeadingLevel {
+  for (const level of HEADING_LEVELS) {
+    if (editor.isActive("heading", { level })) return level;
+  }
+  return 1;
+}
 
 const UploadedVideo = Node.create({
   name: "uploadedVideo",
@@ -96,7 +109,7 @@ export function RichEditor({
     { run } = useAccount();
   const input = useRef<HTMLInputElement>(null);
   const editor = useEditor({
-    extensions: [StarterKit, ImageExtension, UploadedVideo, EmbeddedVideo],
+    extensions: [StarterKit, ResizableImageExtension, UploadedVideo, EmbeddedVideo],
     content: block.html,
     immediatelyRender: false,
     /** Keep the working composition synchronized with visual text edits. */
@@ -106,6 +119,7 @@ export function RichEditor({
   });
   useEditorSynchronization(editor, block.html);
   if (!editor) return null;
+  const headingLevel = currentHeadingLevel(editor);
   /** Upload selected media and insert a native node at the current writing selection. */
   async function insertFile(file: File) {
     const media = await uploadMedia(file, postId);
@@ -141,16 +155,40 @@ export function RichEditor({
         >
           <em>I</em>
         </button>
-        <button
-          type="button"
-          onClick={
-            /** Toggle a level-two heading in the selected block. */ function heading() {
-              editor.chain().focus().toggleHeading({ level: 2 }).run();
-            }
-          }
-        >
-          H2
-        </button>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              className="editor-heading-trigger"
+              type="button"
+              aria-label={t(`Heading level H${headingLevel}`, `Nivel de título H${headingLevel}`)}
+            >
+              H{headingLevel}
+              <ChevronDown size={12} aria-hidden="true" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="editor-heading-menu" sideOffset={4} align="start" aria-label={t("Heading level", "Nivel de título")}>
+              {HEADING_LEVELS.map(
+                /** Offer every semantic HTML heading level in the editor menu. */ function headingOption(level) {
+                  return (
+                    <DropdownMenu.Item
+                      className="editor-heading-option"
+                      data-active={headingLevel === level ? "true" : undefined}
+                      key={level}
+                      onSelect={
+                        /** Apply the chosen heading without toggling the block back to a paragraph. */ function chooseHeading() {
+                          editor.chain().focus().setHeading({ level }).run();
+                        }
+                      }
+                    >
+                      H{level}
+                    </DropdownMenu.Item>
+                  );
+                },
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
         <button
           type="button"
           onClick={

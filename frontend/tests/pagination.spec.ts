@@ -1,39 +1,56 @@
 import { expect, test } from "@playwright/test";
 
-test("public collection appends three posts near the scroll boundary", /** Verify true network pagination, visible progress, and stable existing cards. */ async function lazyCollection({ page }) {
-  await page.route(
-    "**/api/posts?*",
-    /** Keep the second page pending briefly so loading feedback can be observed reliably. */
-    async function delaySecondPage(route) {
-      const requestUrl = new URL(route.request().url());
-      if (requestUrl.searchParams.get("offset") === "3") {
-        await new Promise<void>(
-          /** Resolve the controlled test delay without changing application timing. */
-          function finishDelay(resolve) {
-            setTimeout(resolve, 450);
-          },
-        );
-      }
-      await route.continue();
-    },
-  );
+test("public collection navigates through fifteen-post pages", /** Verify bounded cards, URL state, and accessible previous/current/next controls. */ async function paginatedCollection({ page }) {
   await page.goto("/public");
   const cards = page.locator(".post-card");
-  await expect(cards).toHaveCount(3);
+  await expect(cards).toHaveCount(15);
   const firstTitle = await cards.first().getByRole("heading").innerText();
-  await page.locator(".post-feed-sentinel").scrollIntoViewIfNeeded();
-  await expect(page.locator('[role="status"]')).toHaveText("Loading more posts…");
-  await expect(cards).toHaveCount(6);
-  await expect(cards.first().getByRole("heading")).toHaveText(firstTitle);
+  const pagination = page.getByRole("navigation", { name: "Post pages" });
+  await expect(pagination.getByRole("button", { name: "Page 1" })).toHaveAttribute("aria-current", "page");
+  await expect(pagination.getByRole("button", { name: "Previous" })).toBeDisabled();
+  await page.evaluate(
+    /** Record the URL active whenever application code scrolls the collection into view. */
+    function traceCollectionScroll() {
+      const nativeScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = /** Preserve native scrolling while recording its route timing. */ function recordedScrollIntoView(options) {
+        document.documentElement.dataset.collectionScrollUrl = window.location.href;
+        nativeScrollIntoView.call(this, options);
+      };
+    },
+  );
+  await pagination.getByRole("button", { name: "Next" }).click();
+  await expect(page).toHaveURL(/\/public\?page=2$/);
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first().getByRole("heading")).not.toHaveText(firstTitle);
+  await expect(page.getByRole("heading", { name: "Stories worth wandering into" })).toBeFocused();
+  await expect(page.locator("html")).toHaveAttribute("data-collection-scroll-url", /\/public\?page=2$/);
+  await expect(pagination.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
+  await expect(pagination.getByRole("button", { name: "Next" })).toBeDisabled();
+  await pagination.getByRole("button", { name: "Previous" }).click();
+  await expect(page).toHaveURL(/\/public$/);
+  await expect(cards).toHaveCount(15);
 });
 
-test("lazy collection remains bounded on a phone", /** Ensure incremental cards and their loading boundary do not create horizontal overflow. */ async function lazyCollectionPhone({ page }) {
+test("Discover navigates through fifteen-post pages", /** Apply the same bounded navigation while preserving Discover card reveals. */ async function paginatedDiscover({ page }) {
+  await page.goto("/");
+  const cards = page.locator(".post-card");
+  const pagination = page.getByRole("navigation", { name: "Post pages" });
+  await expect(cards).toHaveCount(15);
+  await pagination.getByRole("button", { name: "Next" }).click();
+  await expect(page).toHaveURL(/\/?page=2$/);
+  await expect(cards).toHaveCount(1);
+  await expect(page.locator(".post-card-reveal")).toHaveCount(1);
+  await expect(pagination.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
+});
+
+test("paginated collection remains bounded on a phone", /** Ensure fifteen cards and their navigation do not create horizontal overflow. */ async function paginatedCollectionPhone({ page }) {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/public");
-  await expect(page.locator(".post-card")).toHaveCount(3);
+  await expect(page.locator(".post-card")).toHaveCount(15);
+  await expect(page.getByRole("navigation", { name: "Post pages" })).toBeVisible();
   expect(
     await page.evaluate(
-      /** Compare the document and phone viewport widths before more posts are appended. */ function fitsViewport() {
+      /** Compare the complete paginated document width with the phone viewport. */ function fitsViewport() {
         return document.documentElement.scrollWidth <= window.innerWidth;
       },
     ),

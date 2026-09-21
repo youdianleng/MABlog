@@ -1,10 +1,10 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AuthenticatedAccountCard } from "./authenticated-account-card";
 
 /** Handle registration, sign-in, recovery, verification, and resend in one localized form. */
 export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
@@ -80,15 +80,7 @@ export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
       setBusy(false);
     }
   }
-  if (success)
-    return (
-      <div className="form-panel stack">
-        <h1>{t("Welcome to your atelier", "Bienvenido a tu taller")}</h1>
-        <Link href="/workspace">
-          <Button>{t("Open my workspace", "Abrir mi taller")}</Button>
-        </Link>
-      </div>
-    );
+  if (success) return <AuthenticatedAccountCard />;
   return (
     <form className="form-panel stack" onSubmit={submit}>
       <div className="eyebrow">MAblog · {t("YOUR ATELIER", "TU TALLER")}</div>

@@ -17,6 +17,7 @@ from ..utils import now
 
 router = APIRouter()
 PUBLIC_POST_PAGE_LIMIT = 50
+PUBLIC_POST_NAVIGATION_SIZE = 15
 
 @router.get("/posts")
 def public_posts(offset: int = 0, limit: int = Query(PUBLIC_POST_PAGE_LIMIT, ge=1, le=PUBLIC_POST_PAGE_LIMIT), category: PostCategory | None = None, language: Literal["en", "es"] = "en", user=Depends(current_user), db=Depends(database)):
@@ -27,6 +28,32 @@ def public_posts(offset: int = 0, limit: int = Query(PUBLIC_POST_PAGE_LIMIT, ge=
         query = query.where(func.coalesce(Post.document["details"]["category"].as_string(), "general") == category)
     posts = db.scalars(query.order_by(Post.published.desc(), Post.id).offset(max(0, offset)).limit(limit))
     return [post_summary(db, post, user, language) for post in posts]
+
+
+@router.get("/posts/page")
+def public_post_page(page: int = Query(1, ge=1), page_size: int = Query(PUBLIC_POST_NAVIGATION_SIZE, ge=1, le=PUBLIC_POST_NAVIGATION_SIZE), category: PostCategory | None = None, language: Literal["en", "es"] = "en", user=Depends(current_user), db=Depends(database)):
+    """Return one numbered public-post page plus the filtered total for navigation."""
+    visibility = [Post.public.is_(True)]
+    if category is not None:
+        # Count and item queries must use the same approved metadata predicate.
+        visibility.append(func.coalesce(Post.document["details"]["category"].as_string(), "general") == category)
+    total = db.scalar(select(func.count()).select_from(Post).where(*visibility)) or 0
+    posts = db.scalars(
+        select(Post)
+        .where(*visibility)
+        .order_by(Post.published.desc(), Post.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    # At least one page keeps the empty collection navigation state understandable.
+    page_count = max(1, (total + page_size - 1) // page_size)
+    return {
+        "items": [post_summary(db, post, user, language) for post in posts],
+        "page": page,
+        "page_size": page_size,
+        "pages": page_count,
+        "total": total,
+    }
 
 
 @router.get("/carousel")

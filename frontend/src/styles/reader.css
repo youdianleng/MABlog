@@ -46,6 +46,15 @@
 .rich-content h3 {
   font-size: 23px;
 }
+.rich-content h4 {
+  font-size: 20px;
+}
+.rich-content h5 {
+  font-size: 18px;
+}
+.rich-content h6 {
+  font-size: 16px;
+}
 .rich-content p {
   margin: 0.5em 0;
 }
