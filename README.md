@@ -12,6 +12,7 @@ docker compose up -d --build
 ```
 
 - Blog: http://localhost:3000
+- AI model rankings: http://localhost:3000/ai-models
 - Local email inbox: http://localhost:8025
 - API documentation: http://localhost:8000/docs
 - Health check: http://localhost:3000/api/health

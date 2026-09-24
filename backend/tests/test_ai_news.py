@@ -1,21 +1,29 @@
 """Integration coverage for the durable weekly AI-news extension."""
 
 import copy
+import json
+from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 
 from app import bootstrap
-from app.services import authentication as auth
 from app.database import SessionLocal
-from app.models import AutomatedEdition, LoginSession, NewsJob, NewsRun, NewsSetting, Post, PostLocalization, User
+from app.models import AdminStepUp, AutomatedEdition, LoginSession, NewsClaim, NewsDocument, NewsJob, NewsRun, NewsSetting, Post, PostLocalization, User
 from app.schemas import Document
-from app.utils import digest, new_id, now
+from app.services import authentication as auth
+from app.services.ai_news import classification, verification
+from app.services.ai_news.classification import _classification_excerpt
+from app.services.ai_news.composition import _paragraphs, public_text, structured_document, validate_structured_documents
+from app.services.ai_news.corrections import _restore_locked_evidence, validate_correction
+from app.services.ai_news.providers.openai import OpenAIResult
+from app.services.ai_news.provider_settings import effective_key, model_for
+from app.services.ai_news.publication import compatibility_document
 from app.services.ai_news.safe_fetch import SafeFetchError, validate_public_https
-from app.services.ai_news.scheduler import create_run
 from app.services.ai_news.safety import deterministic_safety
-from app.services.ai_news.composition import _paragraphs
-from app.services.ai_news import verification
+from app.services.ai_news.scheduler import create_run
 from app.services.public_cache import invalidate_public_cache
+from app.utils import digest, new_id, now
 
 
 @pytest.fixture(autouse=True)
@@ -69,6 +77,43 @@ def test_system_identity_cannot_login_and_admin_workspace_is_protected(client):
     response = client.get("/api/admin/ai-news/status")
     assert response.status_code == 200
     assert response.json()["schedule"]["enabled"] is False
+
+
+def test_provider_management_redacts_keys_and_blocks_mid_run_changes(client):
+    """Require step-up, encrypt keys, hide validation input, and freeze active runs."""
+    _, regular_token = create_account("provider_reader")
+    client.cookies.set("mablog_session", regular_token)
+    assert client.get("/api/admin/ai-news/providers").status_code == 403
+    _, token = create_account("provider_curator", True)
+    client.cookies.set("mablog_session", token)
+    initial = client.get("/api/admin/ai-news/providers")
+    assert initial.status_code == 200
+    assert "ciphertext" not in initial.text and "api_key" not in initial.text
+    path = "/api/admin/ai-news/providers/keys/brave"
+    assert client.put(path, json={"api_key": "brave-test-key-1234"}).status_code == 403
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(token), created=now(), expires=now() + 600))
+        db.commit()
+    invalid = client.put(path, json={"api_key": "short"})
+    assert invalid.status_code == 422 and "short" not in invalid.text
+    saved = client.put(path, json={"api_key": "brave-test-key-1234"})
+    assert saved.status_code == 200
+    assert saved.json()["providers"]["brave"] == {"configured": True, "source": "saved"}
+    assert "brave-test-key-1234" not in saved.text
+    with SessionLocal() as db:
+        settings = db.get(NewsSetting, 1)
+        assert settings.brave_key_ciphertext and "brave-test-key-1234" not in settings.brave_key_ciphertext
+        assert effective_key(db, "brave") == "brave-test-key-1234"
+    changed = client.put("/api/admin/ai-news/providers/models", json={"small_model": "test-fast-model", "strong_model": "test-strong-model"})
+    assert changed.status_code == 200
+    with SessionLocal() as db:
+        assert model_for(db, "small") == "test-fast-model"
+        assert model_for(db, "strong") == "test-strong-model"
+    with SessionLocal() as db:
+        create_run(db, "preview", False)
+    blocked = client.delete(path)
+    assert blocked.status_code == 409
+    assert client.put("/api/admin/ai-news/providers/models", json={"small_model": "another-model", "strong_model": "test-strong-model"}).status_code == 409
 
 
 def test_scheduler_links_active_requests_and_keeps_one_waiting_catchup():
@@ -166,6 +211,76 @@ def test_structured_paragraph_removes_duplicate_trailing_citation_markers():
     """Keep prose intact while making the typed citation array the only rendered marker source."""
     values = [{"text": "A supported release statement. [1, 2]", "citations": [1, 2]}]
     assert _paragraphs(values, {1, 2}) == [{"text": "A supported release statement.", "citations": [1, 2]}]
+
+
+def test_classification_reaches_later_provider_benchmark_tables():
+    """Expose bounded table evidence beyond the release introduction without full-page prompts."""
+    source = "A" * 18_000 + "\nUnrelated detail\nTerminal-Bench 4.0 Opus 5.5 66.4% with tools\nFurther source context"
+    excerpt = _classification_excerpt(source)
+    assert excerpt.startswith("A" * 18_000)
+    assert "Terminal-Bench 4.0 Opus 5.5 66.4% with tools" in excerpt
+    assert len(excerpt) < 27_000
+
+
+def test_classification_retains_only_exact_official_benchmark_evidence(monkeypatch):
+    """Store provider score claims separately from release facts only when their quote exists."""
+    source_url = "https://example.com/release"
+    quote = "Terminal-Bench 4.0 Opus 5.5 66.4% with tools"
+    payload = {"releases": [{"provider": "Example", "model_name": "Opus 5.5", "model_version": "5.5", "update_type": "release", "title": "Opus 5.5 release", "published_date": "2026-09-22", "official_url": source_url, "source_urls": [source_url], "claims": [{"key": "release", "kind": "fact", "text_en": "Opus 5.5 launched.", "text_es": "Se lanzó Opus 5.5.", "evidence_quote": "Opus 5.5 launched", "source_url": source_url}, {"key": "terminal-bench", "kind": "benchmark", "text_en": "Opus 5.5 scored 66.4% on Terminal-Bench 4.0 with tools.", "text_es": "Opus 5.5 logró un 66,4 % en Terminal-Bench 4.0 con herramientas.", "evidence_quote": quote, "source_url": source_url}, {"key": "invented", "kind": "benchmark", "text_en": "An unsupported score.", "text_es": "Una puntuación no respaldada.", "evidence_quote": "Unpublished benchmark 99.9%", "source_url": source_url}]}]}
+
+    def fake_responses_call(*args, **kwargs):
+        """Return a deterministic classification without contacting a paid model."""
+        return OpenAIResult(text=json.dumps(payload), input_tokens=0, output_tokens=0, model="test-model")
+
+    monkeypatch.setattr(classification, "responses_call", fake_responses_call)
+    with SessionLocal() as db:
+        run = NewsRun(kind="preview", status="running", window_start=datetime(2026, 9, 21, tzinfo=UTC).timestamp(), window_end=datetime(2026, 9, 23, tzinfo=UTC).timestamp(), idempotency_key=f"test:{new_id()}")
+        db.add(run)
+        db.flush()
+        db.add(NewsDocument(run_id=run.id, url=source_url, canonical_url=source_url, mime="text/html", content_hash="source-hash", extracted_text=f"Opus 5.5 launched. {quote}", official=True, snapshot_expires=now() + 86400))
+        db.flush()
+        candidates = classification.classify_releases(db, run)
+        db.flush()
+        claims = db.query(NewsClaim).filter(NewsClaim.candidate_id == candidates[0].id).all()
+        assert len(candidates) == 1
+        assert len(claims) == 2
+        assert {claim.evidence[0]["kind"] for claim in claims} == {"fact", "benchmark"}
+
+
+def test_new_roundup_preserves_cited_benchmarks_and_distinct_audience_impacts():
+    """Keep provider scores visible and searchable while requiring useful release sections."""
+    citations = [{"number": 1, "url": "https://example.com/release", "title": "Official release", "official": True}]
+    claims = {"one": [{"kind": "benchmark", "text_en": "Terminal-Bench 4.0: 66.4% with tools; predecessor 55.8%.", "text_es": "Terminal-Bench 4.0: 66,4 % con herramientas; predecesor 55,8 %.", "evidence": [{"citation": 1}]}]}
+
+    def release_value(language: str) -> dict:
+        """Build one cited section with separate release, developer, and reader impacts."""
+        return {"title": "Weekly AI models", "summary": "Evidence-based changes", "overview": [{"text": "A model launched.", "citations": [1]}], "sections": [{"release_id": "one", "title": "New model", "paragraphs": [{"focus": focus, "text": f"{focus} detail in {language}.", "citations": [1]} for focus in ("change", "developer", "reader")], "source_numbers": [1]}]}
+
+    run = SimpleNamespace(window_end=1_789_646_400)
+    documents = {language: structured_document(language, release_value(language), citations, run, release_claims=claims) for language in ("en", "es")}
+    validate_structured_documents(documents, {"one"})
+    release = documents["en"]["blocks"][1]
+    assert release["benchmarks"] == [{"text": claims["one"][0]["text_en"], "citations": [1]}]
+    assert "66.4%" in public_text(documents["en"])
+    assert "66.4%" in compatibility_document(documents["en"])["blocks"][1]["html"]
+
+    missing_impact = copy.deepcopy(documents)
+    missing_impact["es"]["blocks"][1]["paragraphs"] = missing_impact["es"]["blocks"][1]["paragraphs"][:2]
+    with pytest.raises(RuntimeError, match="release_impact_missing_es"):
+        validate_structured_documents(missing_impact, {"one"})
+
+    altered_benchmark = copy.deepcopy(documents)
+    altered_benchmark["en"]["blocks"][1]["benchmarks"][0]["text"] = "Unverified higher score."
+    with pytest.raises(RuntimeError, match="correction_benchmark_identity_changed"):
+        validate_correction(documents, altered_benchmark)
+
+    translated = copy.deepcopy(documents["es"])
+    translated["blocks"][1]["benchmarks"] = []
+    translated["blocks"][1]["paragraphs"][0]["focus"] = "reader"
+    translated["blocks"][1]["paragraphs"][0]["text"] = "Rewritten, cited change."
+    restored = _restore_locked_evidence(documents["es"], translated)
+    assert restored["blocks"][1]["benchmarks"] == documents["es"]["blocks"][1]["benchmarks"]
+    assert restored["blocks"][1]["paragraphs"][0]["focus"] == "change"
 
 
 

@@ -14,6 +14,14 @@ test("administrator can inspect and unlock the weekly AI newsroom without publis
   await page.getByRole("button", { name: "Sources", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Official registry" })).toBeVisible();
   await expect(page.getByText("OpenAI", { exact: true })).toBeVisible();
+  const providerResponse = page.waitForResponse(/** Observe the redacted provider-status request. */ function isProviderStatus(response) { return response.url().endsWith("/api/admin/ai-news/providers"); });
+  await page.getByRole("button", { name: "Providers & models" }).click();
+  const providerPayload = await (await providerResponse).text();
+  expect(providerPayload).not.toContain("api_key");
+  expect(providerPayload).not.toContain("ciphertext");
+  await expect(page.getByRole("heading", { name: "Newsletter models" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "OpenAI", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Brave Search" })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(/** Confirm the operations workspace does not widen a phone document. */ function newsroomFitsPhone() { return document.documentElement.scrollWidth <= innerWidth; })).toBe(true);
   expect(errors).toEqual([]);

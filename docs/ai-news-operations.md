@@ -4,7 +4,9 @@ The dedicated `news-worker` creates one evidence-backed English/Spanish roundup 
 
 ## Configuration and provider readiness
 
-Set the following values in `.env`, then rebuild `backend` and `news-worker`:
+The administrator can now open **AI newsroom → Providers & models** to replace the newsroom's OpenAI and Brave keys and select the fast/strong OpenAI model IDs. These saved values apply to future runs in both the API and worker without restarting containers. Saving, removing, or changing them requires recent administrator step-up and is refused while a run is active. The page shows only configured status and whether a value comes from a saved override or the environment; it never displays a stored key. Removing a saved key restores the environment fallback.
+
+Alternatively, set the following deployment defaults in `.env`, then rebuild `backend` and `news-worker`:
 
 ```powershell
 OPENAI_API_KEY=your-platform-key
@@ -21,6 +23,8 @@ NEWS_BRAVE_QUERY_BUDGET=15
 ```
 
 OpenAI is required for classification, bilingual writing, repair, verification, moderation, and OpenAI web discovery. Brave expands discovery beyond the verified registry. A missing or unavailable Brave key is shown as degraded coverage; registry discovery and OpenAI can continue. Email is required for protected administrator actions outside the local test-account bypass.
+
+Saved newsroom keys are encrypted in PostgreSQL using a key derived from `APP_SECRET`. Keep that secret stable and backed up securely: changing it makes saved key overrides unreadable until they are removed or replaced. Production must use a unique non-default `APP_SECRET` and HTTPS. The newsroom override does not change OpenAI keys used by site search, embeddings, or other features. Model changes do not update the environment-configured per-token price estimates; review those rates and run budgets before enabling the schedule. The form stores an ID but does not validate the model against a paid provider call.
 
 `NEWS_MASTER_ENABLED=false` is the environment-level emergency stop. It prevents scheduled starts even if the database schedule is enabled. Changing an environment value requires recreating the worker:
 

@@ -3,7 +3,8 @@
 import os
 import socket
 
-from ...config import BRAVE_API_KEY, NEWS_MASTER_ENABLED, OPENAI_API_KEY
+from ...config import NEWS_MASTER_ENABLED
+from .provider_settings import provider_status
 
 
 def email_configured() -> bool:
@@ -23,10 +24,11 @@ def smtp_reachable() -> bool:
         return False
 
 
-def readiness(include_connectivity: bool = False) -> dict:
+def readiness(db, include_connectivity: bool = False) -> dict:
     """Return only booleans and safe status codes for the AI-news workspace."""
-    openai_ready = bool(OPENAI_API_KEY)
-    brave_ready = bool(BRAVE_API_KEY)
+    providers = provider_status(db)["providers"]
+    openai_ready = providers["openai"]["configured"]
+    brave_ready = providers["brave"]["configured"]
     email_ready = email_configured() and (smtp_reachable() if include_connectivity else True)
     warnings = []
     if not brave_ready:
@@ -43,9 +45,9 @@ def readiness(include_connectivity: bool = False) -> dict:
     }
 
 
-def require_run_readiness() -> dict:
+def require_run_readiness(db) -> dict:
     """Raise a safe configuration code when a mandatory run dependency is unavailable."""
-    status = readiness()
+    status = readiness(db)
     if not status["master_enabled"]:
         raise RuntimeError("news_master_disabled")
     if status["openai"] != "ready":

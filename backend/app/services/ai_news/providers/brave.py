@@ -4,7 +4,8 @@ from dataclasses import dataclass
 
 import httpx
 
-from ....config import BRAVE_API_KEY, BRAVE_API_URL, OPENAI_TIMEOUT_SECONDS
+from ....config import BRAVE_API_URL, OPENAI_TIMEOUT_SECONDS
+from ..provider_settings import effective_key
 from .openai import NewsProviderError
 
 
@@ -17,14 +18,15 @@ class BraveResult:
     description: str
 
 
-def brave_search(query: str, count: int = 10) -> list[BraveResult]:
+def brave_search(query: str, count: int = 10, db=None) -> list[BraveResult]:
     """Search Brave with a bounded query and return only title, URL, and snippet data."""
-    if not BRAVE_API_KEY:
+    api_key = effective_key(db, "brave")
+    if not api_key:
         raise NewsProviderError("brave_not_configured")
     try:
         response = httpx.get(
             BRAVE_API_URL,
-            headers={"Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY},
+            headers={"Accept": "application/json", "X-Subscription-Token": api_key},
             params={"q": query[:400], "count": min(max(count, 1), 20), "safesearch": "moderate", "text_decorations": "false"},
             timeout=OPENAI_TIMEOUT_SECONDS,
         )

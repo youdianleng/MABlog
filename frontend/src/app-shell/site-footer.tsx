@@ -53,6 +53,7 @@ export function SiteFooter({ showCallout }: SiteFooterProps) {
               <h3 id="footer-explore-heading">{t("Explore", "Explorar")}</h3>
               <Link href="/">{t("Discover", "Descubrir")}</Link>
               <Link href="/public">{t("The collection", "La colección")}</Link>
+              <Link href="/ai-models">{t("AI Models", "Modelos IA")}</Link>
               <Link href="/search">{t("Search stories", "Buscar historias")}</Link>
             </section>
             <section aria-labelledby="footer-create-heading">

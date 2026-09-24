@@ -4,8 +4,9 @@ import json
 
 from sqlalchemy import select
 
-from ...config import NEWS_SNAPSHOT_SECONDS, NEWS_STRONG_MODEL
+from ...config import NEWS_SNAPSHOT_SECONDS
 from ...models import AutomatedEdition, NewsClaim, NewsDocument, NewsRun, NewsSourceCheck, Post
+from .provider_settings import model_for
 from ...utils import new_id, now
 from .extraction import extract_source
 from .notifications import create_alert
@@ -29,11 +30,12 @@ def _reverify_change(db, current_run: NewsRun, edition: AutomatedEdition, docume
         return {"contradicted": False, "claims": []}
     assert_paid_stage_budget(db, current_run, 0.25)
     result = responses_call(
-        NEWS_STRONG_MODEL,
+        model_for(db, "strong"),
         DRIFT_INSTRUCTIONS,
         json.dumps({"claims": relevant, "updated_source": {"url": document.canonical_url, "text": updated_text[:30_000]}}, ensure_ascii=False),
         3000,
         idempotency_key=f"news:{current_run.id}:source-monitor:{document.id}",
+        db=db,
     )
     record_openai_usage(db, current_run, "source_monitoring", result)
     return json_value(result)

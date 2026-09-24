@@ -37,7 +37,7 @@ class PipelineTerminalError(RuntimeError):
 
 def _stage_readiness(db, run: NewsRun) -> dict:
     """Require mandatory configuration and attach degradable readiness warnings."""
-    status = require_run_readiness()
+    status = require_run_readiness(db)
     run.warnings = list(dict.fromkeys([*run.warnings, *status["warnings"]]))
     return status
 
@@ -147,7 +147,7 @@ def _stage_safety(db, run: NewsRun) -> dict:
     if run.result.get("quiet"):
         return {"quiet": True}
     edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == run.id))
-    report = publication_safety(run, edition.documents)
+    report = publication_safety(db, run, edition.documents)
     edition.verification = {**edition.verification, "safety": report}
     edition.updated = now()
     if not report["passed"]:

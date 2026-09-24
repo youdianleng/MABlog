@@ -38,11 +38,14 @@ def compatibility_document(structured: dict) -> dict:
         if block.get("type") == "sources":
             continue
         heading = f"<h2>{escape(str(block.get('title', '')))}</h2>" if block.get("title") else ""
+        visible_paragraphs = [*block.get("paragraphs", []), *block.get("benchmarks", [])]
         paragraphs = "".join(
             f"<p>{escape(str(paragraph.get('text', '')))} {_citation_links(paragraph.get('citations', []), citations)}</p>"
-            for paragraph in block.get("paragraphs", [])
+            for paragraph in visible_paragraphs
         )
-        height = max(180, 80 + 34 * sum(max(1, len(str(paragraph.get("text", ""))) // 80) for paragraph in block.get("paragraphs", [])))
+        # The compatibility copy feeds older readers and search indexing, so
+        # source-backed benchmark text must not disappear outside AiNewsReader.
+        height = max(180, 80 + 34 * sum(max(1, len(str(paragraph.get("text", ""))) // 80) for paragraph in visible_paragraphs))
         blocks.append({"id": str(block.get("id", f"section-{order}")), "x": 60, "y": y, "width": 880, "height": height, "rotation": 0, "z": order, "order": order, "html": heading + paragraphs})
         y += height + 28
     document["canvas"] = {"x": 0, "y": 0, "width": 1000, "height": max(900, y + 40)}

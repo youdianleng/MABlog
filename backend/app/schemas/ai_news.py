@@ -1,7 +1,7 @@
 """AI-news scheduler, source, correction, and publication request schemas."""
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 
 from .common import StrictModel
 
@@ -16,6 +16,19 @@ class NewsSchedulePayload(StrictModel):
     """Enable or disable the durable schedule after activation readiness."""
 
     enabled: bool
+
+
+class NewsProviderKeyPayload(StrictModel):
+    """Accept a replacement key without including it in response serialization."""
+
+    api_key: SecretStr = Field(min_length=8, max_length=4096)
+
+
+class NewsModelsPayload(StrictModel):
+    """Set both newsroom model roles; null resets a role to its environment default."""
+
+    small_model: str | None = Field(default=None, min_length=3, max_length=160, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$")
+    strong_model: str | None = Field(default=None, min_length=3, max_length=160, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$")
 
 
 class NewsPinPayload(StrictModel):

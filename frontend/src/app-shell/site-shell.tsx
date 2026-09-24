@@ -16,7 +16,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t, locale, setLocale } = useLanguage();
   const { user, run, refresh } = useAccount();
-  const showFooterCallout = path !== "/about" && path !== "/help" && !path.startsWith("/compose/") && !path.startsWith("/review/") && !path.startsWith("/sharing/") && !path.startsWith("/admin/");
+  const showFooterCallout = path !== "/about" && path !== "/help" && path !== "/ai-models" && !path.startsWith("/compose/") && !path.startsWith("/review/") && !path.startsWith("/sharing/") && !path.startsWith("/admin/");
 
   /** Create a personal post and navigate to its freeform composer. */
   async function createPost(): Promise<void> {
@@ -32,6 +32,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         <nav className="nav" aria-label={t("Primary navigation", "Navegación principal")}>
           <Link className={path === "/" ? "active" : ""} href="/">{t("Discover", "Descubrir")}</Link>
           <Link className={path === "/public" ? "active" : ""} href="/public">{t("The collection", "La colección")}</Link>
+          <Link className={path === "/ai-models" ? "active" : ""} href="/ai-models">{t("AI Models", "Modelos IA")}</Link>
           <Link className={path === "/workspace" ? "optional active" : "optional"} href="/workspace">{t("My atelier", "Mi taller")}</Link>
         </nav>
         <HeaderSearch />

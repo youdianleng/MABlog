@@ -37,12 +37,12 @@ def deterministic_safety(documents: dict) -> list[str]:
     return issues
 
 
-def publication_safety(run: NewsRun, documents: dict) -> dict:
+def publication_safety(db, run: NewsRun, documents: dict) -> dict:
     """Combine deterministic failures with moderation of both locales and cover alt text."""
     issues = deterministic_safety(documents)
     moderation: dict[str, dict] = {}
     for language, document in documents.items():
-        value = moderate_text(f"{public_text(document)}\n{document.get('cover_alt', '')}"[:100_000])
+        value = moderate_text(f"{public_text(document)}\n{document.get('cover_alt', '')}"[:100_000], db)
         moderation[language] = value
         if value["flagged"]:
             issues.append(f"moderation_flagged:{language}")

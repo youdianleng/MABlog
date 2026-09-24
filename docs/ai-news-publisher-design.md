@@ -2,7 +2,15 @@
 
 Status: confirmed on 2026-09-14 and implemented for the local Docker release. The automatic schedule remains disabled until an administrator enables it after reviewing the successful real preview.
 
-Last updated: 2026-09-14.
+Last updated: 2026-09-23.
+
+## Editorial-depth amendment, 2026-09-23
+
+Future generated editions must give each model release distinct, cited explanations of what changed versus its predecessor, what the change means for production developers, and what it means for everyday users. A limitation/uncertainty paragraph is added when the official evidence supports one; unsupported comparisons and generic praise are not substitutes for concrete consequences.
+
+The classifier now seeks up to six representative benchmark results per release from extractable first-party announcement, model-card, or technical-report text. Each saved benchmark claim retains an exact source excerpt and must identify the metric, reported result, and any published setup or comparator. The public release section displays these results in a dedicated cited panel labeled as **provider-published, not independently retested by MAblog**; it never normalizes unlike metrics into one score. If no result is verifiable in the official materials reviewed, the panel says that, without asserting the provider published none. Screenshots or charts with no extractable text are not OCR-verified by this pipeline and require a readable official document or later curator review.
+
+New editions use versioned structured blocks so their focus labels and locked benchmark evidence survive bilingual correction. Existing published editions remain unchanged. This amendment refines the presentation of qualifying releases; benchmark-only promotions still do not qualify as news, the independent verification and safety gates still apply, and automatic scheduling remains disabled until the existing activation requirements are met.
 
 ## User-supplied objective
 
@@ -70,7 +78,7 @@ The decision tree is complete. The concrete file structure, storage model, worke
 - A web-discovered candidate cannot enter generation until its domain and page pass authoritative first-party validation.
 - Broad discovery uses OpenAI Responses API web search plus one independent dedicated search API. Results are merged and deduplicated before first-party validation.
 - Brave Search is the first-release secondary discovery provider. MAblog merges its normalized candidate URLs with OpenAI web-search candidates before validation.
-- The Brave credential is separate from the OpenAI API key and is loaded from deployment secrets.
+- The Brave credential is separate from the OpenAI API key. Each uses an encrypted newsroom-only database override when saved by an administrator, otherwise its deployment-secret default.
 - The AI pipeline uses two configurable model tiers: a smaller tier for candidate classification and structured evidence extraction, and a stronger tier for bilingual writing, repair, and independent verification.
 - Verification is a separate model call that receives the article and evidence but no writer reasoning or conversation state.
 - Every stage stores its resolved model identifier and prompt version for audit and reproducibility.
@@ -148,6 +156,7 @@ The decision tree is complete. The concrete file structure, storage model, worke
 - This step-up authorization is bound to the administrator session, remains valid for ten minutes, and is invalidated by password or email changes.
 - The seeded test administrator may bypass step-up authentication only when the application explicitly runs in local-development mode. Production configuration cannot enable the bypass.
 - The AI-news workspace shows redacted readiness for OpenAI, Brave Search, and email delivery without exposing or logging their credentials.
+- The Providers & models tab lets a step-up-authorized administrator rotate or clear saved OpenAI/Brave newsroom keys and assign the fast/strong OpenAI model IDs. Status responses never include key values or fragments; active runs block configuration changes so an edition cannot mix configurations midstream. Clearing a saved key restores any deployment default, and rotating `APP_SECRET` requires replacing encrypted overrides.
 - A usable OpenAI credential is mandatory for scheduled and manual runs. If it is absent or invalid, no run starts and the workspace shows the blocking configuration error.
 - A missing or invalid Brave credential permits degraded discovery when the official registry and OpenAI web search succeed, with a persistent coverage warning.
 - Missing email delivery preserves in-app action-required alerts and records a curator-visible delivery warning. Readiness is rechecked before every run and after configuration reload.

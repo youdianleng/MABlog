@@ -39,7 +39,7 @@ class NewsRun(Base):
 
 
 class NewsSetting(Base):
-    """Singleton durable schedule, cursor, activation, and economy-limit policy."""
+    """Singleton durable scheduler and encrypted newsroom provider overrides."""
     __tablename__ = "news_settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     schedule_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -53,6 +53,10 @@ class NewsSetting(Base):
     openai_run_budget: Mapped[float] = mapped_column(Float, default=2)
     openai_month_budget: Mapped[float] = mapped_column(Float, default=10)
     brave_query_budget: Mapped[int] = mapped_column(Integer, default=15)
+    openai_key_ciphertext: Mapped[str | None] = mapped_column(Text, nullable=True)
+    brave_key_ciphertext: Mapped[str | None] = mapped_column(Text, nullable=True)
+    small_model_override: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    strong_model_override: Mapped[str | None] = mapped_column(String(160), nullable=True)
     updated: Mapped[float] = mapped_column(Float, default=now)
 
 

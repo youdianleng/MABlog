@@ -28,7 +28,7 @@ def status(db=Depends(database), user: User = Depends(require_admin)):
     unread = db.scalar(select(func.count()).select_from(NewsAlertReceipt).join(NewsAlert, NewsAlert.id == NewsAlertReceipt.alert_id).where(NewsAlertReceipt.user_id == user.id, NewsAlertReceipt.read_at == 0, NewsAlert.resolved == 0))
     current = active_run(db)
     return {
-        "readiness": readiness(),
+        "readiness": readiness(db),
         "schedule": {"enabled": settings.schedule_enabled, "timezone": settings.timezone, "weekday": settings.weekday, "hour": settings.hour, "minute": settings.minute, "next_run": settings.next_run, "activation_preview_run_id": settings.activation_preview_run_id},
         "budget": {"run_limit": settings.openai_run_budget, "month_limit": settings.openai_month_budget, "brave_limit": settings.brave_query_budget, "month_spend": float(db.scalar(select(func.coalesce(func.sum(NewsUsage.estimated_cost), 0))) or 0)},
         "active_run": run_summary(current) if current else None,

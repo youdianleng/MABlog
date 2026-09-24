@@ -77,7 +77,7 @@ def accept_correction(revision_id: str, data: NewsCorrectionAcceptance, db=Depen
         validate_correction(edition.documents, data.documents)
         digest = hashlib.sha256(json.dumps(data.documents, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:24]
         report = verify_once(db, run, data.documents, attempt=f"correction-{digest}")
-        safety = publication_safety(run, data.documents)
+        safety = publication_safety(db, run, data.documents)
     except NewsProviderError as error:
         raise HTTPException(503, f"Verification provider unavailable: {error.code}") from error
     except RuntimeError as error:

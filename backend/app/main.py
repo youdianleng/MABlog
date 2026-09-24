@@ -1,5 +1,7 @@
 """FastAPI application composition, middleware, and global error translation."""
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -25,6 +27,13 @@ async def request_security(request: Request, call_next):
 async def invalid_document(request: Request, error: ValidationError):
     """Return a client error for invalid nested composition data."""
     return JSONResponse({"detail": "Invalid document: check block dimensions and content limits"}, status_code=422)
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request: Request, error: RequestValidationError):
+    """Avoid reflecting attempted provider keys in a validation response."""
+    if request.url.path.startswith("/api/admin/ai-news/providers/keys/"):
+        return JSONResponse({"detail": "Invalid provider key input"}, status_code=422)
+    return await request_validation_exception_handler(request, error)
 
 @app.exception_handler(IntegrityError)
 async def duplicate_record(request: Request, error: IntegrityError):

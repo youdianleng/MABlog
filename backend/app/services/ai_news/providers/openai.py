@@ -1,12 +1,13 @@
 """Redacted synchronous OpenAI Responses and moderation adapters for AI news."""
 
-from dataclasses import dataclass
 import json
 import re
+from dataclasses import dataclass
 
 import httpx
 
-from ....config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_TIMEOUT_SECONDS
+from ....config import OPENAI_BASE_URL, OPENAI_TIMEOUT_SECONDS
+from ..provider_settings import effective_key
 
 
 class NewsProviderError(RuntimeError):
@@ -42,9 +43,10 @@ def _response_text(payload: dict) -> str:
     return "".join(parts)
 
 
-def responses_call(model: str, instructions: str, input_text: str, max_output_tokens: int, tools: list[dict] | None = None, idempotency_key: str | None = None) -> OpenAIResult:
+def responses_call(model: str, instructions: str, input_text: str, max_output_tokens: int, tools: list[dict] | None = None, idempotency_key: str | None = None, db=None) -> OpenAIResult:
     """Call Responses with provider storage disabled and translate failures into safe codes."""
-    if not OPENAI_API_KEY:
+    api_key = effective_key(db, "openai")
+    if not api_key:
         raise NewsProviderError("openai_not_configured")
     payload: dict = {
         "model": model,
@@ -56,7 +58,7 @@ def responses_call(model: str, instructions: str, input_text: str, max_output_to
     if tools:
         payload["tools"] = tools
     try:
-        headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         if idempotency_key:
             headers["Idempotency-Key"] = idempotency_key
         response = httpx.post(
@@ -101,14 +103,15 @@ def json_value(result: OpenAIResult) -> dict:
     return value
 
 
-def moderate_text(text: str) -> dict:
+def moderate_text(text: str, db) -> dict:
     """Moderate bounded public text and return only category flags and the aggregate result."""
-    if not OPENAI_API_KEY:
+    api_key = effective_key(db, "openai")
+    if not api_key:
         raise NewsProviderError("moderation_not_configured")
     try:
         response = httpx.post(
             f"{OPENAI_BASE_URL}/moderations",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={"model": "omni-moderation-latest", "input": text},
             timeout=OPENAI_TIMEOUT_SECONDS,
         )

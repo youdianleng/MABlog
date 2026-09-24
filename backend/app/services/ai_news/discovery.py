@@ -5,8 +5,8 @@ from urllib.parse import urlsplit
 
 from sqlalchemy import select
 
-from ...config import NEWS_SMALL_MODEL
 from ...models import NewsRun, NewsSource
+from .provider_settings import model_for
 from .providers.brave import brave_search
 from .providers.openai import NewsProviderError, json_value, responses_call
 from .usage import assert_paid_stage_budget, record_openai_usage
@@ -51,7 +51,7 @@ def discover_candidates(db, run: NewsRun) -> list[dict]:
     try:
         assert_paid_stage_budget(db, run, 0.15)
         prompt = f"Find qualifying AI model releases announced from {_iso_date(run.window_start)} through {_iso_date(run.window_end)}. Prefer official provider URLs."
-        result = responses_call(NEWS_SMALL_MODEL, DISCOVERY_INSTRUCTIONS, prompt, 1800, tools=[{"type": "web_search"}], idempotency_key=f"news:{run.id}:web-discovery")
+        result = responses_call(model_for(db, "small"), DISCOVERY_INSTRUCTIONS, prompt, 1800, tools=[{"type": "web_search"}], idempotency_key=f"news:{run.id}:web-discovery", db=db)
         record_openai_usage(db, run, "web_discovery", result)
         values = json_value(result).get("results", [])
         candidates.extend(filter(None, (_normalized_result(value, "openai_web") for value in values if isinstance(value, dict))))
@@ -60,7 +60,7 @@ def discover_candidates(db, run: NewsRun) -> list[dict]:
         run.warnings = [*run.warnings, str(error)]
     try:
         query = f'AI model release OR model API update official after:{_iso_date(run.window_start)} before:{_iso_date(run.window_end)}'
-        results = brave_search(query, count=15)
+        results = brave_search(query, count=15, db=db)
         run.brave_queries += 1
         candidates.extend(
             {

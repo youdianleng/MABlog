@@ -66,6 +66,7 @@ export interface AiNewsCitation {
 export interface AiNewsParagraph {
   text: string;
   citations: number[];
+  focus?: "change" | "developer" | "reader" | "limitations";
 }
 
 export interface AiNewsBlock {
@@ -74,12 +75,14 @@ export interface AiNewsBlock {
   release_id?: string;
   title?: string;
   paragraphs?: AiNewsParagraph[];
+  benchmarks?: AiNewsParagraph[];
   source_numbers?: number[];
   citations?: AiNewsCitation[];
 }
 
 export interface AiNewsDocument {
   kind: "ai_news";
+  editorial_version?: number;
   language: "en" | "es";
   details: { title: string; summary: string; cover: string; category: "technology" };
   edition_date: string;

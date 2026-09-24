@@ -192,6 +192,10 @@ The first build contains the agreed blog, composer, collaboration, review, carou
 
 **Follow-up, 2026-09-18:** Reworked the Help hero after the user found the first adaptation too close to its reference. The taupe rounded shell, large white pill panel, overlapping figure-eight artwork, and horizontal utility strip are removed. The current MAblog-specific composition uses a sharp asymmetric editorial grid: a dark story-desk narrative column, a light three-stage protected-workflow column, and a bordered two-column quick-route matrix, collapsing into one readable column on narrow screens.
 
+**Amendment, 2026-09-22:** Added a public bilingual AI Models field guide at `/ai-models`, linked from the persistent header and footer. The page is an editorial decision framework rather than a volatile provider leaderboard: it explains reasoning, general-language, multimodal, and open-weight families; maps common work to a starting model class and verification step; describes MAblog's separate fast, strong, and embedding roles; and warns readers to confirm current provider documentation and evaluate representative work. Its flat cream/crimson/charcoal composition uses only code-native Lucide illustrations, contains no live pricing or benchmark claims, and replaces the shell's generic collection callout on this route.
+
+**Superseding follow-up, 2026-09-22:** Replaced the introductory field guide with the user-confirmed first ranking edition documented in `docs/ai-model-rankings.md`. `/ai-models` now presents four independent evidence-based categories—production coding, image, video with native audio, and music—with Top 5 families filtered to one accessible family per provider; Music preserves separate Vocal and Instrumental views. Cards retain source-native scores, confidence intervals and samples when published, source rank ranges, access labels, statistical-tie context, and permanent `/ai-models/[slug]` profile links. A seven-item section is explicitly labeled as MAblog editorial picks rather than benchmark awards. The original code-native covers use abstract patterns instead of provider logos, and the local typed snapshot records the evaluation date so future reviewed updates do not require a page redesign.
+
 | Page | Main purpose |
 | --- | --- |
 | Public home / posts | Featured carousel and browseable public posts |
@@ -202,6 +206,7 @@ The first build contains the agreed blog, composer, collaboration, review, carou
 | Review | Compare block/layout/details proposals; approve or reject |
 | Sharing | Creator-managed email lookup and per-post view/edit access |
 | Account screens | Register, sign in, verify code, reset password, language/profile settings |
+| AI Models | Bilingual, evidence-based Top 5 rankings with category anchors and permanent family profiles |
 | Mailpit inbox | Local testing tool for captured verification emails |
 
 ## 4. Review example

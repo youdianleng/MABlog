@@ -4,15 +4,16 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 
-from ...config import NEWS_SMALL_INPUT_USD_PER_MILLION, NEWS_SMALL_MODEL, NEWS_SMALL_OUTPUT_USD_PER_MILLION, NEWS_STRONG_INPUT_USD_PER_MILLION, NEWS_STRONG_MODEL, NEWS_STRONG_OUTPUT_USD_PER_MILLION
+from ...config import NEWS_SMALL_INPUT_USD_PER_MILLION, NEWS_SMALL_OUTPUT_USD_PER_MILLION, NEWS_STRONG_INPUT_USD_PER_MILLION, NEWS_STRONG_OUTPUT_USD_PER_MILLION
 from ...models import NewsRun, NewsSetting, NewsUsage
 from ...utils import now
 from .providers.openai import OpenAIResult
+from .provider_settings import model_for
 
 
-def estimated_cost(result: OpenAIResult) -> float:
+def estimated_cost(db, result: OpenAIResult) -> float:
     """Estimate USD from provider token counters and deployment-configured price rates."""
-    if result.model == NEWS_SMALL_MODEL or "luna" in result.model.lower():
+    if result.model == model_for(db, "small"):
         input_rate, output_rate = NEWS_SMALL_INPUT_USD_PER_MILLION, NEWS_SMALL_OUTPUT_USD_PER_MILLION
     else:
         input_rate, output_rate = NEWS_STRONG_INPUT_USD_PER_MILLION, NEWS_STRONG_OUTPUT_USD_PER_MILLION
@@ -37,7 +38,7 @@ def assert_paid_stage_budget(db, run: NewsRun, projected_cost: float = 0.25) -> 
 
 def record_openai_usage(db, run: NewsRun, stage: str, result: OpenAIResult) -> float:
     """Add one redacted usage record and update the run's accumulated estimate."""
-    cost = estimated_cost(result)
+    cost = estimated_cost(db, result)
     db.add(
         NewsUsage(
             run_id=run.id,

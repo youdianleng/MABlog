@@ -1,6 +1,11 @@
 import type { AiNewsDocument } from "@/lib/api";
 
-export type NewsTab = "overview" | "sources" | "editions" | "alerts" | "administrators";
+export type NewsTab = "overview" | "sources" | "editions" | "alerts" | "providers" | "administrators";
+
+export interface NewsProviderSettings {
+  providers: Record<"openai" | "brave", { configured: boolean; source: "saved" | "environment" | "missing" }>;
+  models: Record<"small" | "strong", { value: string; source: "saved" | "environment" }>;
+}
 
 export interface AdministratorAccount {
   id: string;

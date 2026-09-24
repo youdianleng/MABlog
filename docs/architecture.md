@@ -23,7 +23,7 @@ frontend/src/
 │   ├── review/             Creator proposal review
 │   ├── search/             Query state, filters, streamed explanation, ranked groups
 │   ├── sharing/            Per-post invitation management
-│   ├── site-info/          Reusable bilingual About, Help, policy, and terms presentation
+│   ├── site-info/          Reusable bilingual About, Help, AI-model, policy, and terms presentation
 │   └── workspace/          Owned, shared, and review-request lists
 ├── hooks/                  Cross-feature browser and data hooks
 ├── lib/
@@ -31,7 +31,11 @@ frontend/src/
 └── styles/                 Base, feature, footer, information-page, and responsive styles
 ```
 
-The persistent application shell owns the global header, skip link, and footer. The footer links only to implemented routes; its public information destinations reuse `features/site-info/`, while their route files own metadata and page-specific bilingual copy.
+The persistent application shell owns the global header, skip link, and footer. The footer links only to implemented routes; its public information destinations reuse `features/site-info/`, while their route files own metadata and page-specific bilingual copy. AI ranking cards and `/ai-models/[slug]` profiles read from the same typed, versioned `ai-model-rankings.ts` snapshot so native benchmark scores, access routes, and family identity cannot diverge between list and detail views; a future reviewed backend feed can replace this module without changing the presentation contracts.
+
+Generated AI-news editions use versioned structured blocks. New release blocks separate sourced change, developer, and reader implications from deterministic provider-benchmark rows built out of exact official-source claims. The public reader labels reported results as provider-published, while correction preserves their citation and score evidence; legacy editions without these fields remain readable.
+
+The administrator newsroom's Providers & models tab reads a redacted status endpoint. Step-up-protected mutations store encrypted OpenAI/Brave key overrides and model IDs on the durable news-settings row; the API and worker resolve those values for each AI-news stage, falling back to environment defaults. General site AI services remain on their separate environment configuration. The server rejects override changes while a newsletter run is active.
 
 A component that represents an independently understandable interface element belongs in its own file. Feature-only hooks stay beside the feature; hooks useful in more than one feature belong in `hooks/`. Effects for network loading, subscriptions, timers, measurements, synchronization, and navigation guards should live in a named hook so components primarily describe rendering and user actions.
 

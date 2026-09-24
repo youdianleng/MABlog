@@ -1,5 +1,14 @@
 import { api } from "@/lib/api";
-import type { AdministratorAccount, NewsAlert, NewsEdition, NewsRunDetail, NewsRunSummary, NewsSource, NewsStatus, NewsSuggestion } from "./ai-news-types";
+import type { AdministratorAccount, NewsAlert, NewsEdition, NewsProviderSettings, NewsRunDetail, NewsRunSummary, NewsSource, NewsStatus, NewsSuggestion } from "./ai-news-types";
+
+/** Read provider status and model IDs without retrieving credential material. */
+export function fetchNewsProviders() { return api<NewsProviderSettings>("/admin/ai-news/providers"); }
+/** Replace one encrypted newsroom provider credential. */
+export function replaceNewsProviderKey(provider: "openai" | "brave", apiKey: string) { return api<NewsProviderSettings>(`/admin/ai-news/providers/keys/${provider}`, "PUT", { api_key: apiKey }); }
+/** Clear a saved credential override, leaving any environment fallback untouched. */
+export function clearNewsProviderKey(provider: "openai" | "brave") { return api<NewsProviderSettings>(`/admin/ai-news/providers/keys/${provider}`, "DELETE"); }
+/** Assign or reset the fast and strong models for future newsroom runs. */
+export function saveNewsModels(smallModel: string | null, strongModel: string | null) { return api<NewsProviderSettings>("/admin/ai-news/providers/models", "PUT", { small_model: smallModel, strong_model: strongModel }); }
 
 /** Fetch the compact administrator newsroom state. */
 export function fetchNewsStatus() { return api<NewsStatus>("/admin/ai-news/status"); }
