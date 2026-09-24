@@ -12,8 +12,8 @@ from ...schemas import ActionReasonPayload, NewsCorrectionAcceptance, NewsCorrec
 from ...services.admin_audit import audit
 from ...services.administration import require_admin
 from ...services.ai_news.corrections import synchronize_correction, validate_correction
-from ...services.ai_news.publication import publish_edition, replace_edition_documents, unpublish_edition
 from ...services.ai_news.providers.openai import NewsProviderError
+from ...services.ai_news.publication import publish_edition, replace_edition_documents, unpublish_edition
 from ...services.ai_news.safety import publication_safety
 from ...services.ai_news.verification import verify_once
 from ...services.step_up import require_step_up
@@ -90,7 +90,12 @@ def accept_correction(revision_id: str, data: NewsCorrectionAcceptance, db=Depen
         db.commit()
         return {"id": revision.id, "status": revision.status, "verification": revision.verification}
     revision.status = "published" if edition.status == "published" else "verified"
+    previous_override = edition.verification.get("manual_override") or edition.verification.get("manual_override_history")
+    previous_unverified = edition.verification.get("manual_unverified_preview") or edition.verification.get("manual_unverified_preview_history")
     replace_edition_documents(db, edition, data.documents, data.correction_note)
+    # A passing correction restores the normal public verification badge while
+    # retaining the earlier override approval in the private edition history.
+    edition.verification = {**report, "safety": safety, "source_contradicted": False, **({"manual_override_history": previous_override} if previous_override else {}), **({"manual_unverified_preview_history": previous_unverified} if previous_unverified else {})}
     audit(db, user, "ai_news.correction.verified", "news_revision", revision.id, data.correction_note)
     db.commit()
     return {"id": revision.id, "status": revision.status, "edition": edition_summary(edition)}

@@ -2,14 +2,14 @@
 
 import json
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from ...config import NEWS_SNAPSHOT_SECONDS
-from ...models import AutomatedEdition, NewsClaim, NewsDocument, NewsRun, NewsSourceCheck, Post
-from .provider_settings import model_for
+from ...models import AutomatedEdition, NewsClaim, NewsDocument, NewsRun, NewsSourceCheck
 from ...utils import new_id, now
 from .extraction import extract_source
 from .notifications import create_alert
+from .provider_settings import model_for
 from .providers.openai import json_value, responses_call
 from .publication import unpublish_edition
 from .safe_fetch import SafeFetchError, fetch_public_document
@@ -45,7 +45,9 @@ def monitor_recent_sources(db, current_run: NewsRun) -> dict:
     """Hash-check recent published evidence and unpublish only on a verified contradiction."""
     checked = changed = unavailable = unpublished = 0
     cutoff = now() - NEWS_SNAPSHOT_SECONDS
-    editions = list(db.scalars(select(AutomatedEdition).where(AutomatedEdition.status == "published", AutomatedEdition.verified_at >= cutoff)))
+    # Manually approved editions have no successful verified_at timestamp, but
+    # still need the same post-publication source-change monitoring window.
+    editions = list(db.scalars(select(AutomatedEdition).where(AutomatedEdition.status == "published", or_(AutomatedEdition.verified_at >= cutoff, AutomatedEdition.updated >= cutoff))))
     for edition in editions:
         documents = list(db.scalars(select(NewsDocument).where(NewsDocument.run_id == edition.run_id, NewsDocument.official.is_(True))))
         for document in documents:

@@ -99,6 +99,7 @@ export interface NewsRunDetail extends NewsRunSummary {
   candidates: NewsCandidate[];
   documents: Array<{ id: string; url: string; mime: string; content_hash: string; official: boolean; warnings: string[]; text: string }>;
   claims: Array<{ id: string; claim_key: string; text_en: string; text_es: string; status: string; evidence: Array<{ url: string; quote: string }> }>;
+  publication_conflicts?: Array<{ model_name: string; post_id: string | null }>;
   edition: NewsEdition | null;
 }
 

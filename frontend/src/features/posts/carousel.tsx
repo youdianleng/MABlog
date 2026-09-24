@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Post } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -111,7 +111,7 @@ export function Carousel({ posts }: { posts: Post[] }) {
             >
               <img src={post.cover} alt="" />
               <div className="carousel-caption">
-                {post.kind === "ai_news" ? <small className="carousel-ai-label"><ShieldCheck aria-hidden="true" size={12} />{t("AI-GENERATED · VERIFIED", "GENERADO POR IA · VERIFICADO")}</small> : null}
+                {post.kind === "ai_news" ? <small className="carousel-ai-label">{post.ai_news?.fact_check_passed === false ? <TriangleAlert aria-hidden="true" size={12} /> : <ShieldCheck aria-hidden="true" size={12} />}{post.ai_news?.fact_check_passed === false ? post.ai_news?.manual_unverified_preview ? t("AI-GENERATED · NOT FACT-CHECKED", "GENERADO POR IA · SIN VERIFICACIÓN") : t("AI-GENERATED · EVIDENCE EXCEPTION", "GENERADO POR IA · EXCEPCIÓN DE EVIDENCIA") : t("AI-GENERATED · SOURCE-REVIEWED", "GENERADO POR IA · FUENTES REVISADAS")}</small> : null}
                 <small>
                   {t("MOST LOVED · 14 DAYS", "MÁS VALORADAS · 14 DÍAS")}
                 </small>

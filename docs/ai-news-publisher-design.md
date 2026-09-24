@@ -2,7 +2,19 @@
 
 Status: confirmed on 2026-09-14 and implemented for the local Docker release. The automatic schedule remains disabled until an administrator enables it after reviewing the successful real preview.
 
-Last updated: 2026-09-23.
+Last updated: 2026-09-24.
+
+## Ordinary administrator-preview policy, 2026-09-24
+
+The user clarified that removing the generated-claim **Fact check** phase applies to **administrator-run ordinary previews only**. Such a preview still composes a complete bilingual draft and passes safety moderation, but it skips the independent claim-to-source verifier and cannot be described as verified. It stays private until an administrator with recent step-up reads both languages, gives a written reason, acknowledges the missing fact-check, and chooses **Review and publish**. The server again validates structure, source reachability, duplicate-release state, and safety/moderation; reachable source drift is recorded and disclosed. A published ordinary preview carries a distinct public “not fact-checked” notice, does not advance the successful scan cursor, and cannot authorize the weekly schedule. A separate **Test weekly pipeline** preview deliberately runs the full verifier to qualify for schedule activation. Scheduled/catch-up publishing, **Run and publish**, and the separate correction workflow retain their existing verifier. Historical failed-verifier previews retain the earlier explicit evidence-exception action and label. This amendment supersedes earlier statements that *every* manually started preview must pass claim verification, but does not remove any unattended publication gate.
+
+## Source-drift exception amendment, 2026-09-24
+
+The administrator evidence-exception action may now publish a retained failed preview when a reachable official page's current content hash differs from the saved evidence snapshot. This supersedes only the unchanged-source requirement in the evidence-exception amendment below; normal verified-preview publication still rejects source drift. The action retains the original snapshot as its evidence, records both hashes and the affected document in the private approval metadata, and warns public readers that a current source page may differ from the saved version. Administrator step-up, explicit risk acknowledgement and reason, duplicate-release protection, bilingual structure validation, fresh deterministic safety and moderation, and subsequent contradiction monitoring remain in force. An unavailable source still blocks publication; no exception is submitted automatically.
+
+## Administrator evidence-exception amendment, 2026-09-24
+
+The user confirmed that an administrator may deliberately publish a retained private preview even after its evidence verification and bounded repairs fail. This supersedes the original "failed gates never expose a public post" and universal "verified" label decisions **only for this explicit manual exception**; automatic and normal preview publication still require full verification. The exception is limited to the verify-stage evidence failure, requires session-bound step-up, a written reason and acknowledgement, complete bilingual content, unchanged official sources (superseded for this action by the source-drift amendment above), duplicate checks, and freshly passing safety/moderation. It cannot override a safety failure or activate scheduled publishing. The retained failed report and approver audit remain visible to administrators, while readers see a distinct warning that the edition was published by administrator exception and its claims/citations may be unsupported. A later passing correction restores the verified label without erasing the earlier override history.
 
 ## Editorial-depth amendment, 2026-09-23
 

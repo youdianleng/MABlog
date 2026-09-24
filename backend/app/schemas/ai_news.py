@@ -1,15 +1,16 @@
 """AI-news scheduler, source, correction, and publication request schemas."""
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 
 from .common import StrictModel
 
 
 class NewsPreviewPayload(StrictModel):
-    """Start a current or historical preview without publication side effects."""
+    """Choose an ordinary manual preview or a full-path schedule-activation test."""
 
     historical_days: int | None = Field(default=None, ge=1, le=30)
+    verify_for_activation: bool = False
 
 
 class NewsSchedulePayload(StrictModel):
@@ -35,6 +36,23 @@ class NewsPinPayload(StrictModel):
     """Preserve or release one run from the normal retention window."""
 
     pinned: bool
+
+
+class NewsEvidenceOverridePayload(StrictModel):
+    """Require an explicit risk acknowledgement and auditable editorial reason."""
+
+    # A short minimum discourages a meaningless one-word explanation for a public override.
+    reason: str = Field(min_length=12, max_length=1000)
+    acknowledged_risk: Literal[True]
+
+    @field_validator("reason")
+    @classmethod
+    def meaningful_reason(cls, value: str) -> str:
+        """Trim the audit reason and reject whitespace-only or very short approvals."""
+        reason = value.strip()
+        if len(reason) < 12:
+            raise ValueError("Approval reason must contain at least 12 non-whitespace characters")
+        return reason
 
 
 class NewsSourcePayload(StrictModel):

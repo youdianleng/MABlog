@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("public collection navigates through fifteen-post pages", /** Verify bounded cards, URL state, and accessible previous/current/next controls. */ async function paginatedCollection({ page }) {
+test("public collection navigates through fifteen-post pages", /** Verify bounded cards, URL state, and accessible previous/current/next controls without assuming a fixed live total. */ async function paginatedCollection({ page }) {
   await page.goto("/public");
   const cards = page.locator(".post-card");
   await expect(cards).toHaveCount(15);
@@ -20,26 +20,31 @@ test("public collection navigates through fifteen-post pages", /** Verify bounde
   );
   await pagination.getByRole("button", { name: "Next" }).click();
   await expect(page).toHaveURL(/\/public\?page=2$/);
-  await expect(cards).toHaveCount(1);
   await expect(cards.first().getByRole("heading")).not.toHaveText(firstTitle);
+  expect(await cards.count()).toBeGreaterThan(0);
+  expect(await cards.count()).toBeLessThanOrEqual(15);
   await expect(page.getByRole("heading", { name: "Stories worth wandering into" })).toBeFocused();
   await expect(page.locator("html")).toHaveAttribute("data-collection-scroll-url", /\/public\?page=2$/);
   await expect(pagination.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
-  await expect(pagination.getByRole("button", { name: "Next" })).toBeDisabled();
+  await expect(pagination.locator(".post-pagination-summary")).toContainText("Page 2 of");
   await pagination.getByRole("button", { name: "Previous" }).click();
   await expect(page).toHaveURL(/\/public$/);
   await expect(cards).toHaveCount(15);
 });
 
-test("Discover navigates through fifteen-post pages", /** Apply the same bounded navigation while preserving Discover card reveals. */ async function paginatedDiscover({ page }) {
+test("Discover navigates through fifteen-post pages", /** Apply bounded navigation and card reveals without depending on a fixed live post count. */ async function paginatedDiscover({ page }) {
   await page.goto("/");
   const cards = page.locator(".post-card");
   const pagination = page.getByRole("navigation", { name: "Post pages" });
   await expect(cards).toHaveCount(15);
+  const firstTitle = await cards.first().getByRole("heading").innerText();
   await pagination.getByRole("button", { name: "Next" }).click();
   await expect(page).toHaveURL(/\/?page=2$/);
-  await expect(cards).toHaveCount(1);
-  await expect(page.locator(".post-card-reveal")).toHaveCount(1);
+  await expect(cards.first().getByRole("heading")).not.toHaveText(firstTitle);
+  const pageTwoCount = await cards.count();
+  expect(pageTwoCount).toBeGreaterThan(0);
+  expect(pageTwoCount).toBeLessThanOrEqual(15);
+  await expect(page.locator(".post-card-reveal")).toHaveCount(pageTwoCount);
   await expect(pagination.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
 });
 

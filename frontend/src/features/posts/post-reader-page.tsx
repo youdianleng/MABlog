@@ -158,7 +158,7 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
         )}
       </div>
       {post.ai_news_document && post.ai_news ? (
-        <AiNewsReader document={post.ai_news_document} sourceCount={post.ai_news.source_count} verifiedAt={post.ai_news.verified_at} correctionNote={post.ai_news.correction_note} />
+        <AiNewsReader document={post.ai_news_document} sourceCount={post.ai_news.source_count} verifiedAt={post.ai_news.verified_at} correctionNote={post.ai_news.correction_note} factCheckPassed={post.ai_news.fact_check_passed} manualUnverifiedPreview={post.ai_news.manual_unverified_preview} sourceChangedOnPublish={post.ai_news.source_changed_on_publish} />
       ) : (
         <CompositionReader document={post.document} highlightedBlockId={searchParams.get("highlight") === "search" ? searchParams.get("block") : null} />
       )}

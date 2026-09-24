@@ -44,7 +44,7 @@ export interface Post {
   search_status?: "ready" | "indexing" | "failed";
   kind?: "human" | "ai_news";
   ai_news_document?: AiNewsDocument | null;
-  ai_news?: { source_count: number; verified_at: number; correction_note: string } | null;
+  ai_news?: { source_count: number; verified_at: number; correction_note: string; fact_check_passed: boolean; manual_unverified_preview: boolean; source_changed_on_publish: boolean } | null;
 }
 
 /** One bounded public collection page returned with enough metadata to navigate it. */

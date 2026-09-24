@@ -55,6 +55,7 @@
   }
 }
 .post-card .cover {
+  position: relative;
   display: block;
   aspect-ratio: 1.65;
   overflow: hidden;

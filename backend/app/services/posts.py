@@ -1,13 +1,16 @@
 """Reusable post presentation, validation, and target-application rules."""
 import copy
+
 from fastapi import HTTPException
 from sqlalchemy import func, select
+
 from ..config import LIKE_WINDOW_SECONDS
 from ..models import AutomatedEdition, Like, Media, Post, PostLocalization, Proposal, User
+from ..utils import now
 from .documents import clean_document, media_ids
 from .indexing import post_search_status
 from .permissions import role_for
-from ..utils import now
+
 
 def user_profile(user: User) -> dict:
     """Expose public profile fields without leaking account email or auth state."""
@@ -32,7 +35,7 @@ def post_summary(db, post: Post, user=None, language: str = "en") -> dict:
         "created": post.created,
         "kind": post.kind,
         "ai_news_document": presentation if localization else None,
-        "ai_news": ({"source_count": edition.source_count, "verified_at": edition.verified_at, "correction_note": edition.correction_note} if edition else None),
+        "ai_news": ({"source_count": edition.source_count, "verified_at": edition.verified_at, "correction_note": edition.correction_note, "fact_check_passed": edition.verification.get("passed") is True, "manual_unverified_preview": bool(edition.verification.get("manual_unverified_preview")), "source_changed_on_publish": bool(((edition.verification.get("manual_override") or edition.verification.get("manual_unverified_preview")) or {}).get("changed_sources"))} if edition else None),
         "search_status": post_search_status(db, post),
     }
 

@@ -1,6 +1,5 @@
 """Checkpointed AI-news stage execution, leasing, retries, and terminal alerts."""
 
-from datetime import datetime, timezone
 import os
 from urllib.parse import urlsplit
 
@@ -11,7 +10,7 @@ from ...database import SessionLocal
 from ...models import AutomatedEdition, NewsCandidate, NewsClaim, NewsDocument, NewsJob, NewsRun, NewsSetting
 from ...utils import new_id, now
 from .classification import classify_releases
-from .composition import compose_roundup
+from .composition import compose_roundup, validate_structured_documents
 from .discovery import discover_candidates
 from .extraction import extract_source
 from .monitoring import monitor_recent_sources
@@ -120,6 +119,7 @@ def _stage_compose(db, run: NewsRun) -> dict:
         db.add(edition)
     edition.documents = documents
     edition.source_count = len(citations)
+    edition.verification = {"fact_check_performed": False} if run.kind == "preview" and not run.result.get("verify_for_activation") else {}
     edition.status = "composed"
     edition.updated = now()
     run.result = {**run.result, "edition_id": edition.id}
@@ -127,13 +127,22 @@ def _stage_compose(db, run: NewsRun) -> dict:
 
 
 def _stage_verify(db, run: NewsRun) -> dict:
-    """Independently verify and repair the complete bilingual edition twice at most."""
+    """Verify automatic, activation, and previously failed legacy preview jobs."""
     if run.result.get("quiet"):
         return {"quiet": True}
     edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == run.id))
+    if run.kind == "preview" and not run.result.get("verify_for_activation") and edition.verification.get("passed") is not False:
+        # A legacy preview without a failed report can safely cross this old
+        # checkpoint. A previously failed report must not be relabeled as
+        # never checked; its retained verifier remains available on retry.
+        release_ids = set(db.scalars(select(NewsCandidate.id).where(NewsCandidate.run_id == run.id, NewsCandidate.status == "qualifying")))
+        validate_structured_documents(edition.documents, release_ids)
+        edition.verification = {**edition.verification, "fact_check_performed": False, "legacy_review_skipped": True}
+        edition.updated = now()
+        return {"skipped": True, "manual_preview": True}
     documents, report = verify_with_repairs(db, run, edition.documents)
     edition.documents = documents
-    edition.verification = report
+    edition.verification = {**report, "fact_check_performed": True}
     edition.updated = now()
     if not report.get("passed"):
         raise PipelineTerminalError("verification_failed_after_repairs")
@@ -152,12 +161,12 @@ def _stage_safety(db, run: NewsRun) -> dict:
     edition.updated = now()
     if not report["passed"]:
         raise PipelineTerminalError("publication_safety_failed")
-    edition.status = "verified_preview"
+    edition.status = "safety_cleared_preview" if run.kind == "preview" and not run.result.get("verify_for_activation") else "verified_preview"
     return report
 
 
 def _stage_finalize(db, run: NewsRun) -> dict:
-    """Advance a quiet cursor, retain a preview, or atomically publish a verified edition."""
+    """Retain a manual safety-cleared preview or finish a fully checked run."""
     settings = db.get(NewsSetting, 1)
     if run.result.get("quiet"):
         run.status = "quiet"
@@ -168,11 +177,15 @@ def _stage_finalize(db, run: NewsRun) -> dict:
             settings.updated = now()
         return {"quiet": True}
     edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == run.id))
-    if not edition or edition.status != "verified_preview":
-        raise PipelineTerminalError("verified_edition_missing")
-    # Every nonempty verified preview proves the full live pipeline for schedule activation.
-    settings.activation_preview_run_id = run.id
-    settings.updated = now()
+    manual_preview = run.kind == "preview" and not run.result.get("verify_for_activation")
+    expected_status = "safety_cleared_preview" if manual_preview else "verified_preview"
+    if not edition or edition.status != expected_status:
+        raise PipelineTerminalError("safety_cleared_edition_missing" if manual_preview else "verified_edition_missing")
+    # Only a complete full-path preview proves the verifier used by future
+    # scheduled runs; ordinary manual previews never unlock scheduling.
+    if run.kind == "preview" and run.result.get("verify_for_activation"):
+        settings.activation_preview_run_id = run.id
+        settings.updated = now()
     if run.publication_intent:
         post = publish_edition(db, run, edition)
         run.result = {**run.result, "terminal_status": "published"}
@@ -180,7 +193,7 @@ def _stage_finalize(db, run: NewsRun) -> dict:
     run.status = "preview"
     run.completed = now()
     run.result = {**run.result, "terminal_status": "preview"}
-    edition.status = "verified_preview"
+    edition.status = expected_status
     return {"preview": True, "edition_id": edition.id}
 
 
@@ -253,7 +266,7 @@ def _complete_stage(db, job: NewsJob, run: NewsRun, checkpoint: dict) -> None:
     job.updated = now()
     index = STAGES.index(job.stage)
     if index + 1 < len(STAGES):
-        next_stage = STAGES[index + 1]
+        next_stage = "safety" if job.stage == "compose" and run.kind == "preview" and not run.result.get("verify_for_activation") else STAGES[index + 1]
         if not db.scalar(select(NewsJob).where(NewsJob.run_id == run.id, NewsJob.stage == next_stage)):
             db.add(NewsJob(run_id=run.id, stage=next_stage, idempotency_key=f"{run.id}:{next_stage}"))
         run.stage = next_stage

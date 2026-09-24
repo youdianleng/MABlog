@@ -14,12 +14,16 @@ export function saveNewsModels(smallModel: string | null, strongModel: string | 
 export function fetchNewsStatus() { return api<NewsStatus>("/admin/ai-news/status"); }
 /** Fetch one run with its private evidence, jobs, and generated preview. */
 export function fetchNewsRun(id: string) { return api<NewsRunDetail>(`/admin/ai-news/runs/${id}`); }
-/** Start a no-publication run over the current or selected historical window. */
-export function startNewsPreview(historicalDays: number | null = null) { return api<{ created: boolean; run: NewsRunSummary }>("/admin/ai-news/runs/preview", "POST", { historical_days: historicalDays }); }
+/** Start an ordinary preview or an explicit full-path rehearsal for schedule activation. */
+export function startNewsPreview(historicalDays: number | null = null, verifyForActivation = false) { return api<{ created: boolean; run: NewsRunSummary }>("/admin/ai-news/runs/preview", "POST", { historical_days: historicalDays, verify_for_activation: verifyForActivation }); }
 /** Start the gated immediate generation and publication path. */
 export function runAndPublishNews() { return api<{ created: boolean; run: NewsRunSummary }>("/admin/ai-news/runs/run-and-publish", "POST"); }
 /** Publish a complete verified private preview after current-source rechecks. */
 export function publishNewsPreview(id: string) { return api<{ post_id: string }>(`/admin/ai-news/runs/${id}/publish`, "POST"); }
+/** Request an audited administrator exception for a failed evidence-check preview. */
+export function publishNewsEvidenceOverride(id: string, reason: string) { return api<{ post_id: string; verification_status: string }>(`/admin/ai-news/runs/${id}/publish-evidence-override`, "POST", { reason, acknowledged_risk: true }); }
+/** Approve an ordinary safety-cleared preview without claiming its facts were checked. */
+export function publishNewsUnverifiedPreview(id: string, reason: string) { return api<{ post_id: string; verification_status: string }>(`/admin/ai-news/runs/${id}/publish-unverified-preview`, "POST", { reason, acknowledged_risk: true }); }
 /** Retry only the failed stage of a retained run. */
 export function retryNewsRun(id: string) { return api<NewsRunSummary>(`/admin/ai-news/runs/${id}/retry`, "POST"); }
 /** Change whether retention may remove a failed or private run. */

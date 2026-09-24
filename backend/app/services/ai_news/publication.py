@@ -61,9 +61,44 @@ def system_publisher(db) -> User:
     return publisher
 
 
-def publish_edition(db, run: NewsRun, edition: AutomatedEdition) -> Post:
-    """Publish both languages, disclosure, evidence state, cursor, and indexing in one transaction."""
-    if edition.status not in {"verified_preview", "corrected_verified", "unpublished"} or not edition.verification.get("passed") or edition.verification.get("source_contradicted"):
+def publish_edition(db, run: NewsRun, edition: AutomatedEdition, *, allow_evidence_override: bool = False, allow_unverified_preview: bool = False) -> Post:
+    """Publish a verified edition or one narrowly authorized administrator preview."""
+    if edition.verification.get("source_contradicted"):
+        raise RuntimeError("source_contradicted")
+    if allow_evidence_override and allow_unverified_preview:
+        raise RuntimeError("publication_modes_conflict")
+    if allow_evidence_override:
+        approval = edition.verification.get("manual_override") or {}
+        safety = edition.verification.get("safety") or {}
+        # An override never bypasses moderation, source checks, or a different
+        # pipeline failure; the protected API supplies and audits the approval.
+        if not (
+            run.kind == "preview"
+            and not run.publication_intent
+            and run.status == "failed"
+            and run.stage == "verify"
+            and run.last_error == "verification_failed_after_repairs"
+            and edition.status == "composed"
+            and not edition.post_id
+            and not edition.verification.get("passed")
+            and safety.get("passed") is True
+            and approval.get("approved_by")
+        ):
+            raise RuntimeError("evidence_override_not_eligible")
+    elif allow_unverified_preview:
+        approval = edition.verification.get("manual_unverified_preview") or {}
+        safety = edition.verification.get("safety") or {}
+        # Only the protected, audited manual-preview endpoint may set this
+        # approval; automatic and activation-test runs can never use it.
+        if not (
+            run.kind == "preview" and not run.publication_intent
+            and not run.result.get("verify_for_activation")
+            and run.status == "preview" and edition.status == "safety_cleared_preview"
+            and not edition.post_id and edition.verification.get("fact_check_performed") is False
+            and safety.get("passed") is True and approval.get("approved_by")
+        ):
+            raise RuntimeError("unverified_preview_not_eligible")
+    elif edition.status not in {"verified_preview", "corrected_verified", "unpublished"} or not edition.verification.get("passed"):
         raise RuntimeError("edition_not_verified")
     if edition.post_id:
         post = db.scalar(select(Post).where(Post.id == edition.post_id).with_for_update())
@@ -103,10 +138,11 @@ def publish_edition(db, run: NewsRun, edition: AutomatedEdition) -> Post:
         candidate.status = "published"
         candidate.details = {**candidate.details, "published_post_id": post.id}
     run.status = "published"
+    run.progress = 100
     run.completed = now()
-    run.result = {**run.result, "post_id": post.id, "edition_id": edition.id}
+    run.result = {**run.result, "post_id": post.id, "edition_id": edition.id, **({"evidence_override_published": True} if allow_evidence_override else {}), **({"manual_unverified_preview_published": True} if allow_unverified_preview else {})}
     settings = db.get(NewsSetting, 1)
-    if run.kind in {"scheduled", "catchup"} or (run.kind == "preview" and not run.historical):
+    if not allow_evidence_override and not allow_unverified_preview and (run.kind in {"scheduled", "catchup"} or (run.kind == "preview" and not run.historical)):
         settings.last_successful_scan = max(settings.last_successful_scan, run.window_end)
         settings.updated = now()
     synchronize_post_search(db, post)

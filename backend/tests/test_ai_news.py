@@ -3,21 +3,37 @@
 import copy
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy import select
 
 from app import bootstrap
 from app.database import SessionLocal
-from app.models import AdminStepUp, AutomatedEdition, LoginSession, NewsClaim, NewsDocument, NewsJob, NewsRun, NewsSetting, Post, PostLocalization, User
+from app.models import (
+    AdminAuditEvent,
+    AdminStepUp,
+    AutomatedEdition,
+    LoginSession,
+    NewsCandidate,
+    NewsClaim,
+    NewsDocument,
+    NewsJob,
+    NewsRun,
+    NewsSetting,
+    Post,
+    PostLocalization,
+    User,
+)
 from app.schemas import Document
 from app.services import authentication as auth
-from app.services.ai_news import classification, verification
+from app.services.ai_news import classification, publication, safety, state_machine, verification
 from app.services.ai_news.classification import _classification_excerpt
 from app.services.ai_news.composition import _paragraphs, public_text, structured_document, validate_structured_documents
 from app.services.ai_news.corrections import _restore_locked_evidence, validate_correction
-from app.services.ai_news.providers.openai import OpenAIResult
 from app.services.ai_news.provider_settings import effective_key, model_for
+from app.services.ai_news.providers.openai import OpenAIResult
 from app.services.ai_news.publication import compatibility_document
 from app.services.ai_news.safe_fetch import SafeFetchError, validate_public_https
 from app.services.ai_news.safety import deterministic_safety
@@ -166,6 +182,378 @@ def _completed_run(db) -> str:
     return run.id
 
 
+def create_failed_evidence_preview(*, unsafe_text: bool = False) -> str:
+    """Retain a bilingual, source-backed preview stopped only by fact verification."""
+    source_url = "https://example.com/official-release"
+    release_id = new_id()
+    documents = {"en": localized_document("en", "AI update"), "es": localized_document("es", "Actualización de IA")}
+    for document in documents.values():
+        document["blocks"][1]["release_id"] = release_id
+        document["blocks"][-1]["citations"][0]["url"] = source_url
+    if unsafe_text:
+        documents["en"]["blocks"][0]["paragraphs"][0]["text"] = "Secret sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    with SessionLocal() as db:
+        run = NewsRun(kind="preview", status="failed", stage="verify", publication_intent=False, window_start=now() - 86400, window_end=now(), progress=60, last_error="verification_failed_after_repairs", idempotency_key=f"override:{new_id()}")
+        db.add(run)
+        db.flush()
+        db.add(NewsCandidate(id=release_id, run_id=run.id, provider="Example", model_name="Example 1", normalized_key=f"example:{run.id}", title="Example release", url=source_url, official_url=source_url, published_at=now(), status="qualifying"))
+        db.add(NewsDocument(run_id=run.id, url=source_url, canonical_url=source_url, mime="text/html", content_hash="retained-hash", extracted_text="Example release", official=True, snapshot_expires=now() + 86400))
+        db.add(AutomatedEdition(run_id=run.id, status="composed", documents=documents, verification={"passed": False, "issues": [{"release_id": release_id, "language": "both", "reason": "Citation does not establish the model name."}]}, source_count=1))
+        db.add(NewsJob(run_id=run.id, stage="verify", status="failed", attempts=1, idempotency_key=f"{run.id}:verify", last_error=run.last_error))
+        db.commit()
+        return run.id
+
+
+def create_safety_cleared_manual_preview(*, unsafe_text: bool = False) -> str:
+    """Retain an ordinary preview that bypassed claim review but passed initial safety checks."""
+    run_id = create_failed_evidence_preview(unsafe_text=unsafe_text)
+    with SessionLocal() as db:
+        run = db.get(NewsRun, run_id)
+        run.status = "preview"
+        run.stage = "retention"
+        run.last_error = ""
+        edition = db.query(AutomatedEdition).filter_by(run_id=run_id).one()
+        edition.status = "safety_cleared_preview"
+        edition.verification = {"fact_check_performed": False, "safety": {"passed": True, "issues": []}}
+        db.query(NewsJob).filter_by(run_id=run_id).delete()
+        db.commit()
+    return run_id
+
+
+def test_preview_policy_skips_claim_review_only_for_ordinary_administrator_runs(monkeypatch):
+    """Keep automatic and activation-test verification while skipping ordinary-preview jobs."""
+    documents = {"en": localized_document("en", "AI update"), "es": localized_document("es", "Actualización de IA")}
+
+    def compose(_db, _run):
+        """Return a fixed bilingual draft without a paid composition request."""
+        return documents, [{"number": 1}]
+
+    def check_safety(_db, _run, _documents):
+        """Stand in for the separate bilingual safety gate."""
+        return {"passed": True, "issues": []}
+
+    def verify(_db, _run, value):
+        """Record that a full-path run actually reached the retained verifier."""
+        assert value == documents
+        return value, {"passed": True, "model": "test-verifier"}
+
+    monkeypatch.setattr(state_machine, "compose_roundup", compose)
+    monkeypatch.setattr(state_machine, "publication_safety", check_safety)
+    monkeypatch.setattr(state_machine, "verify_with_repairs", verify)
+    with SessionLocal() as db:
+        manual, _ = create_run(db, "preview", False)
+        state_machine._stage_compose(db, manual)
+        job = db.scalar(select(NewsJob).where(NewsJob.run_id == manual.id))
+        job.stage = "compose"
+        state_machine._complete_stage(db, job, manual, {})
+        assert manual.stage == "safety"
+        assert db.scalar(select(NewsJob).where(NewsJob.run_id == manual.id, NewsJob.stage == "verify")) is None
+        state_machine._stage_safety(db, manual)
+        state_machine._stage_finalize(db, manual)
+        assert db.get(NewsSetting, 1).activation_preview_run_id is None
+        assert db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == manual.id)).verification["fact_check_performed"] is False
+        db.commit()
+        rehearsal, _ = create_run(db, "preview", False, verify_for_activation=True)
+        state_machine._stage_compose(db, rehearsal)
+        rehearsal_job = db.scalar(select(NewsJob).where(NewsJob.run_id == rehearsal.id))
+        rehearsal_job.stage = "compose"
+        state_machine._complete_stage(db, rehearsal_job, rehearsal, {})
+        assert rehearsal.stage == "verify"
+        state_machine._stage_verify(db, rehearsal)
+        state_machine._stage_safety(db, rehearsal)
+        state_machine._stage_finalize(db, rehearsal)
+        assert db.get(NewsSetting, 1).activation_preview_run_id == rehearsal.id
+
+
+def test_manual_unverified_preview_requires_explicit_approval_and_discloses_status(client, monkeypatch):
+    """Allow a reviewed manual preview without enabling the schedule or claiming verification."""
+    from app.api.ai_news import dashboard
+
+    run_id = create_safety_cleared_manual_preview()
+    path = f"/api/admin/ai-news/runs/{run_id}/publish-unverified-preview"
+    payload = {"reason": "Reviewed both languages and official links", "acknowledged_risk": True}
+    _, regular_token = create_account("manual_reader")
+    client.cookies.set("mablog_session", regular_token)
+    assert client.post(path, json=payload).status_code == 403
+    _, admin_token = create_account("manual_curator", True)
+    client.cookies.set("mablog_session", admin_token)
+    assert client.post(path, json=payload).status_code == 403
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(admin_token), created=now(), expires=now() + 600))
+        db.commit()
+    assert client.post(path, json={**payload, "acknowledged_risk": False}).status_code == 422
+    assert client.post(f"/api/admin/ai-news/runs/{run_id}/publish").status_code == 409
+
+    def current_source(_url):
+        """Avoid a live network request while exercising source reachability."""
+        return SimpleNamespace()
+
+    def changed_hash(_source):
+        """Ensure a reachable changed source is disclosed rather than blocking approval."""
+        return SimpleNamespace(content_hash="new-source-hash")
+
+    def safe_moderation(_text, _db):
+        """Replace paid moderation while preserving the real deterministic gate."""
+        return {"flagged": False, "categories": {}}
+
+    def local_cover(*_args):
+        """Avoid writing a real cover to disk in this isolated database test."""
+        return Path("fixture-cover.png")
+
+    def no_search_index(*_args):
+        """Keep search indexing outside this publication-boundary test."""
+        return None
+
+    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
+    monkeypatch.setattr(dashboard, "extract_source", changed_hash)
+    monkeypatch.setattr(safety, "moderate_text", safe_moderation)
+    monkeypatch.setattr(publication, "render_cover", local_cover)
+    monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
+    response = client.post(path, json=payload)
+    assert response.status_code == 200, response.text
+    assert response.json()["verification_status"] == "administrator_unverified_preview"
+    with SessionLocal() as db:
+        edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == run_id))
+        assert edition.verification["fact_check_performed"] is False
+        assert edition.verification["manual_unverified_preview"]["reason"] == payload["reason"]
+        assert db.get(NewsSetting, 1).activation_preview_run_id is None
+        assert db.get(NewsSetting, 1).last_successful_scan == 0
+        assert db.query(AdminAuditEvent).filter_by(action="ai_news.preview.unverified_published").count() == 1
+    public = client.get(f"/api/posts/{response.json()['post_id']}")
+    assert public.status_code == 200
+    assert public.json()["ai_news"]["fact_check_passed"] is False
+    assert public.json()["ai_news"]["manual_unverified_preview"] is True
+    assert public.json()["ai_news"]["source_changed_on_publish"] is True
+    assert client.post(path, json=payload).status_code == 409
+
+
+def test_unverified_preview_cannot_bypass_safety_or_full_path_policy(client, monkeypatch):
+    """Reject unsafe text and forbid a full-path rehearsal from using manual approval."""
+    from app.api.ai_news import dashboard
+
+    _, token = create_account("manual_safety_curator", True)
+    client.cookies.set("mablog_session", token)
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(token), created=now(), expires=now() + 600))
+        db.commit()
+    payload = {"reason": "Reviewed both languages and original sources", "acknowledged_risk": True}
+    run_id = create_safety_cleared_manual_preview(unsafe_text=True)
+
+    def current_source(_url):
+        """Keep source reachability independent of the safety rejection."""
+        return SimpleNamespace()
+
+    def retained_hash(_source):
+        """Match the retained official-source fingerprint."""
+        return SimpleNamespace(content_hash="retained-hash")
+
+    def safe_moderation(_text, _db):
+        """Let the deterministic secret rule trigger the intended rejection."""
+        return {"flagged": False, "categories": {}}
+
+    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
+    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    monkeypatch.setattr(safety, "moderate_text", safe_moderation)
+    path = f"/api/admin/ai-news/runs/{run_id}/publish-unverified-preview"
+    blocked = client.post(path, json=payload)
+    assert blocked.status_code == 409 and "secret_pattern:en" in blocked.text
+    with SessionLocal() as db:
+        run = db.get(NewsRun, run_id)
+        run.result = {"verify_for_activation": True}
+        db.commit()
+    assert client.post(path, json=payload).status_code == 409
+    with SessionLocal() as db:
+        assert db.query(Post).filter_by(kind="ai_news", public=True).count() == 0
+
+
+def test_verified_preview_explains_duplicate_publication_before_source_recheck(client):
+    """Expose the existing post and reject republication without a misleading source error."""
+    run_id = create_safety_cleared_manual_preview()
+    with SessionLocal() as db:
+        run = db.get(NewsRun, run_id)
+        candidate = db.scalar(select(NewsCandidate).where(NewsCandidate.run_id == run_id))
+        edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.run_id == run_id))
+        run.result = {"verify_for_activation": True}
+        edition.status = "verified_preview"
+        edition.verification = {"passed": True, "safety": {"passed": True}}
+        system = db.scalar(select(User).where(User.username == "mablog_ia"))
+        post = Post(author_id=system.id, public=True, document=Document().model_dump(), versions={}, kind="ai_news", published=now())
+        db.add(post)
+        db.flush()
+        post_id = post.id
+        db.add(NewsCandidate(run_id=_completed_run(db), provider=candidate.provider, model_name=candidate.model_name, normalized_key=candidate.normalized_key, title=candidate.title, url=candidate.url, official_url=candidate.official_url, status="published", details={"published_post_id": post.id}))
+        db.commit()
+    _, token = create_account("duplicate_curator", True)
+    client.cookies.set("mablog_session", token)
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(token), created=now(), expires=now() + 600))
+        db.commit()
+    detail = client.get(f"/api/admin/ai-news/runs/{run_id}")
+    assert detail.status_code == 200
+    assert detail.json()["publication_conflicts"] == [{"model_name": "Example 1", "post_id": post_id}]
+    blocked = client.post(f"/api/admin/ai-news/runs/{run_id}/publish")
+    assert blocked.status_code == 409
+    assert "Already published" in blocked.json()["detail"]
+    assert "source changed" not in blocked.json()["detail"]
+
+
+def test_evidence_override_requires_step_up_and_acknowledgement_then_discloses_publicly(client, monkeypatch):
+    """Allow only a deliberate administrator exception and never relabel it verified."""
+    from app.api.ai_news import dashboard
+
+    run_id = create_failed_evidence_preview()
+    path = f"/api/admin/ai-news/runs/{run_id}/publish-evidence-override"
+    payload = {"reason": "Reviewed the unsupported citation in both languages", "acknowledged_risk": True}
+    _, regular_token = create_account("override_reader")
+    client.cookies.set("mablog_session", regular_token)
+    assert client.post(path, json=payload).status_code == 403
+    _, admin_token = create_account("override_curator", True)
+    client.cookies.set("mablog_session", admin_token)
+    assert client.post(path, json=payload).status_code == 403
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(admin_token), created=now(), expires=now() + 600))
+        db.commit()
+    assert client.post(path, json={"reason": payload["reason"]}).status_code == 422
+    assert client.post(path, json={**payload, "acknowledged_risk": False}).status_code == 422
+    assert client.post(path, json={**payload, "reason": "            "}).status_code == 422
+    assert client.post(f"/api/admin/ai-news/runs/{run_id}/publish").status_code == 409
+    with SessionLocal() as db:
+        active, _ = create_run(db, "preview", False)
+        active_id = active.id
+        db.commit()
+    assert client.post(path, json=payload).status_code == 409
+    with SessionLocal() as db:
+        db.get(NewsRun, active_id).status = "quiet"
+        db.commit()
+
+    def current_source(_url):
+        """Represent a still-identical official source without network access."""
+        return SimpleNamespace()
+
+    def retained_hash(_source):
+        """Return the source fingerprint stored with the failed preview."""
+        return SimpleNamespace(content_hash="retained-hash")
+
+    def safe_moderation(_text, _db):
+        """Avoid a paid provider request while exercising the real safety gate."""
+        return {"flagged": False, "categories": {}}
+
+    def local_cover(*_args):
+        """Avoid writing an image during the database-only publication test."""
+        return Path("fixture-cover.png")
+
+    def no_search_index(*_args):
+        """Leave search indexing outside this publication-boundary test."""
+        return None
+
+    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
+    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    monkeypatch.setattr(safety, "moderate_text", safe_moderation)
+    monkeypatch.setattr(publication, "render_cover", local_cover)
+    monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
+    result = client.post(path, json=payload)
+    assert result.status_code == 200, result.text
+    assert result.json()["verification_status"] == "administrator_override"
+    post_id = result.json()["post_id"]
+    with SessionLocal() as db:
+        run = db.get(NewsRun, run_id)
+        edition = db.query(AutomatedEdition).filter_by(run_id=run_id).one()
+        assert db.get(Post, post_id).public is True
+        assert run.status == "published" and run.last_error == "verification_failed_after_repairs"
+        assert run.result["evidence_override_published"] is True
+        assert edition.verification["passed"] is False
+        assert edition.verification["safety"]["passed"] is True
+        assert edition.verification["manual_override"]["reason"] == payload["reason"]
+        assert db.get(NewsSetting, 1).activation_preview_run_id is None
+        assert db.query(AdminAuditEvent).filter_by(action="ai_news.preview.evidence_override_published").count() == 1
+    public = client.get(f"/api/posts/{post_id}")
+    assert public.status_code == 200
+    assert public.json()["ai_news"]["fact_check_passed"] is False
+    assert public.json()["ai_news"]["source_changed_on_publish"] is False
+    assert client.post(path, json=payload).status_code == 409
+
+
+def test_evidence_override_accepts_source_drift_but_still_blocks_unsafe_content(client, monkeypatch):
+    """Audit changed official pages in an exception while retaining safety and normal-publication gates."""
+    from app.api.ai_news import dashboard
+
+    _, admin_token = create_account("override_safety_curator", True)
+    client.cookies.set("mablog_session", admin_token)
+    with SessionLocal() as db:
+        db.add(AdminStepUp(session_token=digest(admin_token), created=now(), expires=now() + 600))
+        db.commit()
+    payload = {"reason": "Reviewed the bilingual draft and accept the citation risk", "acknowledged_risk": True}
+    changed_run_id = create_failed_evidence_preview()
+
+    def current_source(_url):
+        """Return a network-free source stand-in for both checks."""
+        return SimpleNamespace()
+
+    def changed_hash(_source):
+        """Simulate official content changing after the preview was retained."""
+        return SimpleNamespace(content_hash="changed-hash")
+
+    def retained_hash(_source):
+        """Simulate the original source remaining available and unchanged."""
+        return SimpleNamespace(content_hash="retained-hash")
+
+    def safe_moderation(_text, _db):
+        """Leave the deterministic secret check as the failing safety gate."""
+        return {"flagged": False, "categories": {}}
+
+    def local_cover(*_args):
+        """Avoid writing a generated cover in this database-only publication test."""
+        return Path("fixture-cover.png")
+
+    def no_search_index(*_args):
+        """Keep the source-drift regression independent of search indexing."""
+        return None
+
+    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
+    monkeypatch.setattr(dashboard, "extract_source", changed_hash)
+    monkeypatch.setattr(safety, "moderate_text", safe_moderation)
+    monkeypatch.setattr(publication, "render_cover", local_cover)
+    monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
+    verified_run_id = create_failed_evidence_preview()
+    with SessionLocal() as db:
+        verified_run = db.get(NewsRun, verified_run_id)
+        verified_run.status = "preview"
+        verified_run.last_error = ""
+        verified_edition = db.query(AutomatedEdition).filter_by(run_id=verified_run_id).one()
+        verified_edition.status = "verified_preview"
+        verified_edition.verification = {"passed": True}
+        db.commit()
+    assert client.post(f"/api/admin/ai-news/runs/{verified_run_id}/publish").status_code == 409
+    changed = client.post(f"/api/admin/ai-news/runs/{changed_run_id}/publish-evidence-override", json=payload)
+    assert changed.status_code == 200, changed.text
+    public = client.get(f"/api/posts/{changed.json()['post_id']}")
+    assert public.json()["ai_news"]["fact_check_passed"] is False
+    assert public.json()["ai_news"]["source_changed_on_publish"] is True
+    with SessionLocal() as db:
+        edition = db.query(AutomatedEdition).filter_by(run_id=changed_run_id).one()
+        assert edition.verification["manual_override"]["changed_sources"][0]["current_hash"] == "changed-hash"
+        assert db.get(NewsRun, changed_run_id).status == "published"
+    unreachable_run_id = create_failed_evidence_preview()
+
+    def unavailable_source(_url):
+        """Keep unsafe or unreachable official pages outside the override."""
+        raise SafeFetchError("source_unavailable")
+
+    monkeypatch.setattr(dashboard, "fetch_public_document", unavailable_source)
+    assert client.post(f"/api/admin/ai-news/runs/{unreachable_run_id}/publish-evidence-override", json=payload).status_code == 409
+    unsafe_run_id = create_failed_evidence_preview(unsafe_text=True)
+    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
+    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    unsafe = client.post(f"/api/admin/ai-news/runs/{unsafe_run_id}/publish-evidence-override", json=payload)
+    assert unsafe.status_code == 409
+    assert "secret_pattern:en" in unsafe.text
+    with SessionLocal() as db:
+        assert db.get(NewsRun, verified_run_id).status == "preview"
+        assert db.get(NewsRun, unreachable_run_id).status == "failed"
+        assert db.get(NewsRun, unsafe_run_id).status == "failed"
+        assert db.query(Post).filter_by(kind="ai_news", public=True).count() == 1
+
+
 def test_safe_fetch_rejections_and_verbatim_publication_gate():
     """Reject private/credential URLs and long quoted passages before public moderation."""
     for unsafe in ("http://example.com", "https://user:pass@example.com", "https://example.com:444/path", "https://127.0.0.1/test"):
@@ -205,6 +593,54 @@ def test_verification_keeps_last_complete_document_when_first_repair_is_malforme
     assert documents is repaired
     assert report["passed"] is True
     assert repair_attempts == [1, 2]
+
+
+def test_verification_excludes_rejected_claims_from_later_repair_evidence(monkeypatch):
+    """Prevent an unsupported extracted price from contradicting the repaired article forever."""
+    requests: list[dict] = []
+
+    def fake_response(model, instructions, input_text, max_output_tokens, **kwargs):
+        """Return first-pass rejection, then approval over only the retained claim."""
+        payload = json.loads(input_text)
+        requests.append(payload)
+        keys = [claim["claim_key"] for claim in payload["claims"]]
+        report = {
+            "passed": len(requests) == 2,
+            "language_consistent": True,
+            "citations_valid": len(requests) == 2,
+            "claims": [{"claim_key": key, "status": "unsupported" if key == "rejected-price" else "supported", "reason": "quote omits units" if key == "rejected-price" else ""} for key in keys],
+            "issues": [] if len(requests) == 2 else [{"release_id": "release", "language": "both", "reason": "Price quote omits units."}],
+        }
+        return OpenAIResult(text=json.dumps(report), input_tokens=0, output_tokens=0, model=model)
+
+    def ignore_accounting(*_args):
+        """Keep the evidence-scope regression independent of paid-stage counters."""
+        return None
+
+    def test_model(*_args):
+        """Select a fixed verifier model name without reading provider settings."""
+        return "test-verifier"
+
+    monkeypatch.setattr(verification, "responses_call", fake_response)
+    monkeypatch.setattr(verification, "assert_paid_stage_budget", ignore_accounting)
+    monkeypatch.setattr(verification, "record_openai_usage", ignore_accounting)
+    monkeypatch.setattr(verification, "model_for", test_model)
+    with SessionLocal() as db:
+        run = NewsRun(kind="preview", status="running", stage="verify", publication_intent=False, window_start=now() - 86400, window_end=now(), idempotency_key=f"fixture:{new_id()}")
+        db.add(run)
+        db.flush()
+        db.add_all([
+            NewsClaim(run_id=run.id, claim_key="eligible-release", text_en="Released.", text_es="Lanzado.", status="supported", evidence=[]),
+            NewsClaim(run_id=run.id, claim_key="rejected-price", text_en="Price per million tokens.", text_es="Precio por millón de tokens.", status="supported", evidence=[]),
+        ])
+        db.flush()
+        first = verification.verify_once(db, run, {"en": {}, "es": {}}, 0)
+        second = verification.verify_once(db, run, {"en": {}, "es": {}}, 1)
+        assert first["passed"] is False
+        assert second["passed"] is True
+        assert [claim["claim_key"] for claim in requests[0]["claims"]] == ["eligible-release", "rejected-price"]
+        assert [claim["claim_key"] for claim in requests[1]["claims"]] == ["eligible-release"]
+        assert db.query(NewsClaim).filter_by(run_id=run.id, claim_key="rejected-price").one().status == "unsupported"
 
 
 def test_structured_paragraph_removes_duplicate_trailing_citation_markers():

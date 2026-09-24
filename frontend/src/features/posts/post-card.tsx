@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Post } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import { Avatar } from "./avatar";
-import { ShieldCheck } from "lucide-react";
 
 /** Present approved post metadata with a link to the author's public profile. */
 export function PostCard({ post }: { post: Post }) {
@@ -17,6 +16,14 @@ export function PostCard({ post }: { post: Post }) {
         ) : (
           <div className="empty">✦</div>
         )}
+        {post.kind === "ai_news" ? (
+          <span className={`ai-card-label${post.ai_news?.fact_check_passed === false ? " manual-override" : ""}`}>
+            {post.ai_news?.fact_check_passed === false ? <TriangleAlert aria-hidden="true" size={13} /> : <ShieldCheck aria-hidden="true" size={13} />}
+            {post.ai_news?.fact_check_passed === false
+              ? post.ai_news?.manual_unverified_preview ? t("AI-generated · not fact-checked", "Generado por IA · sin verificación") : t("AI-generated · evidence exception", "Generado por IA · excepción de evidencia")
+              : t("AI-generated · source-reviewed", "Generado por IA · fuentes revisadas")}
+          </span>
+        ) : null}
       </Link>
       <div className="post-meta">
         <span>
@@ -28,7 +35,6 @@ export function PostCard({ post }: { post: Post }) {
           <Heart size={12} /> {post.likes}
         </span>
       </div>
-      {post.kind === "ai_news" ? <span className="ai-card-label"><ShieldCheck aria-hidden="true" size={13} />{t("AI-generated · verified", "Generado por IA · verificado")}</span> : null}
       {post.role === "author" && post.search_status ? (
         <span className={`search-status ${post.search_status}`}>
           {post.search_status === "ready"
