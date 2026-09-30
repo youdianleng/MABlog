@@ -4,6 +4,23 @@ Status: confirmed for first implementation on 2026-09-22.
 
 This document records the decisions behind MAblog's public AI model ranking so future updates can distinguish confirmed product requirements from editorial judgments and deferred work. It complements `design-review.md`; it does not replace the source snapshots stored with the frontend ranking data.
 
+## Benchmark-page amendment, 2026-10-01
+
+**Confirmed by the user on 2026-10-01:** the page becomes a benchmark leaderboard that shows the best models for each task as a ranking. Every model gets a short explanation of why it holds its position, and a progress bar each for price and recommendation level, compared only with the other models in the same category. The user delegated the visual redesign to the implementer. This supersedes, for this page only, the section 5 rule that price appears only as contextual labels, and the section 6 layout of five cover cards per category.
+
+**Implementation choices (proposed defaults, open to revision):**
+
+- **Layout:** each category is an ordered leaderboard of full-width rows. A row shows rank, identity and access, source-native score, the two bars, and a "Why #N" explanation. Rows stack into cards on phones. Editor's picks now follow the rankings they are based on.
+- **Recommendation bar:** derived only from the source-native score, never a new universal grade. Arena Elo uses the standard expected-score formula against the category's #1 (win rate × 2, so the leader fills the bar). Benchmark indexes use the ratio to #1's score. The order still follows the primary leaderboard.
+- **Price bar:** the published list price as a share of the most expensive published price in the same category.
+  - Coding token prices are blended 3 input : 1 output, following Artificial Analysis's convention.
+  - Image and video prices come from the Artificial Analysis leaderboards; coding prices come from official provider pages. Muse Spark 1.3 is the exception: it comes from independent trackers and is labelled as such.
+  - Where no comparable price is published, the bar is hatched and labelled "Not published" and never counts as zero. This applies to all music and to Gemini Omni Flash, whose source price covers only the newer 1.1 release.
+  - Prices were checked on 2026-10-01 and live in `frontend/src/features/site-info/ai-model-benchmark-context.ts`.
+- **Rank explanations:** restate only the evidence already stored in the snapshot (score, interval, source rank, tie notes, filters, and the price comparison).
+
+**Known limitation:** the live Artificial Analysis leaderboards viewed on 2026-10-01 already differ from the 2026-09-22 score snapshot for some video and music entries. Refreshing the ranking itself is a separate review task.
+
 ## 1. Audience and purpose
 
 The ranking serves both general users choosing an AI product and developers choosing a model or API. It ranks model families, not consumer applications, while naming the product, API, subscription, or open-weight release through which each family is accessible.
