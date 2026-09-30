@@ -17,7 +17,7 @@ test("footer links reach complete public information pages", /** Verify the adap
   const pages = [
     ["/about", "A home for stories that refuse to stay ordinary."],
     ["/help", "From first line to shared story."],
-    ["/ai-models", "Five models. Four crafts. No invented score."],
+    ["/ai-models", "The best AI model for each job."],
     ["/guidelines", "Make room for brave work—and for one another."],
     ["/privacy", "Your drafts are not a public promise."],
     ["/terms", "Clear roles make better collaborations."],
@@ -30,81 +30,66 @@ test("footer links reach complete public information pages", /** Verify the adap
   }
 });
 
-test("AI Models page presents evidence-based responsive rankings", /** Verify ranking counts, category navigation, evidence context, profile links, and phone containment. */ async function aiModelsPage({
+test("AI Models benchmark ranks models with reasons, recommendation, and price bars", /** Verify ranked leaderboards, per-row explanations and meters, honest missing prices, navigation, and responsive containment. */ async function aiModelsPage({
   page,
 }) {
   await page.goto("/ai-models");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Five models. Four crafts. No invented score." }),
+    page.getByRole("heading", { level: 1, name: "The best AI model for each job." }),
   ).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Ranking categories" })).toBeVisible();
-  await expect(page.locator(".models-ranking-section")).toHaveCount(5);
-  await expect(page.locator(".models-rank-card")).toHaveCount(25);
+  await expect(page.locator(".bench-section")).toHaveCount(5);
+  await expect(page.locator(".bench-row")).toHaveCount(25);
+  await expect(page.locator(".bench-row .bench-reason-label")).toHaveCount(25);
+  await expect(page.locator(".bench-row [role='meter']")).toHaveCount(50);
+  await expect(page.locator(".bench-row.is-leader")).toHaveCount(5);
+  // Ten music rows plus Gemini Omni Flash have no comparable published price.
+  await expect(page.locator(".bench-meter-price.is-missing")).toHaveCount(11);
   await expect(page.locator(".models-awards-grid a")).toHaveCount(7);
   await expect(page.getByText("Coding Agent Index v1.5", { exact: true }).first()).toBeVisible();
+  const leader = page.locator('.bench-row[href="/ai-models/claude-fable-5-1"]');
+  await expect(leader).toHaveCount(1);
+  await expect(leader.getByText("Why #1")).toBeVisible();
+  await expect(leader.locator(".bench-meter-recommendation [role='meter']")).toHaveAttribute(
+    "aria-valuenow",
+    "100",
+  );
+  await expect(leader.getByText("$20.00 / 1M tok")).toBeVisible();
   await expect(
     page.getByRole("heading", {
       name: "A ranking is a dated decision aid—not a permanent verdict.",
     }),
   ).toBeVisible();
-  await expect(page.locator('.models-rank-card[href="/ai-models/claude-fable-5-1"]')).toHaveCount(
-    1,
-  );
   await expect(page.getByRole("link", { name: "AI Models", exact: true }).first()).toHaveAttribute(
     "href",
     "/ai-models",
   );
-  await expect(
-    page.getByRole("heading", { name: "Find a story worth carrying with you." }),
-  ).not.toBeVisible();
 
-  await page.setViewportSize({ width: 1900, height: 900 });
-  await page.reload();
-  expect(
-    await page.evaluate(
-      /** Ensure short and wrapped labels reserve the same provider and score positions in every desktop ranking row. */ function rankingCardRowsAlign() {
-        for (const grid of document.querySelectorAll(".models-card-grid")) {
-          let firstOffsets: number[] | undefined;
-          for (const card of grid.querySelectorAll(".models-rank-card")) {
-            const body = card.querySelector(".models-rank-card-body");
-            const provider = card.querySelector(".models-provider");
-            const score = card.querySelector(".models-score");
-            if (!body || !provider || !score) return false;
-            const bodyTop = body.getBoundingClientRect().top;
-            const offsets = [provider, score].map(
-              /** Round subpixel font rendering so only visible row shifts fail the assertion. */ (
-                element,
-              ) => Math.round(element.getBoundingClientRect().top - bodyTop),
-            );
-            if (firstOffsets && (offsets[0] !== firstOffsets[0] || offsets[1] !== firstOffsets[1]))
-              return false;
-            firstOffsets = offsets;
+  for (const [width, height] of [
+    [1440, 900],
+    [900, 1100],
+    [375, 812],
+    [812, 375],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.reload();
+    await expect(page.locator(".bench-row").first()).toBeVisible();
+    expect(
+      await page.evaluate(
+        /** Confirm leaderboard rows, meters, and bilingual labels stay inside the viewport. */ function aiModelsFits() {
+          if (document.documentElement.scrollWidth > window.innerWidth) return false;
+          for (const row of document.querySelectorAll(".bench-row")) {
+            const bounds = row.getBoundingClientRect();
+            for (const meter of row.querySelectorAll(".bench-meter")) {
+              const inner = meter.getBoundingClientRect();
+              if (inner.left < bounds.left - 1 || inner.right > bounds.right + 1) return false;
+            }
           }
-        }
-        return true;
-      },
-    ),
-  ).toBe(true);
-
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.reload();
-  await expect(page.locator(".models-rank-card").first()).toBeVisible();
-  expect(
-    await page.evaluate(
-      /** Confirm ranking cards, editorial awards, and bilingual labels stay inside a phone viewport. */ function aiModelsFitsPhone() {
-        return document.documentElement.scrollWidth <= window.innerWidth;
-      },
-    ),
-  ).toBe(true);
-
-  await page.setViewportSize({ width: 812, height: 375 });
-  expect(
-    await page.evaluate(
-      /** Confirm the ranking remains bounded when a small device rotates to landscape. */ function aiModelsFitsLandscape() {
-        return document.documentElement.scrollWidth <= window.innerWidth;
-      },
-    ),
-  ).toBe(true);
+          return true;
+        },
+      ),
+    ).toBe(true);
+  }
 });
 
 test("AI model profile preserves access and evidence links", /** Verify a permanent family profile aggregates scores and exposes official and benchmark sources. */ async function aiModelProfile({

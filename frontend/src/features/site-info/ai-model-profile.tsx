@@ -1,26 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  BookOpenCheck,
-  Braces,
-  Image as ImageIcon,
-  Music2,
-  Video,
-} from "lucide-react";
+import { ArrowLeft, ArrowUpRight, BookOpenCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import type { RankedModel, RankingCategory } from "./ai-model-rankings";
 import { RANKING_SNAPSHOT_DATE } from "./ai-model-rankings";
-
-const accessTranslations: Record<string, string> = {
-  "Free access": "Acceso gratuito",
-  Subscription: "Suscripción",
-  API: "API",
-  "Open weights": "Pesos abiertos",
-  "Regional access": "Acceso regional",
-};
+import {
+  getPlacementContext,
+  isPublishedPrice,
+  PRICE_CHECKED_DATE,
+} from "./ai-model-benchmark-context";
+import { CategoryIcon } from "./category-icon";
+import { accessTranslations } from "./ranking-labels";
 
 /** Return the readable bilingual name for a stored ranking category. */
 function categoryName(category: RankingCategory, spanish: boolean): string {
@@ -34,12 +25,35 @@ function categoryName(category: RankingCategory, spanish: boolean): string {
   return names[category][spanish ? 1 : 0];
 }
 
-/** Select the profile cover icon for the family's first ranked category. */
-function ProfileIcon({ category }: { category: RankingCategory }) {
-  if (category === "coding") return <Braces aria-hidden="true" />;
-  if (category === "image") return <ImageIcon aria-hidden="true" />;
-  if (category === "video") return <Video aria-hidden="true" />;
-  return <Music2 aria-hidden="true" />;
+/** Explain one placement and show its published price, or why no price is shown. */
+function PlacementContextDetails({ category, slug }: { category: RankingCategory; slug: string }) {
+  const { t } = useLanguage();
+  const { rankReason, price } = getPlacementContext(category, slug);
+  return (
+    <div className="model-score-context">
+      <p>
+        <strong>{t("Why this rank", "Por qué este puesto")}:</strong>{" "}
+        {t(rankReason.en, rankReason.es)}
+      </p>
+      {isPublishedPrice(price) ? (
+        <p>
+          <strong>{t("Price", "Precio")}:</strong> {price.display}
+          {price.variant ? ` (${price.variant})` : ""} ·{" "}
+          <a href={price.sourceUrl} target="_blank" rel="noreferrer">
+            {price.sourceLabel}
+          </a>
+          {price.secondarySource
+            ? ` · ${t("independent tracker, not a first-party page", "rastreador independiente, no página oficial")}`
+            : ""}{" "}
+          · {t("checked", "consultado")} {PRICE_CHECKED_DATE}
+        </p>
+      ) : (
+        <p>
+          <strong>{t("Price", "Precio")}:</strong> {t(price.missing.en, price.missing.es)}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** Render the minimal permanent family profile approved for the first ranking edition. */
@@ -57,7 +71,7 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
       <header className={`model-profile-hero models-accent-${model.accent}`}>
         <div className="models-cover model-profile-cover" aria-hidden="true">
           <div className="models-cover-orbit" />
-          <ProfileIcon category={firstPlacement.category} />
+          <CategoryIcon category={firstPlacement.category} />
           <span>{model.provider}</span>
           <strong>{model.name}</strong>
         </div>
@@ -122,6 +136,7 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
                 {placement.tieNote ? (
                   <p className="models-tie">{t(placement.tieNote.en, placement.tieNote.es)}</p>
                 ) : null}
+                <PlacementContextDetails category={placement.category} slug={model.slug} />
                 <a href={placement.sourceUrl} target="_blank" rel="noreferrer">
                   {placement.sourceLabel} <ArrowUpRight aria-hidden="true" />
                 </a>
