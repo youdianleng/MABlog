@@ -32,7 +32,9 @@ export function ApplicationProviders({ children, initialUser }: ApplicationProvi
       await action();
       setMessage("");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t("Request failed", "La solicitud falló"));
+      setMessage(
+        error instanceof Error ? error.message : t("Request failed", "La solicitud falló"),
+      );
       if (error instanceof ApiError && error.status === 401) setReauth(true);
     }
   }
@@ -45,17 +47,63 @@ export function ApplicationProviders({ children, initialUser }: ApplicationProvi
       {message ? (
         <div className="notice error toast" role="alert">
           {message}
-          <button className="ml-4" aria-label={t("Dismiss", "Cerrar")} onClick={/** Dismiss the current operation message. */ function dismissMessage() { setMessage(""); }}>×</button>
+          <button
+            className="ml-4"
+            aria-label={t("Dismiss", "Cerrar")}
+            onClick={
+              /** Dismiss the current operation message. */ function dismissMessage() {
+                setMessage("");
+              }
+            }
+          >
+            ×
+          </button>
         </div>
       ) : null}
-      <Dialog.Root open={reauth} onOpenChange={/** Keep overlay state synchronized with escape-key dismissal. */ function changeReauthentication(open) { setReauth(open); }}>
+      <Dialog.Root
+        open={reauth}
+        onOpenChange={
+          /** Keep overlay state synchronized with escape-key dismissal. */ function changeReauthentication(
+            open,
+          ) {
+            setReauth(open);
+          }
+        }
+      >
         <Dialog.Portal>
-          <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "#29231cca", zIndex: 150 }} />
+          <Dialog.Overlay
+            style={{ position: "fixed", inset: 0, background: "#29231cca", zIndex: 150 }}
+          />
           <Dialog.Content style={{ position: "fixed", inset: 20, overflow: "auto", zIndex: 151 }}>
-            <Dialog.Title className="sr-only">{t("Sign in again", "Vuelve a iniciar sesión")}</Dialog.Title>
-            <Dialog.Description className="sr-only">{t("Sign in to continue saving. Your open draft stays here.", "Inicia sesión para seguir guardando. Tu borrador permanece abierto.")}</Dialog.Description>
-            <button className="icon-button" aria-label={t("Close sign in", "Cerrar acceso")} onClick={/** Close reauthentication while preserving the mounted page. */ function closeReauthentication() { setReauth(false); }}><X size={16} /></button>
-            <AccountForm onSuccess={/** Refresh the account and close the overlay after verification. */ async function finishAuthentication() { await refresh(); setReauth(false); setMessage(""); }} />
+            <Dialog.Title className="sr-only">
+              {t("Sign in again", "Vuelve a iniciar sesión")}
+            </Dialog.Title>
+            <Dialog.Description className="sr-only">
+              {t(
+                "Sign in to continue saving. Your open draft stays here.",
+                "Inicia sesión para seguir guardando. Tu borrador permanece abierto.",
+              )}
+            </Dialog.Description>
+            <button
+              className="icon-button"
+              aria-label={t("Close sign in", "Cerrar acceso")}
+              onClick={
+                /** Close reauthentication while preserving the mounted page. */ function closeReauthentication() {
+                  setReauth(false);
+                }
+              }
+            >
+              <X size={16} />
+            </button>
+            <AccountForm
+              onSuccess={
+                /** Refresh the account and close the overlay after verification. */ async function finishAuthentication() {
+                  await refresh();
+                  setReauth(false);
+                  setMessage("");
+                }
+              }
+            />
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

@@ -16,23 +16,15 @@ test("registration, actual email verification, freeform draft, approval, publish
   const name = `writer_${Date.now()}`,
     email = `${name}@example.com`;
   await page.goto("/account");
-  await page
-    .getByRole("button", { name: "Create an account", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Create an account", exact: true }).click();
   await page.getByLabel("Username", { exact: true }).fill(name);
   await page.getByLabel("Email", { exact: true }).fill(email);
-  await page
-    .getByLabel("Password (at least 10 characters)")
-    .fill("my-local-test-password");
-  await page
-    .getByRole("button", { name: "Create account", exact: true })
-    .click();
+  await page.getByLabel("Password (at least 10 characters)").fill("my-local-test-password");
+  await page.getByRole("button", { name: "Create account", exact: true }).click();
   await expect(page.getByLabel("Verification code")).toBeVisible();
   await page.getByLabel("Verification code").fill(await emailCode(page, email));
   await page.getByRole("button", { name: "Verify email", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Welcome to your atelier" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome to your atelier" })).toBeVisible();
   await page.getByRole("button", { name: "Write", exact: true }).click();
   await page.waitForURL("**/compose/**");
   const id = page.url().split("/").pop();
@@ -40,7 +32,9 @@ test("registration, actual email verification, freeform draft, approval, publish
   await expect(settings.locator(".editor-sidebar")).not.toBeVisible();
   expect(
     await page.locator(".editor-viewport").evaluate(
-      /** Measure the usable canvas viewport after removing the permanent sidebar column. */ function viewportWidth(element) {
+      /** Measure the usable canvas viewport after removing the permanent sidebar column. */ function viewportWidth(
+        element,
+      ) {
         return element.getBoundingClientRect().width;
       },
     ),
@@ -71,9 +65,7 @@ test("registration, actual email verification, freeform draft, approval, publish
   await expect(settings.locator(".editor-sidebar")).toBeVisible();
   await page.getByLabel("Title", { exact: true }).fill("Browser-written story");
   await page.getByLabel("Category", { exact: true }).selectOption("technology");
-  await page
-    .getByLabel("Summary", { exact: true })
-    .fill("Created with the real visual composer.");
+  await page.getByLabel("Summary", { exact: true }).fill("Created with the real visual composer.");
   await page
     .getByLabel("Cover image", { exact: true })
     .setInputFiles("../backend/seed-assets/shrine.png");
@@ -87,27 +79,42 @@ test("registration, actual email verification, freeform draft, approval, publish
   await page.getByRole("menuitem", { name: "H4", exact: true }).click();
   await expect(page.locator(".tiptap h4")).toHaveText("A real block, written in the browser.");
   await expect(page.getByRole("button", { name: "Heading level H4" })).toBeVisible();
-  await page.locator('.editor-block.selected input[type="file"]').setInputFiles("../backend/seed-assets/shrine.png");
+  await page
+    .locator('.editor-block.selected input[type="file"]')
+    .setInputFiles("../backend/seed-assets/shrine.png");
   const insertedImage = page.locator(".editor-block.selected .resizable-image-node img");
   await expect(insertedImage).toBeVisible();
   const imageBeforeResize = await insertedImage.boundingBox();
   const imageResizeHandle = page.getByRole("button", { name: /Resize image/ });
   await imageResizeHandle.scrollIntoViewIfNeeded();
   const imageHandleBox = await imageResizeHandle.boundingBox();
-  await page.mouse.move(imageHandleBox!.x + imageHandleBox!.width / 2, imageHandleBox!.y + imageHandleBox!.height / 2);
+  await page.mouse.move(
+    imageHandleBox!.x + imageHandleBox!.width / 2,
+    imageHandleBox!.y + imageHandleBox!.height / 2,
+  );
   await page.mouse.down();
-  await page.mouse.move(imageHandleBox!.x - 70, imageHandleBox!.y + imageHandleBox!.height / 2, { steps: 6 });
+  await page.mouse.move(imageHandleBox!.x - 70, imageHandleBox!.y + imageHandleBox!.height / 2, {
+    steps: 6,
+  });
   await page.mouse.up();
-  await expect.poll(/** Wait for the pointer-up transaction to serialize the committed width. */ async function committedDragWidth() {
-    return Number(await insertedImage.getAttribute("width"));
-  }).toBeGreaterThan(0);
+  await expect
+    .poll(
+      /** Wait for the pointer-up transaction to serialize the committed width. */ async function committedDragWidth() {
+        return Number(await insertedImage.getAttribute("width"));
+      },
+    )
+    .toBeGreaterThan(0);
   const draggedWidth = Number(await insertedImage.getAttribute("width"));
   expect(draggedWidth).toBeLessThan(imageBeforeResize!.width);
   await imageResizeHandle.focus();
   await page.keyboard.press("ArrowRight");
-  await expect.poll(/** Wait for TipTap to serialize the keyboard resize transaction. */ async function resizedWidth() {
-    return Number(await insertedImage.getAttribute("width"));
-  }).toBe(draggedWidth + 10);
+  await expect
+    .poll(
+      /** Wait for TipTap to serialize the keyboard resize transaction. */ async function resizedWidth() {
+        return Number(await insertedImage.getAttribute("width"));
+      },
+    )
+    .toBe(draggedWidth + 10);
   await page.getByLabel("Rotation °").fill("12");
   await page.getByRole("button", { name: "Draw block", exact: true }).click();
   const surface = await page.locator(".editor-canvas").boundingBox();
@@ -117,7 +124,8 @@ test("registration, actual email verification, freeform draft, approval, publish
   await page.mouse.up();
   await expect(page.locator(".editor-block")).toHaveCount(2);
   await page.locator(".tiptap").fill("Drawn and moved in the browser.");
-  const blockX = page.getByLabel(/^X$/), blockY = page.getByLabel(/^Y$/);
+  const blockX = page.getByLabel(/^X$/),
+    blockY = page.getByLabel(/^Y$/);
   const originalX = Number(await blockX.inputValue());
   const originalY = Number(await blockY.inputValue());
   const handle = page.locator(".editor-block.selected .drag-handle");
@@ -129,7 +137,10 @@ test("registration, actual email verification, freeform draft, approval, publish
   await page.mouse.up();
   await expect(blockX).toHaveValue(String(originalX - 90));
   await expect(blockY).toHaveValue(String(originalY + 50));
-  const resize = page.locator('.editor-block.selected').locator('..').locator('div[style*="cursor: se-resize"]');
+  const resize = page
+    .locator(".editor-block.selected")
+    .locator("..")
+    .locator('div[style*="cursor: se-resize"]');
   const resizeBox = await resize.boundingBox();
   const oldWidth = Number(await page.getByLabel("Width", { exact: true }).last().inputValue());
   await page.mouse.move(resizeBox!.x + 3, resizeBox!.y + 3);
@@ -200,59 +211,56 @@ test("registration, actual email verification, freeform draft, approval, publish
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("Email or username").fill(name);
-  await dialog
-    .getByLabel("Password (at least 10 characters)")
-    .fill("my-local-test-password");
+  await dialog.getByLabel("Password (at least 10 characters)").fill("my-local-test-password");
   await dialog.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await expect(page.locator(".tiptap")).toContainText(
-    "A real block, written in the browser.",
-  );
+  await expect(page.locator(".tiptap")).toContainText("A real block, written in the browser.");
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(page.getByText("Private draft saved.")).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(
-    "Browser-written story",
-  );
-  await page
-    .getByRole("button", { name: "Apply my changes", exact: true })
-    .click();
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue("Browser-written story");
+  await page.getByRole("button", { name: "Apply my changes", exact: true }).click();
   await expect(page.getByText("Changes submitted successfully.")).toBeVisible();
   await page.getByRole("link", { name: "Read approved version" }).click();
   await expect(
     page.getByRole("heading", { name: "Browser-written story", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText("A real block, written in the browser."),
-  ).toBeVisible();
+  await expect(page.getByText("A real block, written in the browser.")).toBeVisible();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Make personal", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Make personal", exact: true })).toBeVisible();
   await page.goto("/public");
   const categories = page.getByRole("navigation", { name: "Post categories" });
-  const publishedCard = page.locator(".post-card").filter({ has: page.locator(`a[href="/posts/${id}"]`) });
+  const publishedCard = page
+    .locator(".post-card")
+    .filter({ has: page.locator(`a[href="/posts/${id}"]`) });
   await categories.getByRole("button", { name: "Technology", exact: true }).click();
   await expect(publishedCard).toHaveCount(1);
   await categories.getByRole("button", { name: "Travel", exact: true }).click();
   await expect(publishedCard).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByLabel("Language").selectOption("es");
-  await expect(page.getByRole("navigation", { name: "Categorías de publicaciones" }).getByRole("button", { name: "Viajes", exact: true })).toHaveAttribute("aria-pressed", "true");
-  expect(await page.evaluate(/** Verify the vertical menu fits a phone viewport. */ function categoryFits() { return document.documentElement.scrollWidth <= innerWidth; })).toBe(true);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Categorías de publicaciones" })
+      .getByRole("button", { name: "Viajes", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(
+    await page.evaluate(
+      /** Verify the vertical menu fits a phone viewport. */ function categoryFits() {
+        return document.documentElement.scrollWidth <= innerWidth;
+      },
+    ),
+  ).toBe(true);
   await page.getByLabel("Idioma").selectOption("en");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`/posts/${id}`);
   await page.getByRole("link", { name: "Sharing", exact: true }).click();
   await page.getByLabel("Registered email").fill("not-registered@example.com");
   await page.getByRole("button", { name: "Grant access", exact: true }).click();
-  await expect(page.locator(".toast[role=alert]")).toContainText(
-    "Email not found",
-  );
+  await expect(page.locator(".toast[role=alert]")).toContainText("Email not found");
   expect(errors).toEqual([]);
   // Remove this test-created post explicitly so browser checks do not pollute the sample collection.
   await page.request.delete(`/api/posts/${id}`, {
     headers: { "X-MAblog": "1" },
   });
 });
-

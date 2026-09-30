@@ -37,10 +37,7 @@ export function Carousel({ posts }: { posts: Post[] }) {
     <section
       className="carousel"
       aria-roledescription="carousel"
-      aria-label={t(
-        "Most loved stories in 14 days",
-        "Historias más valoradas en 14 días",
-      )}
+      aria-label={t("Most loved stories in 14 days", "Historias más valoradas en 14 días")}
       onMouseEnter={
         /** Pause autoplay while the pointer is over the carousel. */ function enter() {
           setHovered(true);
@@ -60,22 +57,17 @@ export function Carousel({ posts }: { posts: Post[] }) {
         /** Resume focus-controlled autoplay only after focus leaves the whole carousel. */ function blur(
           event,
         ) {
-          if (!event.currentTarget.contains(event.relatedTarget))
-            setFocused(false);
+          if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
         }
       }
       onKeyDown={
-        /** Map arrow keys to previous and next carousel navigation. */ function keyboard(
-          event,
-        ) {
+        /** Map arrow keys to previous and next carousel navigation. */ function keyboard(event) {
           if (event.key === "ArrowLeft") move(-1);
           if (event.key === "ArrowRight") move(1);
         }
       }
       onTouchStart={
-        /** Remember the initial horizontal swipe position. */ function touchStart(
-          event,
-        ) {
+        /** Remember the initial horizontal swipe position. */ function touchStart(event) {
           touch.current = event.touches[0].clientX;
         }
       }
@@ -111,10 +103,24 @@ export function Carousel({ posts }: { posts: Post[] }) {
             >
               <img src={post.cover} alt="" />
               <div className="carousel-caption">
-                {post.kind === "ai_news" ? <small className="carousel-ai-label">{post.ai_news?.fact_check_passed === false ? <TriangleAlert aria-hidden="true" size={12} /> : <ShieldCheck aria-hidden="true" size={12} />}{post.ai_news?.fact_check_passed === false ? post.ai_news?.manual_unverified_preview ? t("AI-GENERATED · NOT FACT-CHECKED", "GENERADO POR IA · SIN VERIFICACIÓN") : t("AI-GENERATED · EVIDENCE EXCEPTION", "GENERADO POR IA · EXCEPCIÓN DE EVIDENCIA") : t("AI-GENERATED · SOURCE-REVIEWED", "GENERADO POR IA · FUENTES REVISADAS")}</small> : null}
-                <small>
-                  {t("MOST LOVED · 14 DAYS", "MÁS VALORADAS · 14 DÍAS")}
-                </small>
+                {post.kind === "ai_news" ? (
+                  <small className="carousel-ai-label">
+                    {post.ai_news?.fact_check_passed === false ? (
+                      <TriangleAlert aria-hidden="true" size={12} />
+                    ) : (
+                      <ShieldCheck aria-hidden="true" size={12} />
+                    )}
+                    {post.ai_news?.fact_check_passed === false
+                      ? post.ai_news?.manual_unverified_preview
+                        ? t("AI-GENERATED · NOT FACT-CHECKED", "GENERADO POR IA · SIN VERIFICACIÓN")
+                        : t(
+                            "AI-GENERATED · EVIDENCE EXCEPTION",
+                            "GENERADO POR IA · EXCEPCIÓN DE EVIDENCIA",
+                          )
+                      : t("AI-GENERATED · SOURCE-REVIEWED", "GENERADO POR IA · FUENTES REVISADAS")}
+                  </small>
+                ) : null}
+                <small>{t("MOST LOVED · 14 DAYS", "MÁS VALORADAS · 14 DÍAS")}</small>
                 <h2>{post.title}</h2>
                 <small>
                   {post.author.display_name} · ♡ {post.likes}

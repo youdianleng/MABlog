@@ -3,9 +3,17 @@ line-length = 160
 target-version = "py312"
 extend-exclude = ["migrations/versions"]
 
+[tool.ruff.format]
+# `ruff format` is the single backend formatter; CI runs `ruff format --check`.
+quote-style = "double"
+
 [tool.ruff.lint]
 # Begin with correctness, import, upgrade, and common bug checks that are useful in CI.
 select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI declares dependencies and parameters through default-argument calls by design.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header", "fastapi.Cookie", "fastapi.Body", "fastapi.File", "fastapi.Form"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]

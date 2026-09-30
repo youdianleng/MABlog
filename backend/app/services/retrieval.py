@@ -1,7 +1,8 @@
 """Permission-safe lexical/vector candidates, rank fusion, and answer context selection."""
-from dataclasses import dataclass
+
 import math
 import re
+from dataclasses import dataclass
 
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import aliased
@@ -18,12 +19,40 @@ from ..config import (
     SEARCH_CONTEXT_POSTS,
 )
 from ..models import Grant, Like, Post, SearchPassage, User
+from ..models.posts import post_category_expression
 from ..utils import now
 
 # Excluding common question words keeps keyword fallback broad enough for natural-language queries.
 QUERY_STOP_WORDS = {
-    "a", "about", "and", "are", "de", "del", "el", "en", "find", "for", "i", "is", "la", "las", "los",
-    "me", "of", "para", "por", "post", "posts", "que", "show", "sobre", "the", "to", "una", "un", "with",
+    "a",
+    "about",
+    "and",
+    "are",
+    "de",
+    "del",
+    "el",
+    "en",
+    "find",
+    "for",
+    "i",
+    "is",
+    "la",
+    "las",
+    "los",
+    "me",
+    "of",
+    "para",
+    "por",
+    "post",
+    "posts",
+    "que",
+    "show",
+    "sobre",
+    "the",
+    "to",
+    "una",
+    "un",
+    "with",
 }
 
 
@@ -61,6 +90,7 @@ def request_subject(user: User | None, remote_host: str) -> str:
     if user:
         return f"user:{user.id}"
     from ..utils import digest
+
     return f"anonymous:{digest(remote_host)}"
 
 
@@ -85,7 +115,7 @@ def _category_condition(category: str | None):
     """Filter the approved JSON metadata while treating legacy posts as General."""
     if category is None:
         return True
-    return func.coalesce(Post.document["details"]["category"].as_string(), "general") == category
+    return post_category_expression() == category
 
 
 def _semantic_condition(user: User | None, author_alias):
@@ -97,13 +127,7 @@ def _semantic_condition(user: User | None, author_alias):
 
 def _like_count_expression():
     """Count active likes from the confirmed rolling fourteen-day ranking window."""
-    return (
-        select(func.count())
-        .select_from(Like)
-        .where(Like.post_id == Post.id, Like.created >= now() - LIKE_WINDOW_SECONDS)
-        .correlate(Post)
-        .scalar_subquery()
-    )
+    return select(func.count()).select_from(Like).where(Like.post_id == Post.id, Like.created >= now() - LIKE_WINDOW_SECONDS).correlate(Post).scalar_subquery()
 
 
 def query_terms(query: str) -> list[str]:
@@ -239,12 +263,7 @@ def select_answer_context(db, ranked: list[RankedPost], vector: list[float] | No
             order.append(SearchPassage.embedding.cosine_distance(vector).nullslast())
         order.extend([SearchPassage.reading_order, SearchPassage.chunk_index])
         passages = list(
-            db.scalars(
-                select(SearchPassage)
-                .where(SearchPassage.post_id == result.post.id)
-                .order_by(*order)
-                .limit(SEARCH_CONTEXT_PASSAGES_PER_POST)
-            )
+            db.scalars(select(SearchPassage).where(SearchPassage.post_id == result.post.id).order_by(*order).limit(SEARCH_CONTEXT_PASSAGES_PER_POST))
         )
         if not passages:
             continue
@@ -262,4 +281,3 @@ def select_answer_context(db, ranked: list[RankedPost], vector: list[float] | No
                 }
             )
     return evidence
-

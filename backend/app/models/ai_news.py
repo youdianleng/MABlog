@@ -1,15 +1,15 @@
 """Durable AI-news pipeline, evidence, edition, and notification records."""
-from pgvector.sqlalchemy import Vector
+
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, literal_column, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..config import EMBEDDING_DIMENSIONS
 from ..database import Base
 from ..utils import new_id, now
 
 
 class NewsRun(Base):
     """One durable preview, scheduled, catch-up, or immediate AI-news execution."""
+
     __tablename__ = "news_runs"
     __table_args__ = (
         # A constant-expression partial index guarantees one active run across all workers.
@@ -40,6 +40,7 @@ class NewsRun(Base):
 
 class NewsSetting(Base):
     """Singleton durable scheduler and encrypted newsroom provider overrides."""
+
     __tablename__ = "news_settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     schedule_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -49,7 +50,9 @@ class NewsSetting(Base):
     minute: Mapped[int] = mapped_column(Integer, default=0)
     next_run: Mapped[float] = mapped_column(Float, default=0)
     last_successful_scan: Mapped[float] = mapped_column(Float, default=0)
-    activation_preview_run_id: Mapped[str | None] = mapped_column(ForeignKey("news_runs.id", ondelete="SET NULL", use_alter=True, name="fk_news_settings_activation_preview_run_id_news_runs"), nullable=True)
+    activation_preview_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("news_runs.id", ondelete="SET NULL", use_alter=True, name="fk_news_settings_activation_preview_run_id_news_runs"), nullable=True
+    )
     openai_run_budget: Mapped[float] = mapped_column(Float, default=2)
     openai_month_budget: Mapped[float] = mapped_column(Float, default=10)
     brave_query_budget: Mapped[int] = mapped_column(Integer, default=15)
@@ -62,6 +65,7 @@ class NewsSetting(Base):
 
 class NewsSource(Base):
     """Curator-managed verified first-party discovery endpoint."""
+
     __tablename__ = "news_sources"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     provider_key: Mapped[str] = mapped_column(String, index=True)
@@ -79,6 +83,7 @@ class NewsSource(Base):
 
 class NewsSourceSuggestion(Base):
     """Inactive web-discovered provider endpoint awaiting curator review."""
+
     __tablename__ = "news_source_suggestions"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     provider_name: Mapped[str] = mapped_column(String)
@@ -93,6 +98,7 @@ class NewsSourceSuggestion(Base):
 
 class NewsJob(Base):
     """One leased idempotent and checkpointed stage belonging to a news run."""
+
     __tablename__ = "news_jobs"
     __table_args__ = (UniqueConstraint("run_id", "stage"),)
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -111,6 +117,7 @@ class NewsJob(Base):
 
 class NewsCandidate(Base):
     """Normalized possible release and its classification or duplicate outcome."""
+
     __tablename__ = "news_candidates"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     run_id: Mapped[str] = mapped_column(ForeignKey("news_runs.id", ondelete="CASCADE"), index=True)
@@ -133,6 +140,7 @@ class NewsCandidate(Base):
 
 class NewsDocument(Base):
     """Safely fetched source snapshot and its permanent hash and metadata."""
+
     __tablename__ = "news_documents"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     run_id: Mapped[str] = mapped_column(ForeignKey("news_runs.id", ondelete="CASCADE"), index=True)
@@ -151,6 +159,7 @@ class NewsDocument(Base):
 
 class NewsClaim(Base):
     """Language-paired factual claim mapped to retained exact evidence excerpts."""
+
     __tablename__ = "news_claims"
     __table_args__ = (UniqueConstraint("run_id", "claim_key"),)
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -167,6 +176,7 @@ class NewsClaim(Base):
 
 class AutomatedEdition(Base):
     """Private or public bilingual edition produced by exactly one news run."""
+
     __tablename__ = "automated_editions"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     run_id: Mapped[str] = mapped_column(ForeignKey("news_runs.id", ondelete="CASCADE"), unique=True)
@@ -183,6 +193,7 @@ class AutomatedEdition(Base):
 
 class NewsRevision(Base):
     """Private curator correction awaiting bilingual acceptance and verification."""
+
     __tablename__ = "news_revisions"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     edition_id: Mapped[str] = mapped_column(ForeignKey("automated_editions.id", ondelete="CASCADE"), index=True)
@@ -196,6 +207,7 @@ class NewsRevision(Base):
 
 class NewsAlert(Base):
     """One deduplicated action-required condition for a run and alert type."""
+
     __tablename__ = "news_alerts"
     __table_args__ = (UniqueConstraint("run_id", "alert_type"),)
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -211,6 +223,7 @@ class NewsAlert(Base):
 
 class NewsAlertReceipt(Base):
     """Per-administrator read state for a mandatory in-app news alert."""
+
     __tablename__ = "news_alert_receipts"
     alert_id: Mapped[str] = mapped_column(ForeignKey("news_alerts.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
@@ -219,6 +232,7 @@ class NewsAlertReceipt(Base):
 
 class NewsUsage(Base):
     """Redacted provider usage and estimated cost for one paid pipeline stage."""
+
     __tablename__ = "news_usage"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     run_id: Mapped[str] = mapped_column(ForeignKey("news_runs.id", ondelete="CASCADE"), index=True)
@@ -233,6 +247,7 @@ class NewsUsage(Base):
 
 class NewsSourceCheck(Base):
     """Post-publication source hash comparison and any reverification outcome."""
+
     __tablename__ = "news_source_checks"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     edition_id: Mapped[str] = mapped_column(ForeignKey("automated_editions.id", ondelete="CASCADE"), index=True)

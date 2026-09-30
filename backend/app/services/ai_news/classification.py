@@ -51,7 +51,7 @@ def _classification_excerpt(source_text: str) -> str:
             continue
         # Neighboring lines often contain a table heading, model columns, or a
         # benchmark's tool/partial-credit qualifier needed to interpret a score.
-        excerpt = "\n".join(lines[max(0, index - 1):min(len(lines), index + 2)])
+        excerpt = "\n".join(lines[max(0, index - 1) : min(len(lines), index + 2)])
         if excerpt in selected or used + len(excerpt) > CLASSIFICATION_BENCHMARK_CHARACTERS:
             continue
         selected.append(excerpt)
@@ -82,7 +82,14 @@ def classify_releases(db, run: NewsRun) -> list[NewsCandidate]:
     if not any(document.official for document in documents):
         raise RuntimeError("official_registry_unavailable")
     assert_paid_stage_budget(db, run, 0.35)
-    result = responses_call(model_for(db, "small"), CLASSIFICATION_INSTRUCTIONS, _classification_payload(documents, run), 5000, idempotency_key=f"news:{run.id}:classification", db=db)
+    result = responses_call(
+        model_for(db, "small"),
+        CLASSIFICATION_INSTRUCTIONS,
+        _classification_payload(documents, run),
+        5000,
+        idempotency_key=f"news:{run.id}:classification",
+        db=db,
+    )
     record_openai_usage(db, run, "classification_evidence", result)
     releases = json_value(result).get("releases", [])
     by_url = {document.canonical_url: document for document in documents}
@@ -110,7 +117,9 @@ def classify_releases(db, run: NewsRun) -> list[NewsCandidate]:
             continue
         claims = [claim for claim in release.get("claims", []) if isinstance(claim, dict)]
         evidence_hash = hashlib.sha256(json.dumps(claims, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-        prior = db.scalar(select(NewsCandidate).where(NewsCandidate.normalized_key == key, NewsCandidate.status == "published").order_by(NewsCandidate.published_at.desc()))
+        prior = db.scalar(
+            select(NewsCandidate).where(NewsCandidate.normalized_key == key, NewsCandidate.status == "published").order_by(NewsCandidate.published_at.desc())
+        )
         if prior and prior.content_hash == evidence_hash:
             continue
         candidate = NewsCandidate(
@@ -148,7 +157,9 @@ def classify_releases(db, run: NewsRun) -> list[NewsCandidate]:
             claim_kind = "benchmark" if claim.get("kind") == "benchmark" else "fact"
             # A benchmark row without a source-visible number is not a usable
             # reported result; prose-only capability claims remain ordinary facts.
-            if claim_kind == "benchmark" and (not re.search(r"\d", quote) or not str(claim.get("text_en", "")).strip() or not str(claim.get("text_es", "")).strip()):
+            if claim_kind == "benchmark" and (
+                not re.search(r"\d", quote) or not str(claim.get("text_en", "")).strip() or not str(claim.get("text_es", "")).strip()
+            ):
                 continue
             if claim_kind == "benchmark" and benchmark_claims >= MAX_PROVIDER_BENCHMARKS_PER_RELEASE:
                 continue

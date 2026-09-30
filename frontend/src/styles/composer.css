@@ -48,17 +48,43 @@
   box-shadow: 0 0 0 1px #a44143;
 }
 .canvas-resize-n::after,
-.canvas-resize-s::after { left: 50%; transform: translateX(-50%); }
+.canvas-resize-s::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
 .canvas-resize-e::after,
-.canvas-resize-w::after { top: 50%; transform: translateY(-50%); }
-.canvas-resize-n::after { top: -5px; }
-.canvas-resize-s::after { bottom: -5px; }
-.canvas-resize-e::after { right: -5px; }
-.canvas-resize-w::after { left: -5px; }
-.canvas-resize-ne::after { top: -5px; right: -5px; }
-.canvas-resize-se::after { right: -5px; bottom: -5px; }
-.canvas-resize-sw::after { bottom: -5px; left: -5px; }
-.canvas-resize-nw::after { top: -5px; left: -5px; }
+.canvas-resize-w::after {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.canvas-resize-n::after {
+  top: -5px;
+}
+.canvas-resize-s::after {
+  bottom: -5px;
+}
+.canvas-resize-e::after {
+  right: -5px;
+}
+.canvas-resize-w::after {
+  left: -5px;
+}
+.canvas-resize-ne::after {
+  top: -5px;
+  right: -5px;
+}
+.canvas-resize-se::after {
+  right: -5px;
+  bottom: -5px;
+}
+.canvas-resize-sw::after {
+  bottom: -5px;
+  left: -5px;
+}
+.canvas-resize-nw::after {
+  top: -5px;
+  left: -5px;
+}
 .editor-block {
   border: 1px dashed #bca786;
   background: #fffdf6eb;

@@ -1,11 +1,11 @@
 """Deduplicated in-app and administrator-email notifications for failed news runs."""
 
-import os
 import smtplib
 from email.message import EmailMessage
 
 from sqlalchemy import select
 
+from ...config import SMTP_HOST, SMTP_PORT
 from ...models import NewsAlert, NewsAlertReceipt, NewsRun, User
 from ...utils import new_id, now
 
@@ -34,7 +34,7 @@ def create_alert(db, run: NewsRun | None, alert_type: str, title: str, message: 
 
 def _send_alert_email(alert: NewsAlert, recipients: list[User]) -> None:
     """Deliver one message to opted-in administrators and retain only a safe outcome code."""
-    if not recipients or not os.getenv("SMTP_HOST", "").strip():
+    if not recipients or not SMTP_HOST:
         alert.email_status = "not_configured" if recipients else "no_recipients"
         return
     message = EmailMessage()
@@ -43,7 +43,7 @@ def _send_alert_email(alert: NewsAlert, recipients: list[User]) -> None:
     message["Subject"] = f"MAblog AI news: {alert.title}"
     message.set_content(f"{alert.message}\n\nOpen the administrator AI-news workspace for details.")
     try:
-        with smtplib.SMTP(os.getenv("SMTP_HOST", "localhost"), int(os.getenv("SMTP_PORT", "1025")), timeout=10) as smtp:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
             smtp.send_message(message)
         alert.email_status = "sent"
     except OSError:

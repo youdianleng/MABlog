@@ -8,18 +8,12 @@ interface PendingReviewLinkProps {
 }
 
 /** Render the Review action with a creator-visible pending-decision badge. */
-export function PendingReviewLink({
-  postId,
-  pendingCount,
-}: PendingReviewLinkProps) {
+export function PendingReviewLink({ postId, pendingCount }: PendingReviewLinkProps) {
   const { t } = useLanguage();
   const pendingLabel =
     pendingCount === 1
       ? t("1 review pending", "1 revisión pendiente")
-      : t(
-          `${pendingCount} reviews pending`,
-          `${pendingCount} revisiones pendientes`,
-        );
+      : t(`${pendingCount} reviews pending`, `${pendingCount} revisiones pendientes`);
 
   return (
     <Button asChild variant="outline">
@@ -27,9 +21,7 @@ export function PendingReviewLink({
         className="pending-review-link"
         href={`/review/${postId}`}
         aria-label={
-          pendingCount > 0
-            ? `${t("Review", "Revisar")}, ${pendingLabel}`
-            : t("Review", "Revisar")
+          pendingCount > 0 ? `${t("Review", "Revisar")}, ${pendingLabel}` : t("Review", "Revisar")
         }
       >
         <span>{t("Review", "Revisar")}</span>

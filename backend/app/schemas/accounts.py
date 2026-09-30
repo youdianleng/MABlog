@@ -1,4 +1,5 @@
 """Authentication and administrator authorization request schemas."""
+
 from pydantic import EmailStr, Field
 
 from .common import StrictModel

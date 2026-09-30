@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 /** Render the shared shadcn multiline input with accessible focus states. */ function Textarea({
   className,

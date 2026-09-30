@@ -35,19 +35,49 @@ export function ComposerToolbar({
   return (
     <>
       <div className="toolbar">
-        <Button size="sm" variant="outline" onClick={/** Add a block inside the current visible canvas. */ function createBlock() { addBlock(canvas.x + 40, canvas.y + 40); }}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={
+            /** Add a block inside the current visible canvas. */ function createBlock() {
+              addBlock(canvas.x + 40, canvas.y + 40);
+            }
+          }
+        >
           <span aria-hidden="true">+</span>
           {t("Add block", "Añadir bloque")}
         </Button>
-        <Button size="sm" variant={drawing ? "default" : "outline"} onClick={/** Toggle drawing and leave crop-movement mode. */ function drawMode() { setDrawing(!drawing); setCropping(false); }}>
+        <Button
+          size="sm"
+          variant={drawing ? "default" : "outline"}
+          onClick={
+            /** Toggle drawing and leave crop-movement mode. */ function drawMode() {
+              setDrawing(!drawing);
+              setCropping(false);
+            }
+          }
+        >
           <Square size={14} />
           {t("Draw block", "Dibujar bloque")}
         </Button>
-        <Button size="sm" variant={cropping ? "default" : "outline"} onClick={/** Toggle crop movement and leave block-drawing mode. */ function cropMode() { setCropping(!cropping); setDrawing(false); }}>
+        <Button
+          size="sm"
+          variant={cropping ? "default" : "outline"}
+          onClick={
+            /** Toggle crop movement and leave block-drawing mode. */ function cropMode() {
+              setCropping(!cropping);
+              setDrawing(false);
+            }
+          }
+        >
           {t("Adjust canvas bounds", "Ajustar límites del lienzo")}
         </Button>
-        <Button size="sm" variant="ghost" aria-label={t("Undo", "Deshacer")} onClick={undo}><RotateCcw size={15} /></Button>
-        <Button size="sm" variant="ghost" aria-label={t("Redo", "Rehacer")} onClick={redo}><RotateCw size={15} /></Button>
+        <Button size="sm" variant="ghost" aria-label={t("Undo", "Deshacer")} onClick={undo}>
+          <RotateCcw size={15} />
+        </Button>
+        <Button size="sm" variant="ghost" aria-label={t("Redo", "Rehacer")} onClick={redo}>
+          <RotateCw size={15} />
+        </Button>
         <small>{dirty ? t("Unsaved changes", "Cambios sin guardar") : saved}</small>
       </div>
       {cropping ? (
@@ -66,7 +96,8 @@ export function ComposerToolbar({
         </p>
       )}
       <small className="canvas-zoom-status" aria-live="polite">
-        {t("Canvas zoom", "Zoom del lienzo")} · {Math.round(zoom * 100)}% · {t("Ctrl + wheel", "Ctrl + rueda")}
+        {t("Canvas zoom", "Zoom del lienzo")} · {Math.round(zoom * 100)}% ·{" "}
+        {t("Ctrl + wheel", "Ctrl + rueda")}
       </small>
     </>
   );

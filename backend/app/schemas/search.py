@@ -1,4 +1,5 @@
 """Search retrieval and streamed explanation request schemas."""
+
 from typing import Literal
 
 from pydantic import Field

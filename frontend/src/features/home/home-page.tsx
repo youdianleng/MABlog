@@ -29,11 +29,7 @@ export function Home({ publicOnly, initialPage, initialFeatured, category = "" }
   const posts = initialPage?.items ?? [];
   const currentPage = initialPage?.page ?? 1;
   const pageCount = initialPage?.pages ?? 1;
-  const featured = useData<Post[]>(
-    "/carousel?language=" + locale,
-    0,
-    initialFeatured,
-  );
+  const featured = useData<Post[]>("/carousel?language=" + locale, 0, initialFeatured);
 
   useEffect(
     /** Move keyboard focus to the updated result heading after page or filter navigation. */
@@ -81,12 +77,28 @@ export function Home({ publicOnly, initialPage, initialFeatured, category = "" }
             <CharacterCycle />
             <div className="hero-intro">
               <div className="eyebrow">
-                {t("A gathering of stories & kindred spirits", "Un encuentro de historias y almas afines")}
+                {t(
+                  "A gathering of stories & kindred spirits",
+                  "Un encuentro de historias y almas afines",
+                )}
               </div>
-              <h1>{t("Every story opens", "Cada historia abre")}<br />{t("another world.", "otro mundo.")}</h1>
-              <p>{t("Wander through imagination. Leave a little of your own.", "Explora la imaginación. Deja un poco de la tuya.")}</p>
+              <h1>
+                {t("Every story opens", "Cada historia abre")}
+                <br />
+                {t("another world.", "otro mundo.")}
+              </h1>
+              <p>
+                {t(
+                  "Wander through imagination. Leave a little of your own.",
+                  "Explora la imaginación. Deja un poco de la tuya.",
+                )}
+              </p>
             </div>
-            {featured.data ? <Carousel posts={featured.data} /> : <Loading error={featured.error} />}
+            {featured.data ? (
+              <Carousel posts={featured.data} />
+            ) : (
+              <Loading error={featured.error} />
+            )}
           </div>
           <div className="divider">✦</div>
         </>
@@ -94,24 +106,51 @@ export function Home({ publicOnly, initialPage, initialFeatured, category = "" }
       <div className="section-heading">
         <div>
           <div className="eyebrow">{t("FROM THE COMMUNITY", "DE LA COMUNIDAD")}</div>
-          <h2 ref={collectionHeading} tabIndex={-1}>{t("Stories worth wandering into", "Historias en las que perderse")}</h2>
-          <p>{t("A new perspective, a familiar feeling, an unexpected journey.", "Una nueva perspectiva, una sensación familiar, un viaje inesperado.")}</p>
+          <h2 ref={collectionHeading} tabIndex={-1}>
+            {t("Stories worth wandering into", "Historias en las que perderse")}
+          </h2>
+          <p>
+            {t(
+              "A new perspective, a familiar feeling, an unexpected journey.",
+              "Una nueva perspectiva, una sensación familiar, un viaje inesperado.",
+            )}
+          </p>
         </div>
         <Link href="/public">{t("Explore the collection", "Explorar la colección")} ↗</Link>
       </div>
       <div className={publicOnly ? "collection-layout" : undefined}>
         {publicOnly ? (
-          <nav className="category-menu" aria-label={t("Post categories", "Categorías de publicaciones")}>
+          <nav
+            className="category-menu"
+            aria-label={t("Post categories", "Categorías de publicaciones")}
+          >
             <div className="eyebrow">{t("BROWSE BY CATEGORY", "EXPLORAR POR CATEGORÍA")}</div>
-            <button type="button" aria-pressed={!category} disabled={postsPending} onClick={showAllCategories}>
-              <span aria-hidden="true">☷</span>{t("All posts", "Todas las publicaciones")}
+            <button
+              type="button"
+              aria-pressed={!category}
+              disabled={postsPending}
+              onClick={showAllCategories}
+            >
+              <span aria-hidden="true">☷</span>
+              {t("All posts", "Todas las publicaciones")}
             </button>
             {categories.map(
               /** Render a keyboard-accessible category filter. */
               function categoryOption(item) {
                 return (
-                  <button type="button" key={item.value} aria-pressed={category === item.value} disabled={postsPending} onClick={/** Open the category at its first page. */ function selectCategory() { navigatePosts(1, item.value); }}>
-                    <span aria-hidden="true">{item.symbol}</span>{t(item.en, item.es)}
+                  <button
+                    type="button"
+                    key={item.value}
+                    aria-pressed={category === item.value}
+                    disabled={postsPending}
+                    onClick={
+                      /** Open the category at its first page. */ function selectCategory() {
+                        navigatePosts(1, item.value);
+                      }
+                    }
+                  >
+                    <span aria-hidden="true">{item.symbol}</span>
+                    {t(item.en, item.es)}
                   </button>
                 );
               },
@@ -120,19 +159,45 @@ export function Home({ publicOnly, initialPage, initialFeatured, category = "" }
         ) : null}
         <div className="collection-results" aria-live="polite" aria-busy={postsPending}>
           {publicOnly && category && initialPage && posts.length === 0 ? (
-            <div className="empty"><h2>{t("No stories in this category yet", "Todavía no hay historias en esta categoría")}</h2><p>{t("Choose another category or explore all posts.", "Elige otra categoría o explora todas las publicaciones.")}</p></div>
+            <div className="empty">
+              <h2>
+                {t("No stories in this category yet", "Todavía no hay historias en esta categoría")}
+              </h2>
+              <p>
+                {t(
+                  "Choose another category or explore all posts.",
+                  "Elige otra categoría o explora todas las publicaciones.",
+                )}
+              </p>
+            </div>
           ) : initialPage && posts.length ? (
             <>
               <PostGrid posts={posts} reveal={!publicOnly} />
-              {postsPending ? <p className="post-pagination-loading" role="status">{t("Loading posts…", "Cargando publicaciones…")}</p> : null}
-              <PostPagination page={currentPage} pages={pageCount} pending={postsPending} onPageChange={showPage} />
+              {postsPending ? (
+                <p className="post-pagination-loading" role="status">
+                  {t("Loading posts…", "Cargando publicaciones…")}
+                </p>
+              ) : null}
+              <PostPagination
+                page={currentPage}
+                pages={pageCount}
+                pending={postsPending}
+                onPageChange={showPage}
+              />
             </>
           ) : initialPage ? (
             <>
               <PostGrid posts={[]} />
-              <PostPagination page={currentPage} pages={pageCount} pending={postsPending} onPageChange={showPage} />
+              <PostPagination
+                page={currentPage}
+                pages={pageCount}
+                pending={postsPending}
+                onPageChange={showPage}
+              />
             </>
-          ) : <Loading error={t("Unable to load posts", "No se pueden cargar las publicaciones")} />}
+          ) : (
+            <Loading error={t("Unable to load posts", "No se pueden cargar las publicaciones")} />
+          )}
         </div>
       </div>
     </>

@@ -1,54 +1,65 @@
 """Public collection, reader, publication, workspace, and like endpoints."""
-import json
-import redis
+
 from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import func, select
+
+from ..config import UPLOAD_DIR
 from ..dependencies import current_user, database, signed_in
-from ..config import CACHE_SECONDS, LIKE_WINDOW_SECONDS, UPLOAD_DIR
-from ..models import Draft, Grant, Like, Media, Post, Proposal, User
-from ..schemas import Document, DraftPayload, PostCategory, PublicationPayload
-from ..services.documents import clean_document, media_ids, targets
+from ..models import Grant, Like, Media, Post, Proposal
+from ..models.posts import post_category_expression
+from ..schemas import Document, PostCategory, PublicationPayload
+from ..services.carousel import carousel_posts
 from ..services.indexing import synchronize_post_search
-from ..services.permissions import require_post, role_for
-from ..services.posts import apply_target, ensure_publishable, post_summary, submitted_media, user_profile, validate_media
-from ..services.public_cache import cache, invalidate_public_cache
+from ..services.permissions import require_post
+from ..services.posts import ensure_publishable, post_summaries, post_summary
+from ..services.public_cache import invalidate_public_cache
 from ..utils import now
 
 router = APIRouter()
 PUBLIC_POST_PAGE_LIMIT = 50
 PUBLIC_POST_NAVIGATION_SIZE = 15
 
+
 @router.get("/posts")
-def public_posts(offset: int = 0, limit: int = Query(PUBLIC_POST_PAGE_LIMIT, ge=1, le=PUBLIC_POST_PAGE_LIMIT), category: PostCategory | None = None, language: Literal["en", "es"] = "en", user=Depends(current_user), db=Depends(database)):
+def public_posts(
+    offset: int = 0,
+    limit: int = Query(PUBLIC_POST_PAGE_LIMIT, ge=1, le=PUBLIC_POST_PAGE_LIMIT),
+    category: PostCategory | None = None,
+    language: Literal["en", "es"] = "en",
+    user=Depends(current_user),
+    db=Depends(database),
+):
     """Filter approved public metadata before bounded pagination; legacy posts default to General."""
     query = select(Post).where(Post.public.is_(True))
     if category is not None:
         # JSON metadata already participates in creator approval; no duplicate category column is needed.
-        query = query.where(func.coalesce(Post.document["details"]["category"].as_string(), "general") == category)
-    posts = db.scalars(query.order_by(Post.published.desc(), Post.id).offset(max(0, offset)).limit(limit))
-    return [post_summary(db, post, user, language) for post in posts]
+        query = query.where(post_category_expression() == category)
+    posts = list(db.scalars(query.order_by(Post.published.desc(), Post.id).offset(max(0, offset)).limit(limit)))
+    return post_summaries(db, posts, user, language)
 
 
 @router.get("/posts/page")
-def public_post_page(page: int = Query(1, ge=1), page_size: int = Query(PUBLIC_POST_NAVIGATION_SIZE, ge=1, le=PUBLIC_POST_NAVIGATION_SIZE), category: PostCategory | None = None, language: Literal["en", "es"] = "en", user=Depends(current_user), db=Depends(database)):
+def public_post_page(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(PUBLIC_POST_NAVIGATION_SIZE, ge=1, le=PUBLIC_POST_NAVIGATION_SIZE),
+    category: PostCategory | None = None,
+    language: Literal["en", "es"] = "en",
+    user=Depends(current_user),
+    db=Depends(database),
+):
     """Return one numbered public-post page plus the filtered total for navigation."""
     visibility = [Post.public.is_(True)]
     if category is not None:
         # Count and item queries must use the same approved metadata predicate.
-        visibility.append(func.coalesce(Post.document["details"]["category"].as_string(), "general") == category)
+        visibility.append(post_category_expression() == category)
     total = db.scalar(select(func.count()).select_from(Post).where(*visibility)) or 0
-    posts = db.scalars(
-        select(Post)
-        .where(*visibility)
-        .order_by(Post.published.desc(), Post.id)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
+    posts = list(db.scalars(select(Post).where(*visibility).order_by(Post.published.desc(), Post.id).offset((page - 1) * page_size).limit(page_size)))
     # At least one page keeps the empty collection navigation state understandable.
     page_count = max(1, (total + page_size - 1) // page_size)
     return {
-        "items": [post_summary(db, post, user, language) for post in posts],
+        "items": post_summaries(db, posts, user, language),
         "page": page,
         "page_size": page_size,
         "pages": page_count,
@@ -58,44 +69,31 @@ def public_post_page(page: int = Query(1, ge=1), page_size: int = Query(PUBLIC_P
 
 @router.get("/carousel")
 def carousel(language: Literal["en", "es"] = "en", user=Depends(current_user), db=Depends(database)):
-    """Cache ranking candidates for 15 seconds while rechecking visibility on every read."""
-    identifiers = None
-    try:
-        saved = cache.get("carousel")
-        identifiers = json.loads(saved) if saved else None
-    except (redis.RedisError, ValueError):
-        pass
-    if identifiers is None:
-        ranking = select(Post.id, Post.kind).outerjoin(Like, (Like.post_id == Post.id) & (Like.created >= now() - LIKE_WINDOW_SECONDS)).where(Post.public.is_(True)).group_by(Post.id).order_by(func.count(Like.user_id).desc(), Post.published.desc(), Post.id).limit(25)
-        identifiers = []
-        ai_news_selected = False
-        for identifier, kind in db.execute(ranking):
-            # One automated roundup may appear, leaving most featured space for community authors.
-            if kind == "ai_news" and ai_news_selected:
-                continue
-            identifiers.append(identifier)
-            ai_news_selected = ai_news_selected or kind == "ai_news"
-            if len(identifiers) == 5:
-                break
-        try:
-            cache.set("carousel", json.dumps(identifiers), ex=CACHE_SECONDS)
-        except redis.RedisError:
-            pass
-    result = []
-    for identifier in identifiers:
-        post = db.get(Post, identifier)
-        # The cache contains only IDs. Private titles, covers, and content never come from it.
-        if post and post.public:
-            result.append(post_summary(db, post, user, language))
-    return result
+    """Return featured public posts ranked by recent likes; see ``services.carousel`` for caching."""
+    return post_summaries(db, carousel_posts(db), user, language)
 
 
 @router.get("/workspace")
 def workspace(user=Depends(signed_in), db=Depends(database)):
     """List owned/shared posts and count proposals awaiting this creator's review."""
     owned = list(db.scalars(select(Post).where(Post.author_id == user.id).order_by(Post.created.desc())))
-    shared = db.scalars(select(Post).join(Grant, Grant.post_id == Post.id).where(Grant.user_id == user.id))
-    return {"owned": [post_summary(db, p, user) for p in owned], "shared": [post_summary(db, p, user) for p in shared], "reviews": [{"id": p.id, "title": p.document["details"]["title"], "count": db.scalar(select(func.count()).select_from(Proposal).where(Proposal.post_id == p.id, Proposal.status == "pending"))} for p in owned]}
+    shared = list(db.scalars(select(Post).join(Grant, Grant.post_id == Post.id).where(Grant.user_id == user.id)))
+    pending = (
+        dict(
+            db.execute(
+                select(Proposal.post_id, func.count())
+                .where(Proposal.post_id.in_([post.id for post in owned]), Proposal.status == "pending")
+                .group_by(Proposal.post_id)
+            ).all()
+        )
+        if owned
+        else {}
+    )
+    return {
+        "owned": post_summaries(db, owned, user),
+        "shared": post_summaries(db, shared, user),
+        "reviews": [{"id": post.id, "title": post.document["details"]["title"], "count": pending.get(post.id, 0)} for post in owned],
+    }
 
 
 @router.post("/posts")
@@ -112,11 +110,7 @@ def read_post(post_id: str, language: Literal["en", "es"] = "en", user=Depends(c
     """Return approved content and a creator-only count of pending review decisions."""
     post = require_post(db, post_id, user)
     pending_reviews = (
-        db.scalar(
-            select(func.count())
-            .select_from(Proposal)
-            .where(Proposal.post_id == post.id, Proposal.status == "pending")
-        )
+        db.scalar(select(func.count()).select_from(Proposal).where(Proposal.post_id == post.id, Proposal.status == "pending"))
         if user and user.id == post.author_id
         else 0
     )
@@ -172,6 +166,3 @@ def toggle_like(post_id: str, user=Depends(signed_in), db=Depends(database)):
     db.commit()
     invalidate_public_cache()
     return post_summary(db, post, user)
-
-
-

@@ -14,67 +14,76 @@ export function useSearchController() {
   }, []);
 
   /** Stream the explanation for a completed retrieval while accumulating trusted citation metadata. */
-  const beginExplanation = useCallback(function beginExplanation(token: string) {
-    cancelExplanation();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    useSearchStore.setState({ explanationStatus: "streaming", explanation: "", citations: [] });
-    void streamExplanation(token, controller.signal, {
-      /** Store server-issued citation titles and deep links before text tokens arrive. */
-      citations(items) {
-        useSearchStore.setState({ citations: items });
-      },
-      /** Append one provider text delta without replacing ranked result groups. */
-      delta(text) {
-        useSearchStore.setState(
-          /** Append to the existing stream because Responses API deltas contain only new text. */
-          function appendDelta(state) {
-          return { explanation: state.explanation + text };
-          },
-        );
-      },
-      /** Mark a fully delivered explanation as stable and interactive. */
-      done() {
-        useSearchStore.setState({ explanationStatus: "done" });
-      },
-      /** Keep retrieval visible while replacing a failed answer with a clear status. */
-      failed() {
-        useSearchStore.setState({ explanationStatus: "failed" });
-      },
-    }).catch(
-      /** Ignore deliberate cancellation and report every other stream failure above the results. */
-      function explanationFailed(error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        useSearchStore.setState({ explanationStatus: "failed" });
-      },
-    );
-  }, [cancelExplanation]);
+  const beginExplanation = useCallback(
+    function beginExplanation(token: string) {
+      cancelExplanation();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      useSearchStore.setState({ explanationStatus: "streaming", explanation: "", citations: [] });
+      void streamExplanation(token, controller.signal, {
+        /** Store server-issued citation titles and deep links before text tokens arrive. */
+        citations(items) {
+          useSearchStore.setState({ citations: items });
+        },
+        /** Append one provider text delta without replacing ranked result groups. */
+        delta(text) {
+          useSearchStore.setState(
+            /** Append to the existing stream because Responses API deltas contain only new text. */
+            function appendDelta(state) {
+              return { explanation: state.explanation + text };
+            },
+          );
+        },
+        /** Mark a fully delivered explanation as stable and interactive. */
+        done() {
+          useSearchStore.setState({ explanationStatus: "done" });
+        },
+        /** Keep retrieval visible while replacing a failed answer with a clear status. */
+        failed() {
+          useSearchStore.setState({ explanationStatus: "failed" });
+        },
+      }).catch(
+        /** Ignore deliberate cancellation and report every other stream failure above the results. */
+        function explanationFailed(error) {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          useSearchStore.setState({ explanationStatus: "failed" });
+        },
+      );
+    },
+    [cancelExplanation],
+  );
 
   /** Run a fresh independent question and immediately display retrieval before streaming its answer. */
-  const runSearch = useCallback(async function runSearch(input: SearchInput) {
-    cancelExplanation();
-    useSearchStore.setState({
-      ...input,
-      pending: true,
-      error: "",
-      response: null,
-      explanation: "",
-      citations: [],
-      explanationStatus: "idle",
-      loadingGroup: null,
-    });
-    try {
-      const response = await searchPosts(input);
+  const runSearch = useCallback(
+    async function runSearch(input: SearchInput) {
+      cancelExplanation();
       useSearchStore.setState({
-        response,
-        pending: false,
-        explanationStatus: response.explanation_available ? "streaming" : "unavailable",
+        ...input,
+        pending: true,
+        error: "",
+        response: null,
+        explanation: "",
+        citations: [],
+        explanationStatus: "idle",
+        loadingGroup: null,
       });
-      if (response.explanation_token) beginExplanation(response.explanation_token);
-    } catch (error) {
-      useSearchStore.setState({ pending: false, error: error instanceof Error ? error.message : "Search failed" });
-    }
-  }, [beginExplanation, cancelExplanation]);
+      try {
+        const response = await searchPosts(input);
+        useSearchStore.setState({
+          response,
+          pending: false,
+          explanationStatus: response.explanation_available ? "streaming" : "unavailable",
+        });
+        if (response.explanation_token) beginExplanation(response.explanation_token);
+      } catch (error) {
+        useSearchStore.setState({
+          pending: false,
+          error: error instanceof Error ? error.message : "Search failed",
+        });
+      }
+    },
+    [beginExplanation, cancelExplanation],
+  );
 
   /** Append one signed Personal or Public page while keeping the other group unchanged. */
   const loadMore = useCallback(async function loadMore(group: "personal" | "public") {
@@ -89,12 +98,19 @@ export function useSearchController() {
       useSearchStore.setState({
         response: {
           ...current,
-          [group]: { ...current[group], items: [...current[group].items, ...page.items], cursor: page.cursor },
+          [group]: {
+            ...current[group],
+            items: [...current[group].items, ...page.items],
+            cursor: page.cursor,
+          },
         },
         loadingGroup: null,
       });
     } catch (error) {
-      useSearchStore.setState({ loadingGroup: null, error: error instanceof Error ? error.message : "Loading failed" });
+      useSearchStore.setState({
+        loadingGroup: null,
+        error: error instanceof Error ? error.message : "Loading failed",
+      });
     }
   }, []);
 

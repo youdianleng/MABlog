@@ -46,13 +46,13 @@ export function queueHeaderSearch(query: string): void {
   useSearchStore.setState(
     /** Increment a sequence so identical consecutive header questions still run independently. */
     function queueRequest(state) {
-    return {
-      query: value,
-      category: null,
-      scope: "all",
-      queuedQuery: value,
-      requestSequence: state.requestSequence + 1,
-    };
+      return {
+        query: value,
+        category: null,
+        scope: "all",
+        queuedQuery: value,
+        requestSequence: state.requestSequence + 1,
+      };
     },
   );
 }

@@ -17,10 +17,18 @@ export function PostCard({ post }: { post: Post }) {
           <div className="empty">✦</div>
         )}
         {post.kind === "ai_news" ? (
-          <span className={`ai-card-label${post.ai_news?.fact_check_passed === false ? " manual-override" : ""}`}>
-            {post.ai_news?.fact_check_passed === false ? <TriangleAlert aria-hidden="true" size={13} /> : <ShieldCheck aria-hidden="true" size={13} />}
+          <span
+            className={`ai-card-label${post.ai_news?.fact_check_passed === false ? " manual-override" : ""}`}
+          >
+            {post.ai_news?.fact_check_passed === false ? (
+              <TriangleAlert aria-hidden="true" size={13} />
+            ) : (
+              <ShieldCheck aria-hidden="true" size={13} />
+            )}
             {post.ai_news?.fact_check_passed === false
-              ? post.ai_news?.manual_unverified_preview ? t("AI-generated · not fact-checked", "Generado por IA · sin verificación") : t("AI-generated · evidence exception", "Generado por IA · excepción de evidencia")
+              ? post.ai_news?.manual_unverified_preview
+                ? t("AI-generated · not fact-checked", "Generado por IA · sin verificación")
+                : t("AI-generated · evidence exception", "Generado por IA · excepción de evidencia")
               : t("AI-generated · source-reviewed", "Generado por IA · fuentes revisadas")}
           </span>
         ) : null}
@@ -45,9 +53,7 @@ export function PostCard({ post }: { post: Post }) {
         </span>
       ) : null}
       <Link href={`/posts/${post.id}`}>
-        <h3 className="post-title">
-          {post.title || t("Untitled story", "Historia sin título")}
-        </h3>
+        <h3 className="post-title">{post.title || t("Untitled story", "Historia sin título")}</h3>
       </Link>
       <p className="post-summary">{post.summary}</p>
       <div className="post-meta post-footer">
@@ -57,9 +63,7 @@ export function PostCard({ post }: { post: Post }) {
             {post.author.display_name || post.author.username}
           </span>
         </Link>
-        <span className="post-read-link">
-          {t("Read story", "Leer historia")} ↗
-        </span>
+        <span className="post-read-link">{t("Read story", "Leer historia")} ↗</span>
       </div>
     </article>
   );

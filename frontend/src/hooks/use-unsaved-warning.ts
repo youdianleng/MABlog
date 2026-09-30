@@ -13,7 +13,9 @@ export function useUnsavedWarning(dirty: boolean) {
         }
       }
       window.addEventListener("beforeunload", warn);
-      return /** Remove the navigation guard when its consumer unmounts or state changes. */ function cleanup() { window.removeEventListener("beforeunload", warn); };
+      return /** Remove the navigation guard when its consumer unmounts or state changes. */ function cleanup() {
+        window.removeEventListener("beforeunload", warn);
+      };
     },
     [dirty],
   );

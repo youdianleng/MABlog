@@ -11,11 +11,7 @@ interface CanvasBoundsSettingsProps {
 }
 
 /** Render numeric crop position and canvas dimension controls. */
-export function CanvasBoundsSettings({
-  t,
-  current,
-  change,
-}: CanvasBoundsSettingsProps) {
+export function CanvasBoundsSettings({ t, current, change }: CanvasBoundsSettingsProps) {
   const canvas = current.canvas;
   return (
     <>
@@ -25,22 +21,23 @@ export function CanvasBoundsSettings({
           /** Render one numeric crop-bound control. */
           function canvasField(key) {
             const label =
-              key === "width"
-                ? t("Width", "Ancho")
-                : key === "height"
-                  ? t("Height", "Alto")
-                  : key;
+              key === "width" ? t("Width", "Ancho") : key === "height" ? t("Height", "Alto") : key;
             return (
               <label key={key}>
                 {label}
                 <Input
                   type="number"
                   value={canvas[key]}
-                  onChange={/** Update one bound while enforcing minimum dimensions. */ function dimensions(event) {
-                    const value = Number(event.target.value);
-                    if ((key === "width" || key === "height") && value < MINIMUM_CANVAS_SIZE) return;
-                    change({ ...current, canvas: { ...canvas, [key]: value } });
-                  }}
+                  onChange={
+                    /** Update one bound while enforcing minimum dimensions. */ function dimensions(
+                      event,
+                    ) {
+                      const value = Number(event.target.value);
+                      if ((key === "width" || key === "height") && value < MINIMUM_CANVAS_SIZE)
+                        return;
+                      change({ ...current, canvas: { ...canvas, [key]: value } });
+                    }
+                  }
                 />
               </label>
             );

@@ -5,7 +5,13 @@ import { useLanguage } from "@/lib/i18n";
 import { useElementWidth } from "@/hooks/use-element-width";
 
 /** Preserve the authored arrangement while fitting the initial reader view and offering zoom. */
-export function CompositionReader({ document, highlightedBlockId = null }: { document: Composition; highlightedBlockId?: string | null }) {
+export function CompositionReader({
+  document,
+  highlightedBlockId = null,
+}: {
+  document: Composition;
+  highlightedBlockId?: string | null;
+}) {
   const { t } = useLanguage();
   const wrapper = useRef<HTMLDivElement>(null);
   const measuredWidth = useElementWidth(wrapper, 932);
@@ -25,10 +31,7 @@ export function CompositionReader({ document, highlightedBlockId = null }: { doc
   );
   return (
     <>
-      <div
-        className="toolbar"
-        style={{ justifyContent: "flex-end", marginBottom: 12 }}
-      >
+      <div className="toolbar" style={{ justifyContent: "flex-end", marginBottom: 12 }}>
         <label>
           {t("Reading zoom", "Zoom de lectura")}
           <input
@@ -49,9 +52,7 @@ export function CompositionReader({ document, highlightedBlockId = null }: { doc
         </label>
       </div>
       <div ref={wrapper} className="reader-wrap">
-        <div
-          style={{ width: canvas.width * scale, height: canvas.height * scale }}
-        >
+        <div style={{ width: canvas.width * scale, height: canvas.height * scale }}>
           <div
             className="composition"
             style={{

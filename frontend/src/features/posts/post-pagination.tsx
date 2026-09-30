@@ -59,7 +59,11 @@ export function PostPagination({ page, pages, pending, onPageChange }: PostPagin
           /** Render page destinations and non-interactive gaps in their visual order. */
           function renderPageItem(item) {
             if (typeof item !== "number") {
-              return <span className="post-pagination-ellipsis" aria-hidden="true" key={item}>…</span>;
+              return (
+                <span className="post-pagination-ellipsis" aria-hidden="true" key={item}>
+                  …
+                </span>
+              );
             }
             const pageNumber = item;
             /** Request the numbered page represented by this control. */

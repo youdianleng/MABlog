@@ -15,15 +15,12 @@ export function Review({ id }: { id: string }) {
   const [revision, setRevision] = useState(0),
     proposals = useData<Proposal[]>(`/posts/${id}/proposals`, revision),
     post = useData<Post>(`/posts/${id}`, revision);
-  if (!proposals.data || !post.data)
-    return <Loading error={proposals.error || post.error} />;
+  if (!proposals.data || !post.data) return <Loading error={proposals.error || post.error} />;
   const current = post.data,
     groups = Array.from(
       new Set(
         proposals.data.map(
-          /** Extract the independently reviewable proposal target. */ function target(
-            p,
-          ) {
+          /** Extract the independently reviewable proposal target. */ function target(p) {
             return p.target;
           },
         ),
@@ -35,26 +32,32 @@ export function Review({ id }: { id: string }) {
     if ("html" in value)
       return (
         <>
-          <div
-            className="rich-content"
-            dangerouslySetInnerHTML={{ __html: value.html }}
-          />
+          <div className="rich-content" dangerouslySetInnerHTML={{ __html: value.html }} />
           <small>
-            {value.width} × {value.height} · x {value.x}, y {value.y} ·{" "}
-            {value.rotation}° · {t("Layer", "Capa")} {value.z}
+            {value.width} × {value.height} · x {value.x}, y {value.y} · {value.rotation}° ·{" "}
+            {t("Layer", "Capa")} {value.z}
           </small>
         </>
       );
     return (
       <dl>
         {Object.entries(value).map(
-          /** Render a metadata or geometry field for comparison. */ function field([
-            key,
-            val,
-          ]) {
+          /** Render a metadata or geometry field for comparison. */ function field([key, val]) {
             return (
               <div key={key}>
-                <strong>{({category: t("Category", "Categoría"), title: t("Title", "Título"), summary: t("Summary", "Resumen"), cover: t("Cover", "Portada"), width: t("Width", "Ancho"), height: t("Height", "Alto")} as Record<string, string>)[key] || key}</strong>:{" "}
+                <strong>
+                  {(
+                    {
+                      category: t("Category", "Categoría"),
+                      title: t("Title", "Título"),
+                      summary: t("Summary", "Resumen"),
+                      cover: t("Cover", "Portada"),
+                      width: t("Width", "Ancho"),
+                      height: t("Height", "Alto"),
+                    } as Record<string, string>
+                  )[key] || key}
+                </strong>
+                :{" "}
                 {key === "cover" && val ? (
                   <img src={String(val)} alt="" style={{ maxWidth: 220 }} />
                 ) : (
@@ -69,9 +72,7 @@ export function Review({ id }: { id: string }) {
   }
   return (
     <div className="stack">
-      <Link href={`/posts/${id}`}>
-        ← {t("Back to post", "Volver a la publicación")}
-      </Link>
+      <Link href={`/posts/${id}`}>← {t("Back to post", "Volver a la publicación")}</Link>
       <h1 className="text-4xl">
         {t("A conversation in revisions", "Una conversación entre versiones")}
       </h1>
@@ -118,9 +119,7 @@ export function Review({ id }: { id: string }) {
                 </div>
                 {proposals
                   .data!.filter(
-                    /** Select only proposals competing for this target. */ function sameTarget(
-                      p,
-                    ) {
+                    /** Select only proposals competing for this target. */ function sameTarget(p) {
                       return p.target === target;
                     },
                   )
@@ -138,52 +137,40 @@ export function Review({ id }: { id: string }) {
                                 ? t("Approved", "Aprobada")
                                 : t("Rejected", "Rechazada")}
                           </small>
-                          <div className="review-preview">
-                            {preview(p.value)}
-                          </div>
-                          {p.status === "pending" &&
-                            current.role === "author" && (
-                              <div className="toolbar">
-                                {["approve", "reject"].map(
-                                  /** Render the approve or reject control. */ function action(
-                                    action,
-                                  ) {
-                                    return (
-                                      <Button
-                                        key={action}
-                                        variant={
-                                          action === "approve"
-                                            ? "default"
-                                            : "outline"
+                          <div className="review-preview">{preview(p.value)}</div>
+                          {p.status === "pending" && current.role === "author" && (
+                            <div className="toolbar">
+                              {["approve", "reject"].map(
+                                /** Render the approve or reject control. */ function action(
+                                  action,
+                                ) {
+                                  return (
+                                    <Button
+                                      key={action}
+                                      variant={action === "approve" ? "default" : "outline"}
+                                      onClick={
+                                        /** Submit an explicit creator review decision. */ function decide() {
+                                          void run(
+                                            /** Apply the decision against the displayed revision and reload proposals. */ async function submitDecision() {
+                                              await api(`/posts/${id}/proposals/${p.id}`, "POST", {
+                                                action,
+                                                current_version: p.current_version,
+                                              });
+                                              setRevision(revision + 1);
+                                            },
+                                          );
                                         }
-                                        onClick={
-                                          /** Submit an explicit creator review decision. */ function decide() {
-                                            void run(
-                                              /** Apply the decision against the displayed revision and reload proposals. */ async function submitDecision() {
-                                                await api(
-                                                  `/posts/${id}/proposals/${p.id}`,
-                                                  "POST",
-                                                  {
-                                                    action,
-                                                    current_version:
-                                                      p.current_version,
-                                                  },
-                                                );
-                                                setRevision(revision + 1);
-                                              },
-                                            );
-                                          }
-                                        }
-                                      >
-                                        {action === "approve"
-                                          ? t("Approve", "Aprobar")
-                                          : t("Reject", "Rechazar")}
-                                      </Button>
-                                    );
-                                  },
-                                )}
-                              </div>
-                            )}
+                                      }
+                                    >
+                                      {action === "approve"
+                                        ? t("Approve", "Aprobar")
+                                        : t("Reject", "Rechazar")}
+                                    </Button>
+                                  );
+                                },
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     },

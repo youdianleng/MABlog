@@ -103,9 +103,15 @@
 }
 
 /* Warm accents preserve the approved palette without continuously repainting the SVG. */
-.home-star-three .home-star-glyph { color: #ca7940; }
-.home-star-five .home-star-glyph { color: #cf7c42; }
-.home-star-seven .home-star-glyph { color: #c35c50; }
+.home-star-three .home-star-glyph {
+  color: #ca7940;
+}
+.home-star-five .home-star-glyph {
+  color: #cf7c42;
+}
+.home-star-seven .home-star-glyph {
+  color: #c35c50;
+}
 
 .character-showcase .hero-intro {
   z-index: 2;

@@ -1,13 +1,40 @@
 """Composition sanitizing, target decomposition, and media-reference extraction."""
+
 import json
 import re
+
 import bleach
 from fastapi import HTTPException
+
 from ..schemas import Document
 
-RICH_TEXT_TAGS = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "s", "u", "ul", "ol", "li", "br", "blockquote", "a", "img", "video", "source", "iframe", "div"]
+RICH_TEXT_TAGS = [
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "strong",
+    "em",
+    "s",
+    "u",
+    "ul",
+    "ol",
+    "li",
+    "br",
+    "blockquote",
+    "a",
+    "img",
+    "video",
+    "source",
+    "iframe",
+    "div",
+]
 MIN_IMAGE_WIDTH = 80
 MAX_IMAGE_WIDTH = 4000
+
 
 def allowed_attribute(tag: str, name: str, value: str) -> bool:
     """Allow safe rich-text attributes and only local uploads or known embed origins."""
@@ -49,4 +76,3 @@ def targets(doc: dict) -> dict:
 def media_ids(value: dict | None) -> set[str]:
     """Extract local upload identifiers from sanitized composition data."""
     return set(re.findall(r"/api/media/([a-f0-9-]{36})", json.dumps(value)))
-

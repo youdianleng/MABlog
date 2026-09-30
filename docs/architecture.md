@@ -9,10 +9,10 @@ The confirmed search/RAG requirements and release gates are maintained in [`rag-
 ```text
 frontend/src/
 ├── app/                    Next.js entry files and global stylesheet imports
-├── app-shell/              Application composition, route selection, header, footer, dialogs
+├── app-shell/              Providers, persistent site shell (header, skip link), and footer
 ├── components/
 │   ├── feedback/           Shared loading and error presentation
-│   └── ui/                 Reusable shadcn-style primitives
+│   └── ui/                 Reusable shadcn/ui primitives (Tailwind utility classes)
 ├── features/
 │   ├── auth/               Account context, forms, and account lifecycle hooks
 │   ├── ai-news/            Administrator newsroom, editions, sources, alerts, and public reader
@@ -28,24 +28,24 @@ frontend/src/
 ├── hooks/                  Cross-feature browser and data hooks
 ├── lib/
 │   └── api/                API client, upload client, and transport types
-└── styles/                 Base, feature, footer, information-page, and responsive styles
+└── styles/                 Focused feature stylesheets imported by app/globals.css
 ```
 
 The persistent application shell owns the global header, skip link, and footer. The footer links only to implemented routes; its public information destinations reuse `features/site-info/`, while their route files own metadata and page-specific bilingual copy. AI ranking cards and `/ai-models/[slug]` profiles read from the same typed, versioned `ai-model-rankings.ts` snapshot so native benchmark scores, access routes, and family identity cannot diverge between list and detail views; a future reviewed backend feed can replace this module without changing the presentation contracts.
 
-Generated AI-news editions use versioned structured blocks. New release blocks separate sourced change, developer, and reader implications from deterministic provider-benchmark rows built out of exact official-source claims. The public reader labels reported results as provider-published, while correction preserves their citation and score evidence; legacy editions without these fields remain readable.
-
-The normal publication service requires a passing bilingual evidence report and rejects official-source hash drift. A separate step-up-protected evidence-exception endpoint is limited to failed preview verification, requires human reason and acknowledgement, rechecks official-source reachability and duplicates, but records changed current hashes instead of blocking the explicit exception. It reruns deterministic safety and moderation, calls the shared publisher only with an explicit override flag, retains the failed verification and approval in edition metadata and administrator audit, and exposes distinct public unverified-evidence and changed-source warnings. Exceptions do not satisfy schedule activation or advance the verified scan cursor; subsequent source-contradiction monitoring still includes them. A later passing correction replaces the current badge while preserving the override history.
-
-Ordinary administrator previews take a separate compose → safety path, omitting only the claim-to-source verify stage. They remain private as `safety_cleared_preview`; a step-up-protected `publish-unverified-preview` action requires reason and acknowledgement, structural/source/duplicate rechecks, and fresh moderation before publication. This path records `manual_unverified_preview`, discloses its unverified status publicly, and advances neither schedule activation nor the successful scan cursor. The explicit activation-test preview, scheduled/catch-up runs, and immediate **Run and publish** retain the full verify stage and normal publisher gate. Corrections remain their own verified workflow; historic failed-verifier exceptions keep their separate eligibility and label.
-
-Run detail exposes already-published release conflicts, including a public post link when one exists. The shared publication source recheck rejects these conflicts before reporting source drift, and the verified-preview control surfaces API errors and completed-publication feedback in the drawer. This prevents an old duplicate preview from presenting as an inert publish button while preserving the original duplicate and source-integrity gates.
-
-The administrator newsroom's Providers & models tab reads a redacted status endpoint. Step-up-protected mutations store encrypted OpenAI/Brave key overrides and model IDs on the durable news-settings row; the API and worker resolve those values for each AI-news stage, falling back to environment defaults. General site AI services remain on their separate environment configuration. The server rejects override changes while a newsletter run is active.
+AI-news publication paths, evidence exceptions, duplicate/source rechecks, and provider overrides are documented in [`ai-news-publisher-design.md`](ai-news-publisher-design.md#implementation-notes). The backend keeps those rechecks in `services/ai_news/publication_checks.py`; the newsroom routers only authorize, validate, and delegate.
 
 A component that represents an independently understandable interface element belongs in its own file. Feature-only hooks stay beside the feature; hooks useful in more than one feature belong in `hooks/`. Effects for network loading, subscriptions, timers, measurements, synchronization, and navigation guards should live in a named hook so components primarily describe rendering and user actions.
 
-The small files in `components/blog-app.tsx`, `components/composer.tsx`, `components/posts.tsx`, and `lib/api.ts` are compatibility exports. They allow stable imports while implementation lives in the structured modules.
+The small files `components/composer.tsx`, `components/posts.tsx`, and `lib/api.ts` are re-export barrels that contain no logic; `lib/api.ts` is the conventional import path for API transport (`@/lib/api`), while implementation lives in `lib/api/` and the feature modules.
+
+### Styling
+
+shadcn/ui primitives in `components/ui/` use Tailwind utilities and the shared `cn` helper from `lib/utils.ts`. Feature presentation uses focused, class-based stylesheets in `src/styles/` (one per feature area, imported from `app/globals.css`); Tailwind utilities are welcome in new components, but an existing feature should not mix both approaches for the same element.
+
+### Formatting and unit tests
+
+Prettier (`npm run format`) is the only frontend formatter. Pure logic has Vitest unit tests beside the module as `*.test.ts` (`npm run test:unit`); Playwright browser workflows remain in `frontend/tests/*.spec.ts`.
 
 ## Backend
 
@@ -56,29 +56,37 @@ backend/app/
 │   ├── health.py           Service availability
 │   ├── ai_news/            Protected newsroom status, runs, sources, editions, and alerts
 │   ├── administrators.py   Protected role and step-up management
+│   ├── auth.py             Registration, login, verification codes, and sessions
 │   ├── posts.py            Collection, reader, publication, workspace, likes
 │   ├── collaboration.py    Grants, drafts, submissions, proposal review
 │   ├── profiles.py         Public and editable profiles
 │   ├── search.py           Ranked retrieval, pagination, streamed explanations
 │   └── media.py            Upload validation and protected delivery
 ├── services/
+│   ├── admin_audit.py      Administrator audit trail records
+│   ├── administration.py   Administrator role checks
+│   ├── authentication.py   Password hashing, codes, sessions, and rate limits
 │   ├── capacity.py         Search/indexing counters and one-use explanation tokens
+│   ├── carousel.py         Featured-post ranking with cached candidate IDs
 │   ├── documents.py        Composition validation and sanitization helpers
+│   ├── email_delivery.py   SMTP delivery of verification codes
 │   ├── embeddings.py       Backend-only OpenAI embedding transport
 │   ├── generation.py       Grounded Responses API streaming adapter
 │   ├── indexing.py         Approved passage extraction and durable job preparation
 │   ├── permissions.py      Authoritative role and post-access rules
-│   ├── posts.py            Post presentation and approval operations
+│   ├── posts.py            Batched post presentation and approval operations
 │   ├── public_cache.py     Rebuildable Redis cache access
 │   ├── retrieval.py        Permission predicates, lexical/vector ranking, RRF
-│   ├── ai_news/            Discovery, safe fetch, evidence, bilingual verification, and publication
+│   ├── ai_news/            Discovery, safe fetch, evidence, verification, publication, and publication rechecks
+│   ├── step_up.py          Recent administrator re-authorization
 │   └── tokens.py           Signed, expiring search continuation state
-├── config.py               Environment configuration and documented defaults
+├── config.py               Typed pydantic-settings configuration and documented defaults
+├── dependencies.py         Request-scoped database session and signed-in account dependencies
+├── logging_setup.py        Shared process logging configuration (LOG_LEVEL)
 ├── database.py             Engine, session factory, and migration metadata
-├── models.py               SQLAlchemy records
-├── schemas.py              Pydantic transport and composition schemas
+├── models/                 SQLAlchemy records by domain (accounts, posts, search, ai_news)
+├── schemas/                Pydantic transport and composition schemas by domain
 ├── utils.py                Shared time, identifier, and digest helpers
-├── auth.py                 Authentication routes and code/session policies
 ├── bootstrap.py            Optional local administrator creation
 ├── evaluate_search.py      Live bilingual embedding-quality release gate
 ├── seed.py                 Explicit sample-content command
@@ -87,7 +95,11 @@ backend/app/
 └── main.py                 FastAPI composition, middleware, and error handlers
 ```
 
-Routes validate HTTP input and delegate shared rules to services. Permission checks remain centralized in `services/permissions.py`. SQLAlchemy records and Pydantic request/document schemas remain separate so persistence details do not leak into API validation. `core.py` is a temporary compatibility export for migrations, existing scripts, and tests; new backend code should import the focused module directly.
+Routes validate HTTP input and delegate shared rules to services. Permission checks remain centralized in `services/permissions.py`. SQLAlchemy records and Pydantic request/document schemas remain separate so persistence details do not leak into API validation. List endpoints present posts through `services.posts.post_summaries`, which loads likes, grants, authors, indexing state, and AI-news metadata in a fixed number of batched queries; avoid per-row queries in new list endpoints.
+
+Configuration is declared once on `config.Settings` (pydantic-settings) and validated at import, so a malformed value stops the container at startup. Upper-case module constants remain the import surface. Code that must observe environment changes at runtime (the local-admin bootstrap and its test) calls `load_settings()`.
+
+The API and both workers log through `logging_setup.configure_logging()`. Worker loops log and survive unexpected cycle failures, and the AI-news state machine logs the traceback of an unexpected stage error while the durable run stores only a stable error code. Only PostgreSQL unique violations become a retryable 409; other integrity violations are logged and returned as 500.
 
 Search reads only approved `Post.document` passages. PostgreSQL applies publication, ownership, current grant, category, scope, and two-sided personal-cloud consent predicates inside lexical and vector candidate queries. The API fuses per-post ranks, signs continuation/evidence identifiers, and rechecks permissions before pagination or generation. A dedicated worker is the only component that writes embeddings; durable PostgreSQL jobs survive Redis or worker restarts.
 
@@ -98,6 +110,6 @@ Public discovery routes server-render numbered pages of at most fifteen posts. F
 1. Add a new user-facing capability under `frontend/src/features/<feature>/` and a matching FastAPI route group under `backend/app/api/` when backend support is needed.
 2. Put reusable business behavior in a backend service and reusable browser behavior in a named frontend hook.
 3. Keep components focused on one interface responsibility; extract a child when it has its own state, effects, sizable markup, or reuse potential.
-4. Keep API transport types in `frontend/src/lib/api/types.ts` and validated backend payloads in `backend/app/schemas.py` or a future feature-specific schema module.
+4. Keep API transport types in `frontend/src/lib/api/types.ts` and validated backend payloads in the matching `backend/app/schemas/` domain module.
 5. Do not place domain logic in `main.py`, route composition files, compatibility barrels, or global style imports.
 6. Document every function and callback, explain fixed business values, and update `docs/build-progress.md` after verified changes.

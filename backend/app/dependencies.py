@@ -1,4 +1,5 @@
 """Request-scoped database and verified-account dependencies."""
+
 from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, Request

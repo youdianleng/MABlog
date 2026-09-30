@@ -1,15 +1,15 @@
 """Reusable post presentation, validation, and target-application rules."""
+
 import copy
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from ..config import LIKE_WINDOW_SECONDS
-from ..models import AutomatedEdition, Like, Media, Post, PostLocalization, Proposal, User
+from ..models import AutomatedEdition, Grant, IndexingJob, Like, Media, Post, PostLocalization, Proposal, User
 from ..utils import now
 from .documents import clean_document, media_ids
-from .indexing import post_search_status
-from .permissions import role_for
+from .indexing import search_status_for
 
 
 def user_profile(user: User) -> dict:
@@ -17,27 +17,85 @@ def user_profile(user: User) -> dict:
     return {"id": user.id, "username": user.username, "display_name": user.display_name, "bio": user.bio, "avatar": user.avatar}
 
 
-def post_summary(db, post: Post, user=None, language: str = "en") -> dict:
-    """Present current approved metadata with active rolling-window like counts."""
-    count = db.scalar(select(func.count()).select_from(Like).where(Like.post_id == post.id, Like.created >= now() - LIKE_WINDOW_SECONDS))
-    localization = db.get(PostLocalization, (post.id, language)) if post.kind == "ai_news" else None
-    presentation = localization.document if localization else post.document
-    edition = db.scalar(select(AutomatedEdition).where(AutomatedEdition.post_id == post.id)) if post.kind == "ai_news" else None
+def _edition_badges(edition: AutomatedEdition) -> dict:
+    """Summarize an automated edition's public verification disclosures for cards and readers."""
+    verification = edition.verification or {}
+    exception = verification.get("manual_override") or verification.get("manual_unverified_preview") or {}
     return {
-        "id": post.id,
-        "category": "general",
-        **presentation["details"],
-        "public": post.public,
-        "author": user_profile(db.get(User, post.author_id)),
-        "likes": count,
-        "liked": bool(user and db.get(Like, (post.id, user.id))),
-        "role": role_for(db, post, user),
-        "created": post.created,
-        "kind": post.kind,
-        "ai_news_document": presentation if localization else None,
-        "ai_news": ({"source_count": edition.source_count, "verified_at": edition.verified_at, "correction_note": edition.correction_note, "fact_check_passed": edition.verification.get("passed") is True, "manual_unverified_preview": bool(edition.verification.get("manual_unverified_preview")), "source_changed_on_publish": bool(((edition.verification.get("manual_override") or edition.verification.get("manual_unverified_preview")) or {}).get("changed_sources"))} if edition else None),
-        "search_status": post_search_status(db, post),
+        "source_count": edition.source_count,
+        "verified_at": edition.verified_at,
+        "correction_note": edition.correction_note,
+        "fact_check_passed": verification.get("passed") is True,
+        "manual_unverified_preview": bool(verification.get("manual_unverified_preview")),
+        "source_changed_on_publish": bool(exception.get("changed_sources")) if isinstance(exception, dict) else False,
     }
+
+
+def post_summaries(db, posts: list[Post], user: User | None = None, language: str = "en") -> list[dict]:
+    """Present many posts with a fixed number of queries instead of several queries per post.
+
+    Rolling-window like counts, the viewer's likes and grants, authors, indexing jobs, and
+    AI-news localizations/editions are each loaded in one batched query. Roles follow the same
+    rules as ``permissions.role_for``: author, then the viewer's explicit grant, then public reader.
+    """
+    if not posts:
+        return []
+    post_ids = [post.id for post in posts]
+    like_counts = dict(
+        db.execute(
+            select(Like.post_id, func.count()).where(Like.post_id.in_(post_ids), Like.created >= now() - LIKE_WINDOW_SECONDS).group_by(Like.post_id)
+        ).all()
+    )
+    liked: set[str] = set()
+    grant_roles: dict[str, str] = {}
+    if user:
+        liked = set(db.scalars(select(Like.post_id).where(Like.post_id.in_(post_ids), Like.user_id == user.id)))
+        grant_roles = dict(db.execute(select(Grant.post_id, Grant.role).where(Grant.post_id.in_(post_ids), Grant.user_id == user.id)).all())
+    authors = {author.id: author for author in db.scalars(select(User).where(User.id.in_({post.author_id for post in posts})))}
+    jobs = {job.post_id: job for job in db.scalars(select(IndexingJob).where(IndexingJob.post_id.in_(post_ids)))}
+    news_ids = [post.id for post in posts if post.kind == "ai_news"]
+    localizations: dict[str, PostLocalization] = {}
+    editions: dict[str, AutomatedEdition] = {}
+    if news_ids:
+        localizations = {
+            item.post_id: item
+            for item in db.scalars(select(PostLocalization).where(PostLocalization.post_id.in_(news_ids), PostLocalization.language == language))
+        }
+        editions = {item.post_id: item for item in db.scalars(select(AutomatedEdition).where(AutomatedEdition.post_id.in_(news_ids)))}
+
+    summaries = []
+    for post in posts:
+        localization = localizations.get(post.id)
+        presentation = localization.document if localization else post.document
+        edition = editions.get(post.id)
+        if user and post.author_id == user.id:
+            role = "author"
+        else:
+            role = grant_roles.get(post.id) or ("reader" if post.public else "none")
+        summaries.append(
+            {
+                "id": post.id,
+                # Legacy posts without an approved category are presented as General.
+                "category": "general",
+                **presentation["details"],
+                "public": post.public,
+                "author": user_profile(authors[post.author_id]),
+                "likes": like_counts.get(post.id, 0),
+                "liked": post.id in liked,
+                "role": role,
+                "created": post.created,
+                "kind": post.kind,
+                "ai_news_document": presentation if localization else None,
+                "ai_news": _edition_badges(edition) if edition else None,
+                "search_status": search_status_for(jobs.get(post.id)),
+            }
+        )
+    return summaries
+
+
+def post_summary(db, post: Post, user: User | None = None, language: str = "en") -> dict:
+    """Present current approved metadata with active rolling-window like counts for one post."""
+    return post_summaries(db, [post], user, language)[0]
 
 
 def validate_media(db, post: Post, user: User, document: dict) -> None:
@@ -85,4 +143,3 @@ def ensure_publishable(document: dict) -> None:
     """Require carousel-ready metadata whenever a public document is changed."""
     if not document["details"]["title"].strip() or not document["details"]["cover"]:
         raise HTTPException(422, "Public posts require a title and uploaded cover image")
-

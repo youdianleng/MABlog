@@ -95,7 +95,13 @@ def accept_correction(revision_id: str, data: NewsCorrectionAcceptance, db=Depen
     replace_edition_documents(db, edition, data.documents, data.correction_note)
     # A passing correction restores the normal public verification badge while
     # retaining the earlier override approval in the private edition history.
-    edition.verification = {**report, "safety": safety, "source_contradicted": False, **({"manual_override_history": previous_override} if previous_override else {}), **({"manual_unverified_preview_history": previous_unverified} if previous_unverified else {})}
+    edition.verification = {
+        **report,
+        "safety": safety,
+        "source_contradicted": False,
+        **({"manual_override_history": previous_override} if previous_override else {}),
+        **({"manual_unverified_preview_history": previous_unverified} if previous_unverified else {}),
+    }
     audit(db, user, "ai_news.correction.verified", "news_revision", revision.id, data.correction_note)
     db.commit()
     return {"id": revision.id, "status": revision.status, "edition": edition_summary(edition)}
@@ -112,5 +118,3 @@ def republish(edition_id: str, data: ActionReasonPayload, db=Depends(database), 
     audit(db, user, "ai_news.edition.published", "post", post.id, data.reason)
     db.commit()
     return {"post_id": post.id}
-
-

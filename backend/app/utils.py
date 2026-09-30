@@ -1,11 +1,13 @@
 """Small identity, time, and token helpers shared across backend features."""
+
 import hashlib
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 
 def now() -> float:
     """Return UTC epoch seconds so expiry comparisons are timezone-independent."""
-    return datetime.now(timezone.utc).timestamp()
+    return datetime.now(UTC).timestamp()
 
 
 def new_id() -> str:

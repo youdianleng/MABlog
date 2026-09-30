@@ -1,4 +1,5 @@
 """Permission-safe search, signed pagination, and streamed grounded explanations."""
+
 import json
 import logging
 import time
@@ -6,7 +7,6 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from ..dependencies import current_user, database
 from ..config import (
     ANONYMOUS_ENHANCED_SEARCHES_PER_HOUR,
     ANONYMOUS_KEYWORD_SEARCHES_PER_HOUR,
@@ -15,14 +15,14 @@ from ..config import (
     SIGNED_IN_ENHANCED_SEARCHES_PER_HOUR,
     SIGNED_IN_KEYWORD_SEARCHES_PER_HOUR,
 )
+from ..dependencies import current_user, database
 from ..models import Post, SearchPassage, User
 from ..schemas import ExplanationPayload, SearchCursorPayload, SearchPayload
 from ..services.capacity import consume_capacity, consume_once
 from ..services.embeddings import OpenAIServiceError, cloud_ai_configured, embed_texts
 from ..services.generation import stream_grounded_explanation
-from ..services.indexing import post_search_status
 from ..services.permissions import role_for
-from ..services.posts import post_summary
+from ..services.posts import post_summaries
 from ..services.retrieval import RankedPost, request_subject, retrieve, select_answer_context
 from ..services.tokens import sign_search_state, verify_search_state
 from ..utils import new_id
@@ -41,15 +41,18 @@ def _rate_identity(user: User | None, request: Request) -> str:
     return user.id if user else _remote_host(request)
 
 
-def _serialize_result(db, result: RankedPost, user: User | None) -> dict:
-    """Present one ranked post with a safe excerpt and creator-visible index state."""
-    return {
-        **post_summary(db, result.post, user),
-        "matched_block_id": result.block_id,
-        "snippet": result.snippet,
-        "score": round(result.score, 8),
-        "search_status": post_search_status(db, result.post),
-    }
+def _serialize_results(db, results: list[RankedPost], user: User | None) -> list[dict]:
+    """Present ranked posts with safe excerpts and creator-visible index state in batched queries."""
+    summaries = post_summaries(db, [result.post for result in results], user)
+    return [
+        {
+            **summary,
+            "matched_block_id": result.block_id,
+            "snippet": result.snippet,
+            "score": round(result.score, 8),
+        }
+        for summary, result in zip(summaries, results, strict=True)
+    ]
 
 
 def _cursor_entry(result: RankedPost) -> list:
@@ -61,12 +64,16 @@ def _result_group(db, results: list[RankedPost], user: User | None, subject: str
     """Return ten ranked posts and sign the remaining order with its original filter contract."""
     first = results[:SEARCH_PAGE_SIZE]
     remaining = results[SEARCH_PAGE_SIZE:]
-    cursor = sign_search_state(
-        "cursor",
-        subject,
-        {"items": [_cursor_entry(item) for item in remaining], "group": group, "category": category},
-    ) if remaining else None
-    return {"items": [_serialize_result(db, item, user) for item in first], "total": len(results), "cursor": cursor}
+    cursor = (
+        sign_search_state(
+            "cursor",
+            subject,
+            {"items": [_cursor_entry(item) for item in remaining], "group": group, "category": category},
+        )
+        if remaining
+        else None
+    )
+    return {"items": _serialize_results(db, first, user), "total": len(results), "cursor": cursor}
 
 
 def _matches_cursor_filters(post: Post, group: str, category: str | None) -> bool:
@@ -83,10 +90,7 @@ def _context_token(subject: str, query: str, evidence: list[dict]) -> str | None
     """Sign only query and passage identities; approved source text remains server-side."""
     if not evidence:
         return None
-    references = [
-        {"citation": item["citation"], "post_id": item["post_id"], "passage_id": item["passage_id"]}
-        for item in evidence
-    ]
+    references = [{"citation": item["citation"], "post_id": item["post_id"], "passage_id": item["passage_id"]} for item in evidence]
     return sign_search_state("explanation", subject, {"query": query, "references": references, "request_id": new_id()})
 
 
@@ -186,7 +190,7 @@ def more(data: SearchCursorPayload, request: Request, user=Depends(current_user)
     category = state.get("category")
     if group not in {"personal", "public"} or category not in {None, "technology", "travel", "general", "anime"}:
         raise HTTPException(400, "Search state expired. Run the search again.")
-    delivered: list[dict] = []
+    delivered: list[RankedPost] = []
     consumed = 0
     while consumed < len(entries) and len(delivered) < SEARCH_PAGE_SIZE:
         entry = entries[consumed]
@@ -207,10 +211,10 @@ def more(data: SearchCursorPayload, request: Request, user=Depends(current_user)
             snippet=(snippet_source[:237] + "...") if len(snippet_source) > 240 else snippet_source,
             score=float(entry[3]),
         )
-        delivered.append(_serialize_result(db, result, user))
+        delivered.append(result)
     remaining = entries[consumed:]
     cursor = sign_search_state("cursor", subject, {"items": remaining, "group": group, "category": category}) if remaining else None
-    return {"items": delivered, "cursor": cursor}
+    return {"items": _serialize_results(db, delivered, user), "cursor": cursor}
 
 
 @router.post("/explanation")
@@ -247,4 +251,3 @@ def explanation(data: ExplanationPayload, request: Request, user=Depends(current
             logger.warning("generation_failed request_id=%s", state.get("request_id", "unknown"))
 
     return StreamingResponse(events(), media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
-

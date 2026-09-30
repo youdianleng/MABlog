@@ -47,9 +47,11 @@ export function SelectedBlockSettings({
                 <Input
                   type="number"
                   value={block[key]}
-                  onChange={/** Update one numeric block property. */ function geometry(event) {
-                    patchBlock({ [key]: Number(event.target.value) });
-                  }}
+                  onChange={
+                    /** Update one numeric block property. */ function geometry(event) {
+                      patchBlock({ [key]: Number(event.target.value) });
+                    }
+                  }
                 />
               </label>
             );
@@ -57,37 +59,64 @@ export function SelectedBlockSettings({
         )}
       </div>
       <div className="toolbar mt-3">
-        <Button size="sm" variant="outline" onClick={/** Raise the selected block one layer. */ function forward() { patchBlock({ z: block.z + 1 }); }}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={
+            /** Raise the selected block one layer. */ function forward() {
+              patchBlock({ z: block.z + 1 });
+            }
+          }
+        >
           {t("Bring forward", "Traer adelante")}
         </Button>
-        <Button size="sm" variant="outline" onClick={/** Lower the selected block one layer. */ function backward() { patchBlock({ z: block.z - 1 }); }}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={
+            /** Lower the selected block one layer. */ function backward() {
+              patchBlock({ z: block.z - 1 });
+            }
+          }
+        >
           {t("Send backward", "Enviar atrás")}
         </Button>
         <Button
           variant="outline"
           size="sm"
           aria-label={t("Duplicate block", "Duplicar bloque")}
-          onClick={/** Copy the block with a fresh identity and visible offset. */ function duplicate() {
-            const identifier = crypto.randomUUID();
-            change({
-              ...current,
-              blocks: [
-                ...current.blocks,
-                {
-                  ...block,
-                  id: identifier,
-                  x: block.x + DUPLICATE_OFFSET,
-                  y: block.y + DUPLICATE_OFFSET,
-                  order: current.blocks.length,
-                },
-              ],
-            });
-            select(identifier);
-          }}
+          onClick={
+            /** Copy the block with a fresh identity and visible offset. */ function duplicate() {
+              const identifier = crypto.randomUUID();
+              change({
+                ...current,
+                blocks: [
+                  ...current.blocks,
+                  {
+                    ...block,
+                    id: identifier,
+                    x: block.x + DUPLICATE_OFFSET,
+                    y: block.y + DUPLICATE_OFFSET,
+                    order: current.blocks.length,
+                  },
+                ],
+              });
+              select(identifier);
+            }
+          }
         >
           <Copy size={13} />
         </Button>
-        <Button variant="outline" size="sm" aria-label={t("Remove block", "Eliminar bloque")} onClick={/** Remove the selected block. */ function removeSelected() { remove(block.id); }}>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={t("Remove block", "Eliminar bloque")}
+          onClick={
+            /** Remove the selected block. */ function removeSelected() {
+              remove(block.id);
+            }
+          }
+        >
           <Trash2 size={13} />
         </Button>
       </div>

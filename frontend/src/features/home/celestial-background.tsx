@@ -34,8 +34,20 @@ export function CelestialBackground() {
         <ellipse className="home-orbit home-orbit-outer" cx="720" cy="470" rx="682" ry="354" />
         <ellipse className="home-orbit home-orbit-middle" cx="720" cy="470" rx="526" ry="268" />
         <ellipse className="home-orbit home-orbit-inner" cx="720" cy="470" rx="354" ry="177" />
-        <ellipse className="home-orbit-trace home-trace-outer" cx="720" cy="470" rx="682" ry="354" />
-        <ellipse className="home-orbit-trace home-trace-middle" cx="720" cy="470" rx="526" ry="268" />
+        <ellipse
+          className="home-orbit-trace home-trace-outer"
+          cx="720"
+          cy="470"
+          rx="682"
+          ry="354"
+        />
+        <ellipse
+          className="home-orbit-trace home-trace-middle"
+          cx="720"
+          cy="470"
+          rx="526"
+          ry="268"
+        />
         <ellipse className="home-orbit-crimson" cx="720" cy="470" rx="430" ry="220" />
       </g>
 

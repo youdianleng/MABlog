@@ -3,13 +3,15 @@
 from sqlalchemy import delete, select, update
 
 from ...config import NEWS_FAILED_RETENTION_SECONDS, NEWS_OPERATION_RETENTION_SECONDS
-from ...models import NewsDocument, NewsRun, NewsSourceCheck
+from ...models import NewsDocument, NewsRun
 from ...utils import now
 
 
 def expire_source_snapshots(db) -> int:
     """Clear expired full extracted text while permanently preserving hash and metadata."""
-    identifiers = list(db.scalars(select(NewsDocument.id).where(NewsDocument.snapshot_expires > 0, NewsDocument.snapshot_expires <= now(), NewsDocument.extracted_text != "")))
+    identifiers = list(
+        db.scalars(select(NewsDocument.id).where(NewsDocument.snapshot_expires > 0, NewsDocument.snapshot_expires <= now(), NewsDocument.extracted_text != ""))
+    )
     if identifiers:
         db.execute(update(NewsDocument).where(NewsDocument.id.in_(identifiers)).values(extracted_text=""))
     return len(identifiers)
@@ -25,7 +27,9 @@ def delete_expired_operational_runs(db) -> int:
         record.id
         for record in records
         if not record.result.get("pinned")
-        and ((record.status in {"failed", "preview"} and record.completed < failed_cutoff) or (record.status == "quiet" and record.completed < operation_cutoff))
+        and (
+            (record.status in {"failed", "preview"} and record.completed < failed_cutoff) or (record.status == "quiet" and record.completed < operation_cutoff)
+        )
     ]
     if removable:
         db.execute(delete(NewsRun).where(NewsRun.id.in_(removable)))

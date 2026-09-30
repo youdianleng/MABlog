@@ -23,9 +23,7 @@ export function RevealPostCard({ post }: RevealPostCardProps) {
     /** Arm the reveal after hydration and disconnect once the card has appeared. */
     function observeCard() {
       const wrapper = wrapperRef.current;
-      const reducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (!wrapper || reducedMotion || !("IntersectionObserver" in window)) {
         setRevealState("visible");
@@ -36,12 +34,15 @@ export function RevealPostCard({ post }: RevealPostCardProps) {
       const observer = new IntersectionObserver(
         /** Reveal the card once enough of its surface reaches the reading area. */
         function revealOnEntry(entries) {
-          if (!entries.some(
-            /** Identify whether an observed card is inside the reveal threshold. */
-            function isVisible(entry) {
-              return entry.isIntersecting;
-            },
-          )) return;
+          if (
+            !entries.some(
+              /** Identify whether an observed card is inside the reveal threshold. */
+              function isVisible(entry) {
+                return entry.isIntersecting;
+              },
+            )
+          )
+            return;
           setRevealState("visible");
           observer.disconnect();
         },

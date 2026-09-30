@@ -23,7 +23,15 @@ export function LayerSettings({ t, current, select }: LayerSettingsProps) {
           /** Render one block selector even when another block covers it. */
           function layer(item) {
             return (
-              <button className="layer-item" key={item.id} onClick={/** Select this layer's stable block. */ function selectLayer() { select(item.id); }}>
+              <button
+                className="layer-item"
+                key={item.id}
+                onClick={
+                  /** Select this layer's stable block. */ function selectLayer() {
+                    select(item.id);
+                  }
+                }
+              >
                 {t("Block", "Bloque")} {item.order + 1}
                 <span>z {item.z}</span>
               </button>

@@ -1,18 +1,16 @@
 """Public profile reading and signed-in profile editing endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, func, select, update
-from ..dependencies import current_user, database, signed_in
-from ..config import CACHE_SECONDS, LIKE_WINDOW_SECONDS, UPLOAD_DIR
-from ..models import Draft, Grant, Like, Media, Post, Proposal, User
-from ..schemas import CloudProcessingPayload, Document, DraftPayload, PostCategory, ProfilePayload
-from ..services.documents import clean_document, media_ids, targets
+from sqlalchemy import select
+
+from ..dependencies import database, signed_in
+from ..models import Media, Post, User
+from ..schemas import CloudProcessingPayload, ProfilePayload
 from ..services.indexing import synchronize_author_posts
-from ..services.permissions import require_post, role_for
-from ..services.posts import apply_target, ensure_publishable, post_summary, submitted_media, user_profile, validate_media
-from ..services.public_cache import cache, invalidate_public_cache
-from ..utils import now
+from ..services.posts import post_summaries, user_profile
 
 router = APIRouter()
+
 
 @router.get("/profiles/{username}")
 def profile(username: str, db=Depends(database)):
@@ -20,7 +18,8 @@ def profile(username: str, db=Depends(database)):
     user = db.scalar(select(User).where(User.username == username.lower(), User.active.is_(True)))
     if not user:
         raise HTTPException(404, "Profile not found")
-    return {**user_profile(user), "posts": [post_summary(db, p) for p in db.scalars(select(Post).where(Post.author_id == user.id, Post.public.is_(True)))]}
+    posts = list(db.scalars(select(Post).where(Post.author_id == user.id, Post.public.is_(True))))
+    return {**user_profile(user), "posts": post_summaries(db, posts)}
 
 
 @router.patch("/profile")
@@ -49,6 +48,3 @@ def update_cloud_processing(data: CloudProcessingPayload, user=Depends(signed_in
     synchronize_author_posts(db, user)
     db.commit()
     return {"enabled": user.personal_cloud_processing}
-
-
-

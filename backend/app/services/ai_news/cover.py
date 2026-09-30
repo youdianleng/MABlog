@@ -1,8 +1,8 @@
 """Local original dark-celestial cover rendering for automated weekly editions."""
 
-from pathlib import Path
 import random
 import textwrap
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 

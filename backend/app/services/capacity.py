@@ -1,4 +1,5 @@
 """Atomic fixed-window capacity and single-use controls for search operations."""
+
 from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 
@@ -33,11 +34,7 @@ def consume_once(name: str, identity: str, expires: float) -> bool:
     with SessionLocal() as db:
         db.execute(delete(SearchReplay).where(SearchReplay.expires <= now()))
         inserted = db.scalar(
-            insert(SearchReplay)
-            .values(key=key, expires=expires)
-            .on_conflict_do_nothing(index_elements=[SearchReplay.key])
-            .returning(SearchReplay.key)
+            insert(SearchReplay).values(key=key, expires=expires).on_conflict_do_nothing(index_elements=[SearchReplay.key]).returning(SearchReplay.key)
         )
         db.commit()
     return inserted is not None
-

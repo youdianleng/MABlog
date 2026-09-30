@@ -14,12 +14,8 @@ test("Discover cards rise and fade in from left to right", /** Verify the ordere
       /** Read the first row's stagger delays in visual left-to-right order. */
       function revealDelays(cards) {
         return cards.slice(0, 3).map(
-          /** Return the computed delay for one Discover card. */ function cardDelay(
-            card,
-          ) {
-            const delay = getComputedStyle(card)
-              .getPropertyValue("--post-reveal-delay")
-              .trim();
+          /** Return the computed delay for one Discover card. */ function cardDelay(card) {
+            const delay = getComputedStyle(card).getPropertyValue("--post-reveal-delay").trim();
             return Number.parseFloat(delay) * (delay.endsWith("ms") ? 1 : 1000);
           },
         );
@@ -58,9 +54,7 @@ test("Discover cards skip motion when reduced motion is preferred", /** Keep eve
   await expect(firstReveal).toHaveAttribute("data-reveal-visible", "true");
   expect(
     await firstReveal.evaluate(
-      /** Read the reduced-motion card's rendered transform. */ function reducedTransform(
-        element,
-      ) {
+      /** Read the reduced-motion card's rendered transform. */ function reducedTransform(element) {
         return getComputedStyle(element).transform;
       },
     ),

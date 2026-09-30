@@ -16,7 +16,13 @@ router = APIRouter()
 @router.get("/notifications")
 def notifications(db=Depends(database), user: User = Depends(require_admin)):
     """List the current administrator's mandatory in-app alerts and email preference."""
-    rows = db.execute(select(NewsAlert, NewsAlertReceipt).join(NewsAlertReceipt, NewsAlertReceipt.alert_id == NewsAlert.id).where(NewsAlertReceipt.user_id == user.id).order_by(NewsAlert.created.desc()).limit(100)).all()
+    rows = db.execute(
+        select(NewsAlert, NewsAlertReceipt)
+        .join(NewsAlertReceipt, NewsAlertReceipt.alert_id == NewsAlert.id)
+        .where(NewsAlertReceipt.user_id == user.id)
+        .order_by(NewsAlert.created.desc())
+        .limit(100)
+    ).all()
     return {"email_enabled": user.ai_news_email, "items": [alert_summary(alert, receipt.read_at) for alert, receipt in rows]}
 
 
@@ -37,5 +43,3 @@ def update_email_preference(data: NewsEmailPreferencePayload, db=Depends(databas
     user.ai_news_email = data.enabled
     db.commit()
     return {"enabled": user.ai_news_email}
-
-

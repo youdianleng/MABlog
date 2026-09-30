@@ -31,14 +31,23 @@ export function PostDetailsSettings({
         <select
           aria-label={t("Category", "Categoría")}
           value={current.details.category || "general"}
-          onChange={/** Store category in the private details draft. */ function selectCategory(event) {
-            change({ ...current, details: { ...current.details, category: event.target.value as PostCategory } });
-          }}
+          onChange={
+            /** Store category in the private details draft. */ function selectCategory(event) {
+              change({
+                ...current,
+                details: { ...current.details, category: event.target.value as PostCategory },
+              });
+            }
+          }
         >
           {categories.map(
             /** Localize each supported stored category. */
             function categoryOption(item) {
-              return <option key={item.value} value={item.value}>{t(item.en, item.es)}</option>;
+              return (
+                <option key={item.value} value={item.value}>
+                  {t(item.en, item.es)}
+                </option>
+              );
             },
           )}
         </select>
@@ -48,9 +57,11 @@ export function PostDetailsSettings({
         <Input
           value={current.details.title}
           maxLength={160}
-          onChange={/** Update the working post title. */ function title(event) {
-            change({ ...current, details: { ...current.details, title: event.target.value } });
-          }}
+          onChange={
+            /** Update the working post title. */ function title(event) {
+              change({ ...current, details: { ...current.details, title: event.target.value } });
+            }
+          }
         />
       </label>
       <label>
@@ -58,9 +69,11 @@ export function PostDetailsSettings({
         <textarea
           value={current.details.summary}
           maxLength={600}
-          onChange={/** Update the working post summary. */ function summary(event) {
-            change({ ...current, details: { ...current.details, summary: event.target.value } });
-          }}
+          onChange={
+            /** Update the working post summary. */ function summary(event) {
+              change({ ...current, details: { ...current.details, summary: event.target.value } });
+            }
+          }
         />
       </label>
       <label>
@@ -68,22 +81,26 @@ export function PostDetailsSettings({
         <Input
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif"
-          onChange={/** Read the selected cover image for upload. */ function cover(event) {
-            const file = event.target.files?.[0];
-            if (file) {
-              void run(
-                /** Upload the image before storing its post-owned media URL. */
-                async function uploadCover() {
-                  const media = await uploadMedia(file, postId);
-                  const latest = workingRef.current!.document;
-                  change({ ...latest, details: { ...latest.details, cover: media.url } });
-                },
-              );
+          onChange={
+            /** Read the selected cover image for upload. */ function cover(event) {
+              const file = event.target.files?.[0];
+              if (file) {
+                void run(
+                  /** Upload the image before storing its post-owned media URL. */
+                  async function uploadCover() {
+                    const media = await uploadMedia(file, postId);
+                    const latest = workingRef.current!.document;
+                    change({ ...latest, details: { ...latest.details, cover: media.url } });
+                  },
+                );
+              }
             }
-          }}
+          }
         />
       </label>
-      {current.details.cover ? <img src={current.details.cover} alt={t("Cover preview", "Vista previa de portada")} /> : null}
+      {current.details.cover ? (
+        <img src={current.details.cover} alt={t("Cover preview", "Vista previa de portada")} />
+      ) : null}
     </>
   );
 }

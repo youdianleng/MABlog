@@ -1,7 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { demoLogin } from "./helpers";
 
-test("an invited editor submits block and canvas changes for separate creator review", /** Verify the review interface using two independently authenticated browsers. */ async function collaboration({ page, browser }) {
+test("an invited editor submits block and canvas changes for separate creator review", /** Verify the review interface using two independently authenticated browsers. */ async function collaboration({
+  page,
+  browser,
+}) {
   // Give the collaborator a separate cookie jar so their login cannot replace the creator's session.
   const editorContext = await browser.newContext({ baseURL: "http://localhost:3000" });
   const editor = await editorContext.newPage();
@@ -12,8 +15,15 @@ test("an invited editor submits block and canvas changes for separate creator re
     const headers = { "X-MAblog": "1" };
     id = (await (await page.request.post("/api/posts", { headers })).json()).id;
     const draft = await (await page.request.get(`/api/posts/${id}/draft`)).json();
-    draft.document = { ...draft.document, details: { title: "Browser review story", summary: "", cover: "" }, blocks: [{ id: "shared-block", html: "<p>Current approved wording.</p>" }] };
-    await page.request.put(`/api/posts/${id}/draft`, { headers, data: { document: draft.document, baseline: draft.baseline, versions: draft.versions } });
+    draft.document = {
+      ...draft.document,
+      details: { title: "Browser review story", summary: "", cover: "" },
+      blocks: [{ id: "shared-block", html: "<p>Current approved wording.</p>" }],
+    };
+    await page.request.put(`/api/posts/${id}/draft`, {
+      headers,
+      data: { document: draft.document, baseline: draft.baseline, versions: draft.versions },
+    });
     await page.request.post(`/api/posts/${id}/submit`, { headers });
     await page.goto(`/sharing/${id}`);
     await page.getByLabel("Registered email").fill("mablog_demo_1@example.com");
@@ -31,29 +41,39 @@ test("an invited editor submits block and canvas changes for separate creator re
     const reviewLink = page.getByRole("link", { name: "Review, 2 reviews pending" });
     const reviewBadge = reviewLink.locator(".pending-review-badge");
     await expect(reviewBadge).toHaveText("2");
-    expect(await reviewBadge.evaluate(
-      /** Confirm the pending count uses the requested circular red treatment. */ function badgeStyle(
-        badge,
-      ) {
-        const style = getComputedStyle(badge);
-        return { background: style.backgroundColor, radius: style.borderRadius };
-      },
-    )).toEqual({ background: "rgb(166, 51, 56)", radius: "999px" });
+    expect(
+      await reviewBadge.evaluate(
+        /** Confirm the pending count uses the requested circular red treatment. */ function badgeStyle(
+          badge,
+        ) {
+          const style = getComputedStyle(badge);
+          return { background: style.backgroundColor, radius: style.borderRadius };
+        },
+      ),
+    ).toEqual({ background: "rgb(166, 51, 56)", radius: "999px" });
     await reviewLink.click();
-    const layout = page.locator("section").filter({ has: page.getByRole("heading", { name: "Canvas layout", exact: true }) });
-    const block = page.locator("section").filter({ has: page.getByRole("heading", { name: "Block shared-b", exact: true }) });
+    const layout = page
+      .locator("section")
+      .filter({ has: page.getByRole("heading", { name: "Canvas layout", exact: true }) });
+    const block = page
+      .locator("section")
+      .filter({ has: page.getByRole("heading", { name: "Block shared-b", exact: true }) });
     await expect(block.getByText("Current approved wording.")).toBeVisible();
     await expect(block.getByText("An editor's submitted wording.")).toBeVisible();
     await block.getByRole("button", { name: "Approve", exact: true }).click();
     await expect(block.getByText("Approved", { exact: true })).toBeVisible();
     await expect(layout.getByText("Pending", { exact: true })).toBeVisible();
     await page.goto(`/posts/${id}`);
-    await expect(page.getByRole("link", { name: "Review, 1 review pending" }).locator(".pending-review-badge")).toHaveText("1");
+    await expect(
+      page.getByRole("link", { name: "Review, 1 review pending" }).locator(".pending-review-badge"),
+    ).toHaveText("1");
     await page.getByRole("link", { name: "Review, 1 review pending" }).click();
     await layout.getByRole("button", { name: "Reject", exact: true }).click();
     await expect(layout.getByText("Rejected", { exact: true })).toBeVisible();
     await page.goto(`/posts/${id}`);
-    await expect(page.getByRole("link", { name: "Review", exact: true }).locator(".pending-review-badge")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Review", exact: true }).locator(".pending-review-badge"),
+    ).toHaveCount(0);
     const approved = await (await page.request.get(`/api/posts/${id}`)).json();
     expect(approved.document.canvas.width).toBe(1200);
     expect(approved.document.blocks[0].html).toContain("An editor's submitted wording.");
@@ -79,4 +99,3 @@ test("a creator can share a post with the local administrator", /** Regress the 
     await page.request.delete(`/api/posts/${id}`, { headers });
   }
 });
-

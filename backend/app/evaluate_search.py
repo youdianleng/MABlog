@@ -1,4 +1,5 @@
 """Run the checked-in bilingual retrieval gate against the configured embedding model."""
+
 import argparse
 import json
 import math

@@ -15,5 +15,7 @@ export function parsePostCategory(value: string | string[] | undefined): PostCat
     function isKnownCategory(category) {
       return category.value === candidate;
     },
-  ) ? candidate as PostCategory : "";
+  )
+    ? (candidate as PostCategory)
+    : "";
 }

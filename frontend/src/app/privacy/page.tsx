@@ -3,7 +3,8 @@ import { SiteInfoPage, type InfoSection } from "@/features/site-info/site-info-p
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "A plain-language overview of data and privacy controls in the current MAblog release.",
+  description:
+    "A plain-language overview of data and privacy controls in the current MAblog release.",
 };
 
 const SECTIONS: InfoSection[] = [
@@ -42,7 +43,10 @@ export default function PrivacyPage() {
   return (
     <SiteInfoPage
       eyebrow={{ en: "Privacy overview", es: "Resumen de privacidad" }}
-      title={{ en: "Your drafts are not a public promise.", es: "Tus borradores no son una promesa pública." }}
+      title={{
+        en: "Your drafts are not a public promise.",
+        es: "Tus borradores no son una promesa pública.",
+      }}
       intro={{
         en: "MAblog is designed around deliberate access: private by default, specific when shared, and discoverable only after publication.",
         es: "MAblog está diseñado en torno a un acceso deliberado: privado por defecto, específico al compartir y visible solo después de publicar.",

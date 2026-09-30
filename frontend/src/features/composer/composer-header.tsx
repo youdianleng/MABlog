@@ -13,15 +13,7 @@ interface ComposerHeaderProps {
 }
 
 /** Render composer identity and explicit private-save or submission actions. */
-export function ComposerHeader({
-  postId,
-  title,
-  busy,
-  role,
-  t,
-  run,
-  save,
-}: ComposerHeaderProps) {
+export function ComposerHeader({ postId, title, busy, role, t, run, save }: ComposerHeaderProps) {
   return (
     <div className="section-heading">
       <div>
@@ -29,23 +21,39 @@ export function ComposerHeader({
         <h1 className="text-3xl">{title || t("An unwritten world", "Un mundo por escribir")}</h1>
       </div>
       <div className="toolbar">
-        <Link href={"/posts/" + postId}>{t("Read approved version", "Leer versión aprobada")} ↗</Link>
+        <Link href={"/posts/" + postId}>
+          {t("Read approved version", "Leer versión aprobada")} ↗
+        </Link>
         <Button
           variant="outline"
           disabled={busy}
-          onClick={/** Save work privately without publishing or submitting it. */ function draft() {
-            void run(/** Persist the current composition as a private draft. */ async function persistDraft() { await save(); });
-          }}
+          onClick={
+            /** Save work privately without publishing or submitting it. */ function draft() {
+              void run(
+                /** Persist the current composition as a private draft. */ async function persistDraft() {
+                  await save();
+                },
+              );
+            }
+          }
         >
           {t("Save draft", "Guardar borrador")}
         </Button>
         <Button
           disabled={busy}
-          onClick={/** Run the explicit apply or submit action. */ function submit() {
-            void run(/** Save the draft and submit its changed targets. */ async function submitChanges() { await save(true); });
-          }}
+          onClick={
+            /** Run the explicit apply or submit action. */ function submit() {
+              void run(
+                /** Save the draft and submit its changed targets. */ async function submitChanges() {
+                  await save(true);
+                },
+              );
+            }
+          }
         >
-          {role === "author" ? t("Apply my changes", "Aplicar mis cambios") : t("Submit for approval", "Enviar para aprobación")}
+          {role === "author"
+            ? t("Apply my changes", "Aplicar mis cambios")
+            : t("Submit for approval", "Enviar para aprobación")}
         </Button>
       </div>
     </div>

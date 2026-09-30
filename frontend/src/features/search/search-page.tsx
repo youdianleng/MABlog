@@ -25,24 +25,61 @@ export function SearchPage() {
   return (
     <div className="search-page">
       <header className="search-hero">
-        <div className="eyebrow">{t("PERMISSION-AWARE DISCOVERY", "DESCUBRIMIENTO CON PERMISOS")}</div>
-        <h1>{t("Find the story that stays with you", "Encuentra la historia que permanece contigo")}</h1>
-        <p>{t("Describe a feeling, subject, place, or idea. MAblog searches only stories you may currently read.", "Describe una emoción, tema, lugar o idea. MAblog busca solo historias que puedes leer ahora.")}</p>
+        <div className="eyebrow">
+          {t("PERMISSION-AWARE DISCOVERY", "DESCUBRIMIENTO CON PERMISOS")}
+        </div>
+        <h1>
+          {t("Find the story that stays with you", "Encuentra la historia que permanece contigo")}
+        </h1>
+        <p>
+          {t(
+            "Describe a feeling, subject, place, or idea. MAblog searches only stories you may currently read.",
+            "Describe una emoción, tema, lugar o idea. MAblog busca solo historias que puedes leer ahora.",
+          )}
+        </p>
       </header>
       <SearchForm onSearch={runSearch} />
-      {state.error ? <div className="notice error" role="alert">{state.error}</div> : null}
-      {state.pending ? <div className="search-loading" aria-live="polite"><span />{t("Ranking accessible stories…", "Clasificando historias accesibles…")}</div> : null}
+      {state.error ? (
+        <div className="notice error" role="alert">
+          {state.error}
+        </div>
+      ) : null}
+      {state.pending ? (
+        <div className="search-loading" aria-live="polite">
+          <span />
+          {t("Ranking accessible stories…", "Clasificando historias accesibles…")}
+        </div>
+      ) : null}
       {state.response ? (
         <>
-          <ExplanationPanel response={state.response} status={state.explanationStatus} text={state.explanation} citations={state.citations} />
-          <SearchResults kind="personal" group={state.response.personal} loading={state.loadingGroup === "personal"} onLoadMore={
-            /** Load another Personal page without changing Public results. */
-            async function loadPersonal() { await loadMore("personal"); }
-          } />
-          <SearchResults kind="public" group={state.response.public} loading={state.loadingGroup === "public"} onLoadMore={
-            /** Load another Public page without changing Personal results. */
-            async function loadPublic() { await loadMore("public"); }
-          } />
+          <ExplanationPanel
+            response={state.response}
+            status={state.explanationStatus}
+            text={state.explanation}
+            citations={state.citations}
+          />
+          <SearchResults
+            kind="personal"
+            group={state.response.personal}
+            loading={state.loadingGroup === "personal"}
+            onLoadMore={
+              /** Load another Personal page without changing Public results. */
+              async function loadPersonal() {
+                await loadMore("personal");
+              }
+            }
+          />
+          <SearchResults
+            kind="public"
+            group={state.response.public}
+            loading={state.loadingGroup === "public"}
+            onLoadMore={
+              /** Load another Public page without changing Personal results. */
+              async function loadPublic() {
+                await loadMore("public");
+              }
+            }
+          />
         </>
       ) : null}
     </div>

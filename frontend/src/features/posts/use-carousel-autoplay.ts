@@ -18,12 +18,16 @@ export function useCarouselAutoplay(options: {
       const timer = setInterval(
         /** Advance to the next card and wrap at the final item. */ function advance() {
           setActive(
-            /** Keep the next position within the available card count. */ function next(index) { return (index + 1) % count; },
+            /** Keep the next position within the available card count. */ function next(index) {
+              return (index + 1) % count;
+            },
           );
         },
         5000,
       );
-      return /** Stop the interval whenever interaction state changes. */ function cleanup() { clearInterval(timer); };
+      return /** Stop the interval whenever interaction state changes. */ function cleanup() {
+        clearInterval(timer);
+      };
     },
     [count, paused, hovered, focused, reduced, setActive],
   );

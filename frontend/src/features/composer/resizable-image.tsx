@@ -28,7 +28,9 @@ function normalizedWidth(value: unknown): number | null {
 
 /** Keep a proposed image width inside the editor block and persistence limits. */
 function clampWidth(width: number, availableWidth: number): number {
-  return Math.round(Math.min(Math.max(MIN_IMAGE_WIDTH, width), availableWidth, MAX_SAVED_IMAGE_WIDTH));
+  return Math.round(
+    Math.min(Math.max(MIN_IMAGE_WIDTH, width), availableWidth, MAX_SAVED_IMAGE_WIDTH),
+  );
 }
 
 /** Render an uploaded image with pointer and keyboard resizing controls inside TipTap. */
@@ -55,7 +57,11 @@ function ResizableImageView({ node, updateAttributes, selected }: NodeViewProps)
     const layoutWidth = element.offsetWidth || renderedWidth;
     const scale = renderedWidth > 0 && layoutWidth > 0 ? renderedWidth / layoutWidth : 1;
     const editorWidth = element.closest(".ProseMirror")?.clientWidth || layoutWidth;
-    return { startWidth: width || layoutWidth, scale, maxWidth: Math.max(MIN_IMAGE_WIDTH, editorWidth) };
+    return {
+      startWidth: width || layoutWidth,
+      scale,
+      maxWidth: Math.max(MIN_IMAGE_WIDTH, editorWidth),
+    };
   }
 
   /** Begin resizing from the visible corner while retaining events outside the handle. */
@@ -83,11 +89,13 @@ function ResizableImageView({ node, updateAttributes, selected }: NodeViewProps)
     const session = resize.current;
     if (!session || session.pointerId !== event.pointerId) return;
     resize.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
     const documentDelta = (event.clientX - session.startX) / session.scale;
-    const nextWidth = event.type === "pointercancel"
-      ? width || session.startWidth
-      : session.startWidth + documentDelta;
+    const nextWidth =
+      event.type === "pointercancel"
+        ? width || session.startWidth
+        : session.startWidth + documentDelta;
     const committedWidth = clampWidth(nextWidth, session.maxWidth);
     setWidth(committedWidth);
     updateAttributes({ width: committedWidth });
@@ -102,7 +110,10 @@ function ResizableImageView({ node, updateAttributes, selected }: NodeViewProps)
     event.stopPropagation();
     const step = event.shiftKey ? LARGE_KEYBOARD_RESIZE_STEP : KEYBOARD_RESIZE_STEP;
     const direction = event.key === "ArrowRight" ? 1 : -1;
-    const nextWidth = clampWidth((width || metrics.startWidth) + direction * step, metrics.maxWidth);
+    const nextWidth = clampWidth(
+      (width || metrics.startWidth) + direction * step,
+      metrics.maxWidth,
+    );
     setWidth(nextWidth);
     updateAttributes({ width: nextWidth });
   }
@@ -115,7 +126,13 @@ function ResizableImageView({ node, updateAttributes, selected }: NodeViewProps)
       data-selected={selected ? "true" : undefined}
       style={{ width: width ? `${width}px` : undefined }}
     >
-      <img ref={image} src={node.attrs.src} alt={node.attrs.alt || ""} width={width || undefined} draggable={false} />
+      <img
+        ref={image}
+        src={node.attrs.src}
+        alt={node.attrs.alt || ""}
+        width={width || undefined}
+        draggable={false}
+      />
       <button
         className="image-resize-handle"
         type="button"
@@ -144,13 +161,18 @@ export const ResizableImageExtension = ImageExtension.extend({
       ...this.parent?.(),
       width: {
         default: null,
-        parseHTML: /** Accept only bounded integer widths from stored HTML. */ function parseWidth(element) {
+        parseHTML: /** Accept only bounded integer widths from stored HTML. */ function parseWidth(
+          element,
+        ) {
           return normalizedWidth(element.getAttribute("width"));
         },
-        renderHTML: /** Omit default sizing and serialize only a validated width. */ function renderWidth(attributes) {
-          const width = normalizedWidth(attributes.width);
-          return width ? { width: String(width) } : {};
-        },
+        renderHTML:
+          /** Omit default sizing and serialize only a validated width. */ function renderWidth(
+            attributes,
+          ) {
+            const width = normalizedWidth(attributes.width);
+            return width ? { width: String(width) } : {};
+          },
       },
     };
   },

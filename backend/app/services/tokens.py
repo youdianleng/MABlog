@@ -1,4 +1,5 @@
 """Short-lived signed search state that avoids server-side query history."""
+
 import base64
 import hashlib
 import hmac
@@ -32,4 +33,3 @@ def verify_search_state(token: str, kind: str, subject: str) -> dict:
         return payload
     except (ValueError, TypeError, KeyError, json.JSONDecodeError) as error:
         raise HTTPException(400, "Search state expired. Run the search again.") from error
-

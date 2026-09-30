@@ -63,8 +63,15 @@ export function ComposerCanvas({
 
   return (
     <div className="editor-viewport" ref={viewportRef}>
-      <div className="editor-zoom-space" ref={zoomContentRef} style={{ width: surfaceWidth * zoom, height: surfaceHeight * zoom }}>
-        <div className="editor-zoom-surface" style={{ width: surfaceWidth, height: surfaceHeight, transform: "scale(" + zoom + ")" }}>
+      <div
+        className="editor-zoom-space"
+        ref={zoomContentRef}
+        style={{ width: surfaceWidth * zoom, height: surfaceHeight * zoom }}
+      >
+        <div
+          className="editor-zoom-surface"
+          style={{ width: surfaceWidth, height: surfaceHeight, transform: "scale(" + zoom + ")" }}
+        >
           <Rnd
             scale={zoom}
             size={{ width: canvas.width, height: canvas.height }}
@@ -87,27 +94,43 @@ export function ComposerCanvas({
               bottomLeft: "canvas-resize-handle canvas-resize-sw",
               topLeft: "canvas-resize-handle canvas-resize-nw",
             }}
-            onDragStop={/** Shift crop bounds without moving stored blocks. */ function moveCrop(event, position) {
-              const deltaX = position.x - canvasFrame.x;
-              const deltaY = position.y - canvasFrame.y;
-              if (deltaX === 0 && deltaY === 0) return;
-              setCanvasFrame({ x: position.x, y: position.y });
-              change({ ...current, canvas: { ...canvas, x: canvas.x + deltaX, y: canvas.y + deltaY } });
-            }}
-            onResizeStop={/** Store crop dimensions and compensate for left or top movement. */ function resizeCanvas(event, direction, ref, delta, position) {
-              const deltaX = position.x - canvasFrame.x;
-              const deltaY = position.y - canvasFrame.y;
-              setCanvasFrame({ x: position.x, y: position.y });
-              change({
-                ...current,
-                canvas: {
-                  x: canvas.x + deltaX,
-                  y: canvas.y + deltaY,
-                  width: ref.offsetWidth,
-                  height: ref.offsetHeight,
-                },
-              });
-            }}
+            onDragStop={
+              /** Shift crop bounds without moving stored blocks. */ function moveCrop(
+                event,
+                position,
+              ) {
+                const deltaX = position.x - canvasFrame.x;
+                const deltaY = position.y - canvasFrame.y;
+                if (deltaX === 0 && deltaY === 0) return;
+                setCanvasFrame({ x: position.x, y: position.y });
+                change({
+                  ...current,
+                  canvas: { ...canvas, x: canvas.x + deltaX, y: canvas.y + deltaY },
+                });
+              }
+            }
+            onResizeStop={
+              /** Store crop dimensions and compensate for left or top movement. */ function resizeCanvas(
+                event,
+                direction,
+                ref,
+                delta,
+                position,
+              ) {
+                const deltaX = position.x - canvasFrame.x;
+                const deltaY = position.y - canvasFrame.y;
+                setCanvasFrame({ x: position.x, y: position.y });
+                change({
+                  ...current,
+                  canvas: {
+                    x: canvas.x + deltaX,
+                    y: canvas.y + deltaY,
+                    width: ref.offsetWidth,
+                    height: ref.offsetHeight,
+                  },
+                });
+              }
+            }
           >
             <div
               className="crop-handle"
@@ -125,7 +148,12 @@ export function ComposerCanvas({
             </div>
             <div
               className="editor-canvas"
-              style={{ width: "100%", height: "100%", overflow: "hidden", cursor: drawing ? "crosshair" : "default" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                overflow: "hidden",
+                cursor: drawing ? "crosshair" : "default",
+              }}
               onPointerDown={startDraw}
               onPointerUp={finishDraw}
             >

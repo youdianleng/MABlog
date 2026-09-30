@@ -1,9 +1,13 @@
 import type { AiNewsDocument } from "@/lib/api";
 
-export type NewsTab = "overview" | "sources" | "editions" | "alerts" | "providers" | "administrators";
+export type NewsTab =
+  "overview" | "sources" | "editions" | "alerts" | "providers" | "administrators";
 
 export interface NewsProviderSettings {
-  providers: Record<"openai" | "brave", { configured: boolean; source: "saved" | "environment" | "missing" }>;
+  providers: Record<
+    "openai" | "brave",
+    { configured: boolean; source: "saved" | "environment" | "missing" }
+  >;
   models: Record<"small" | "strong", { value: string; source: "saved" | "environment" }>;
 }
 
@@ -49,7 +53,15 @@ export interface NewsReadiness {
 
 export interface NewsStatus {
   readiness: NewsReadiness;
-  schedule: { enabled: boolean; timezone: string; weekday: number; hour: number; minute: number; next_run: number; activation_preview_run_id: string | null };
+  schedule: {
+    enabled: boolean;
+    timezone: string;
+    weekday: number;
+    hour: number;
+    minute: number;
+    next_run: number;
+    activation_preview_run_id: string | null;
+  };
   budget: { run_limit: number; month_limit: number; brave_limit: number; month_spend: number };
   active_run: NewsRunSummary | null;
   recent_runs: NewsRunSummary[];
@@ -97,8 +109,23 @@ export interface NewsEdition {
 export interface NewsRunDetail extends NewsRunSummary {
   jobs: NewsJob[];
   candidates: NewsCandidate[];
-  documents: Array<{ id: string; url: string; mime: string; content_hash: string; official: boolean; warnings: string[]; text: string }>;
-  claims: Array<{ id: string; claim_key: string; text_en: string; text_es: string; status: string; evidence: Array<{ url: string; quote: string }> }>;
+  documents: Array<{
+    id: string;
+    url: string;
+    mime: string;
+    content_hash: string;
+    official: boolean;
+    warnings: string[];
+    text: string;
+  }>;
+  claims: Array<{
+    id: string;
+    claim_key: string;
+    text_en: string;
+    text_es: string;
+    status: string;
+    evidence: Array<{ url: string; quote: string }>;
+  }>;
   publication_conflicts?: Array<{ model_name: string; post_id: string | null }>;
   edition: NewsEdition | null;
 }

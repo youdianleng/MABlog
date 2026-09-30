@@ -279,5 +279,3 @@ export function Composer({ id }: { id: string }) {
     </>
   );
 }
-
-

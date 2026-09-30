@@ -16,17 +16,14 @@ export function Sharing({ id }: { id: string }) {
   const [revision, setRevision] = useState(0),
     [email, setEmail] = useState(""),
     [role, setRole] = useState("viewer");
-  const { data, error } = useData<
-    { user_id: string; email: string; role: string }[]
-  >(`/posts/${id}/grants`, revision);
+  const { data, error } = useData<{ user_id: string; email: string; role: string }[]>(
+    `/posts/${id}/grants`,
+    revision,
+  );
   return (
     <div className="stack">
-      <Link href={`/posts/${id}`}>
-        ← {t("Back to post", "Volver a la publicación")}
-      </Link>
-      <h1 className="text-4xl">
-        {t("Invite a collaborator", "Invita a un colaborador")}
-      </h1>
+      <Link href={`/posts/${id}`}>← {t("Back to post", "Volver a la publicación")}</Link>
+      <h1 className="text-4xl">{t("Invite a collaborator", "Invita a un colaborador")}</h1>
       <p>
         {t(
           "Permissions apply only to this post. Editing changes are reviewed by its creator.",
@@ -36,9 +33,7 @@ export function Sharing({ id }: { id: string }) {
       <form
         className="toolbar"
         onSubmit={
-          /** Submit the registered-email access form. */ function invite(
-            event,
-          ) {
+          /** Submit the registered-email access form. */ function invite(event) {
             event.preventDefault();
             void run(
               /** Save the post-specific grant and refresh the recipient list. */ async function grant() {
@@ -57,9 +52,7 @@ export function Sharing({ id }: { id: string }) {
           placeholder={t("Registered email", "Correo registrado")}
           value={email}
           onChange={
-            /** Capture the invited registered email address. */ function address(
-              event,
-            ) {
+            /** Capture the invited registered email address. */ function address(event) {
               setEmail(event.target.value);
             }
           }
@@ -69,9 +62,7 @@ export function Sharing({ id }: { id: string }) {
           style={{ width: 170 }}
           value={role}
           onChange={
-            /** Select view-only or editing permission. */ function permission(
-              event,
-            ) {
+            /** Select view-only or editing permission. */ function permission(event) {
               setRole(event.target.value);
             }
           }
@@ -93,9 +84,7 @@ export function Sharing({ id }: { id: string }) {
               <div className="notice toolbar" key={grant.user_id}>
                 <span>
                   {grant.email} ·{" "}
-                  {grant.role === "editor"
-                    ? t("Editor", "Editor")
-                    : t("Viewer", "Lector")}
+                  {grant.role === "editor" ? t("Editor", "Editor") : t("Viewer", "Lector")}
                 </span>
                 <Button
                   variant="ghost"
@@ -103,10 +92,7 @@ export function Sharing({ id }: { id: string }) {
                     /** Run a creator-controlled access removal. */ function revoke() {
                       void run(
                         /** Revoke the recipient grant and refresh the list. */ async function removeGrant() {
-                          await api(
-                            `/posts/${id}/grants/${grant.user_id}`,
-                            "DELETE",
-                          );
+                          await api(`/posts/${id}/grants/${grant.user_id}`, "DELETE");
                           setRevision(revision + 1);
                         },
                       );

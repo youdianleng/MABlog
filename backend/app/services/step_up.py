@@ -1,11 +1,9 @@
 """Recent administrator authorization bound to the current opaque session."""
 
-import os
-
 from fastapi import Depends, HTTPException, Request
 
+from ..config import ADMIN_STEP_UP_SECONDS, APP_ENV, LOCAL_ADMIN_STEP_UP_BYPASS, LOCAL_ADMIN_USERNAME
 from ..dependencies import database
-from ..config import ADMIN_STEP_UP_SECONDS, APP_ENV, LOCAL_ADMIN_STEP_UP_BYPASS
 from ..models import AdminStepUp, User
 from ..utils import digest, now
 from .administration import require_admin
@@ -21,8 +19,7 @@ def current_session_key(request: Request) -> str:
 
 def local_bypass_allowed(user: User) -> bool:
     """Limit the development convenience bypass to the configured seeded local administrator."""
-    configured_username = os.getenv("LOCAL_ADMIN_USERNAME", "mablog_admin").strip().lower()
-    return APP_ENV == "local" and LOCAL_ADMIN_STEP_UP_BYPASS and user.username == configured_username
+    return APP_ENV == "local" and LOCAL_ADMIN_STEP_UP_BYPASS and user.username == LOCAL_ADMIN_USERNAME
 
 
 def step_up_status(request: Request, db, user: User) -> dict:
@@ -50,4 +47,3 @@ def require_step_up(request: Request, db=Depends(database), user: User = Depends
     if not step_up_status(request, db, user)["authorized"]:
         raise HTTPException(403, "Recent administrator verification is required")
     return user
-

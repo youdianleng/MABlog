@@ -1,4 +1,5 @@
 """Stable schema imports for API routes and domain services."""
+
 from .accounts import AdminRolePayload, Credentials, RecoveryPayload, Registration, StepUpRequest, StepUpVerification, Verification
 from .ai_news import (
     ActionReasonPayload,
@@ -31,12 +32,39 @@ from .posts import (
 from .search import ExplanationPayload, SearchCursorPayload, SearchPayload, SearchScope
 
 __all__ = [
-    "ActionReasonPayload", "AdminRolePayload", "Block", "Canvas", "CloudProcessingPayload",
-    "Credentials", "Details", "Document", "DraftPayload", "ExplanationPayload", "GrantPayload",
-    "NewsCorrectionAcceptance", "NewsCorrectionPayload", "NewsEmailPreferencePayload", "NewsEvidenceOverridePayload",
-    "NewsModelsPayload", "NewsPinPayload", "NewsPreviewPayload", "NewsProviderKeyPayload", "NewsSchedulePayload", "NewsSourcePayload",
-    "NewsSuggestionPayload", "PostCategory", "ProfilePayload", "ProposalReviewPayload",
-    "PublicationPayload", "RecoveryPayload", "Registration", "SearchCursorPayload",
-    "SearchPayload", "SearchScope", "StepUpRequest", "StepUpVerification", "StrictModel",
+    "ActionReasonPayload",
+    "AdminRolePayload",
+    "Block",
+    "Canvas",
+    "CloudProcessingPayload",
+    "Credentials",
+    "Details",
+    "Document",
+    "DraftPayload",
+    "ExplanationPayload",
+    "GrantPayload",
+    "NewsCorrectionAcceptance",
+    "NewsCorrectionPayload",
+    "NewsEmailPreferencePayload",
+    "NewsEvidenceOverridePayload",
+    "NewsModelsPayload",
+    "NewsPinPayload",
+    "NewsPreviewPayload",
+    "NewsProviderKeyPayload",
+    "NewsSchedulePayload",
+    "NewsSourcePayload",
+    "NewsSuggestionPayload",
+    "PostCategory",
+    "ProfilePayload",
+    "ProposalReviewPayload",
+    "PublicationPayload",
+    "RecoveryPayload",
+    "Registration",
+    "SearchCursorPayload",
+    "SearchPayload",
+    "SearchScope",
+    "StepUpRequest",
+    "StepUpVerification",
+    "StrictModel",
     "Verification",
 ]
