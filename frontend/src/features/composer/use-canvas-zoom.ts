@@ -8,7 +8,7 @@ const MAX_CANVAS_ZOOM = 3;
 const CANVAS_ZOOM_STEP = 0.1;
 
 /** Clamp one wheel step to the supported canvas zoom range. */
-function nextCanvasZoom(current: number, deltaY: number): number {
+export function nextCanvasZoom(current: number, deltaY: number): number {
   const direction = deltaY < 0 ? 1 : -1;
   const stepped = Math.round((current + direction * CANVAS_ZOOM_STEP) * 100) / 100;
   return Math.min(MAX_CANVAS_ZOOM, Math.max(MIN_CANVAS_ZOOM, stepped));

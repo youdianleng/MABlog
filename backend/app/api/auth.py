@@ -1,4 +1,5 @@
 """Account registration, login, verification, recovery, and session routes."""
+
 import hmac
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -94,5 +95,16 @@ def me(user=Depends(current_user)):
 
     if not user:
         return {"user": None}
-    return {"user": {"id": user.id, "email": user.email, "username": user.username, "display_name": user.display_name, "bio": user.bio, "avatar": user.avatar, "personal_cloud_processing": user.personal_cloud_processing, "is_admin": user.is_admin, "ai_news_email": user.ai_news_email}}
-
+    return {
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "display_name": user.display_name,
+            "bio": user.bio,
+            "avatar": user.avatar,
+            "personal_cloud_processing": user.personal_cloud_processing,
+            "is_admin": user.is_admin,
+            "ai_news_email": user.ai_news_email,
+        }
+    }

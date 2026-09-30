@@ -1,0 +1,25 @@
+# Optional local hooks mirroring CI formatting and lint checks.
+# Install once with `pip install pre-commit && pre-commit install`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10  # Keep in step with ruff in backend/requirements-dev.txt.
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/(app|tests)/
+      - id: ruff-format
+        files: ^backend/(app|tests)/
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier (frontend)
+        entry: bash -c 'cd frontend && npx prettier --write --ignore-unknown "${@#frontend/}"' --
+        language: system
+        files: ^frontend/
+        exclude: ^frontend/(public/|package-lock\.json)
+      - id: frontend-comment-audit
+        name: frontend function documentation audit
+        entry: bash -c 'cd frontend && node scripts/audit-comments.mjs'
+        language: system
+        files: ^frontend/(src|tests)/.*\.tsx?$
+        pass_filenames: false

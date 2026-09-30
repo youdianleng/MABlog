@@ -1,4 +1,5 @@
 """AI-news scheduler, source, correction, and publication request schemas."""
+
 from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator

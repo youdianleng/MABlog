@@ -2,3 +2,6 @@
 __pycache__
 .pytest_cache
 *.pyc
+.ruff_cache
+.mypy_cache
+uploads

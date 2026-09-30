@@ -98,11 +98,13 @@ backend/app/        Application entry point, authentication, models, schemas, an
 backend/migrations/ Versioned Alembic schema changes
 backend/evaluation/ Checked-in bilingual semantic-retrieval fixture
 backend/tests/     PostgreSQL integration tests
-frontend/tests/    Playwright browser checks
+frontend/tests/    Playwright browser checks (unit tests live beside modules as *.test.ts)
 scripts/           Local backup tooling
 docs/              Design decisions, build progress, and operation notes
 compose.yaml       Local service composition and persistent volumes
 AGENTS.md          Development and function-documentation requirements
+CONTEXT.md         Domain glossary for product terms
+.github/workflows/ CI: lint, format, type, unit, backend integration, and build checks
 ```
 
 See [application structure](docs/architecture.md) for ownership rules and the complete frontend/backend module map. Compatibility export files keep existing imports stable, while implementation remains in feature modules.
@@ -117,7 +119,21 @@ Zustand holds transient search questions, ranked results, and streamed explanati
 
 ## Development and verification
 
-The pinned Python dependencies are in `backend/requirements.txt`; npm versions are locked in `frontend/package-lock.json`. See [build progress](docs/build-progress.md) for the actual checks performed and completed steps.
+The pinned Python dependencies are in `backend/requirements.txt`; npm versions are pinned exactly in `frontend/package.json` and locked in `frontend/package-lock.json`.
+
+Frontend checks (run in `frontend/`):
+
+```powershell
+npm run format:check; npm run lint; npm run typecheck; npm run audit:comments; npm run test:unit
+```
+
+Backend lint, formatting, and integration tests run in the Docker test image against the separate `mablog_test` database:
+
+```powershell
+docker compose --profile test run --rm --build backend-tests sh -c "ruff check app tests && ruff format --check app tests && python -m pytest tests -q"
+```
+
+The same checks, plus a migration round-trip and production frontend build, run in GitHub Actions on every push and pull request. Optional local hooks are in `.pre-commit-config.yaml`. Backend log verbosity is controlled by `LOG_LEVEL` (default `INFO`). See [build progress](docs/build-progress.md) for the actual checks performed and completed steps.
 
 ```powershell
 # Run once to create a separate test database; never point this suite at the main database.

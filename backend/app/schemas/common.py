@@ -1,4 +1,5 @@
 """Shared strict schema behavior used by every API request model."""
+
 from pydantic import BaseModel, ConfigDict
 
 

@@ -1,14 +1,14 @@
 """Economy-limit accounting based on configurable token-price estimates."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 
 from ...config import NEWS_SMALL_INPUT_USD_PER_MILLION, NEWS_SMALL_OUTPUT_USD_PER_MILLION, NEWS_STRONG_INPUT_USD_PER_MILLION, NEWS_STRONG_OUTPUT_USD_PER_MILLION
 from ...models import NewsRun, NewsSetting, NewsUsage
 from ...utils import now
-from .providers.openai import OpenAIResult
 from .provider_settings import model_for
+from .providers.openai import OpenAIResult
 
 
 def estimated_cost(db, result: OpenAIResult) -> float:
@@ -22,8 +22,8 @@ def estimated_cost(db, result: OpenAIResult) -> float:
 
 def month_start_timestamp(timestamp: float | None = None) -> float:
     """Return the UTC start of the calendar month containing the supplied time."""
-    instant = datetime.fromtimestamp(timestamp or now(), tz=timezone.utc)
-    return datetime(instant.year, instant.month, 1, tzinfo=timezone.utc).timestamp()
+    instant = datetime.fromtimestamp(timestamp or now(), tz=UTC)
+    return datetime(instant.year, instant.month, 1, tzinfo=UTC).timestamp()
 
 
 def assert_paid_stage_budget(db, run: NewsRun, projected_cost: float = 0.25) -> None:

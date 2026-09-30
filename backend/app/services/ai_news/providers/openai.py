@@ -43,7 +43,9 @@ def _response_text(payload: dict) -> str:
     return "".join(parts)
 
 
-def responses_call(model: str, instructions: str, input_text: str, max_output_tokens: int, tools: list[dict] | None = None, idempotency_key: str | None = None, db=None) -> OpenAIResult:
+def responses_call(
+    model: str, instructions: str, input_text: str, max_output_tokens: int, tools: list[dict] | None = None, idempotency_key: str | None = None, db=None
+) -> OpenAIResult:
     """Call Responses with provider storage disabled and translate failures into safe codes."""
     api_key = effective_key(db, "openai")
     if not api_key:

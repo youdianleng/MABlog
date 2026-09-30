@@ -68,7 +68,9 @@ def validate_correction(originals: dict, documents: dict) -> None:
         if _release_ids(documents[language]) != release_ids or _citation_identity(documents[language]) != _citation_identity(originals[language]):
             raise RuntimeError("correction_evidence_identity_changed")
         if originals[language].get("editorial_version", 1) >= 2:
-            if documents[language].get("editorial_version") != originals[language]["editorial_version"] or _release_evidence_layout(documents[language]) != _release_evidence_layout(originals[language]):
+            if documents[language].get("editorial_version") != originals[language]["editorial_version"] or _release_evidence_layout(
+                documents[language]
+            ) != _release_evidence_layout(originals[language]):
                 raise RuntimeError("correction_benchmark_identity_changed")
 
 
@@ -78,7 +80,10 @@ def synchronize_correction(db, run: NewsRun, originals: dict, language: str, edi
     provisional = {**originals, language: edited}
     if _release_ids(edited) != _release_ids(originals[language]) or _citation_identity(edited) != _citation_identity(originals[language]):
         raise RuntimeError("correction_evidence_identity_changed")
-    if originals[language].get("editorial_version", 1) >= 2 and (edited.get("editorial_version") != originals[language]["editorial_version"] or _release_evidence_layout(edited) != _release_evidence_layout(originals[language])):
+    if originals[language].get("editorial_version", 1) >= 2 and (
+        edited.get("editorial_version") != originals[language]["editorial_version"]
+        or _release_evidence_layout(edited) != _release_evidence_layout(originals[language])
+    ):
         raise RuntimeError("correction_benchmark_identity_changed")
     assert_paid_stage_budget(db, run, 0.35)
     # A stable digest lets provider-side idempotency survive process and container restarts.
@@ -86,7 +91,9 @@ def synchronize_correction(db, run: NewsRun, originals: dict, language: str, edi
     result = responses_call(
         model_for(db, "strong"),
         SYNC_INSTRUCTIONS,
-        json.dumps({"source_language": language, "target_language": target, "edited_document": edited, "current_target": originals[target]}, ensure_ascii=False),
+        json.dumps(
+            {"source_language": language, "target_language": target, "edited_document": edited, "current_target": originals[target]}, ensure_ascii=False
+        ),
         6000,
         idempotency_key=f"news:{run.id}:correction:{language}:{edit_digest}",
         db=db,

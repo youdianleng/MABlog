@@ -11,19 +11,27 @@ export function SearchForm({ onSearch }: { onSearch: (input: SearchInput) => Pro
   const { t, locale } = useLanguage();
   const query = useSearchStore(
     /** Subscribe only to the transient question field. */
-    function selectQuery(state) { return state.query; },
+    function selectQuery(state) {
+      return state.query;
+    },
   );
   const category = useSearchStore(
     /** Subscribe only to the chosen category filter. */
-    function selectCategory(state) { return state.category; },
+    function selectCategory(state) {
+      return state.category;
+    },
   );
   const scope = useSearchStore(
     /** Subscribe only to the Personal/Public scope filter. */
-    function selectScope(state) { return state.scope; },
+    function selectScope(state) {
+      return state.scope;
+    },
   );
   const pending = useSearchStore(
     /** Subscribe only to retrieval progress for button state. */
-    function selectPending(state) { return state.pending; },
+    function selectPending(state) {
+      return state.pending;
+    },
   );
   return (
     <form
@@ -69,7 +77,9 @@ export function SearchForm({ onSearch }: { onSearch: (input: SearchInput) => Pro
             onChange={
               /** Apply an optional approved category to both result groups. */
               function changeCategory(event) {
-                useSearchStore.setState({ category: (event.target.value || null) as PostCategory | null });
+                useSearchStore.setState({
+                  category: (event.target.value || null) as PostCategory | null,
+                });
               }
             }
           >
@@ -77,7 +87,11 @@ export function SearchForm({ onSearch }: { onSearch: (input: SearchInput) => Pro
             {categories.map(
               /** Render stable stored category keys with localized labels. */
               function renderCategory(item) {
-                return <option key={item.value} value={item.value}>{locale === "es" ? item.es : item.en}</option>;
+                return (
+                  <option key={item.value} value={item.value}>
+                    {locale === "es" ? item.es : item.en}
+                  </option>
+                );
               },
             )}
           </select>

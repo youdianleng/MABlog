@@ -5,13 +5,13 @@ import hmac
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 
+from ..config import CODE_ATTEMPTS
 from ..dependencies import database
 from ..models import AdminStepUp, Challenge, LoginSession, User
 from ..schemas import AdminRolePayload, StepUpRequest, StepUpVerification
 from ..services.admin_audit import audit
-from ..config import CODE_ATTEMPTS
-from ..services.authentication import code_digest, issue_code, password_hasher, throttle
 from ..services.administration import active_admin_count, public_admin, require_admin
+from ..services.authentication import code_digest, issue_code, password_hasher, throttle
 from ..services.step_up import grant_step_up, local_bypass_allowed, require_step_up, step_up_status
 from ..utils import now
 
@@ -72,11 +72,10 @@ def change_administrator(user_id: str, data: AdminRolePayload, db=Depends(databa
     before = public_admin(target)
     target.is_admin = data.is_admin
     if not data.is_admin:
-        db.query(AdminStepUp).filter(AdminStepUp.session_token.in_(select(LoginSession.token).where(LoginSession.user_id == target.id))).delete(synchronize_session=False)
+        db.query(AdminStepUp).filter(AdminStepUp.session_token.in_(select(LoginSession.token).where(LoginSession.user_id == target.id))).delete(
+            synchronize_session=False
+        )
     after = public_admin(target)
     audit(db, actor, "administrator.role.changed", "user", target.id, data.reason, before, after)
     db.commit()
     return after
-
-
-

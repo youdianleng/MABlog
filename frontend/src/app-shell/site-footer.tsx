@@ -17,9 +17,20 @@ export function SiteFooter({ showCallout }: SiteFooterProps) {
     <footer className="site-footer">
       {showCallout ? (
         <section className="footer-callout" aria-labelledby="footer-callout-title">
-          <div className="footer-orbit" aria-hidden="true"><span /><i>✦</i><b>✧</b></div>
-          <p className="eyebrow">{t("The collection is always growing", "La colección siempre está creciendo")}</p>
-          <h2 id="footer-callout-title">{t("Find a story worth carrying with you.", "Encuentra una historia que quieras llevar contigo.")}</h2>
+          <div className="footer-orbit" aria-hidden="true">
+            <span />
+            <i>✦</i>
+            <b>✧</b>
+          </div>
+          <p className="eyebrow">
+            {t("The collection is always growing", "La colección siempre está creciendo")}
+          </p>
+          <h2 id="footer-callout-title">
+            {t(
+              "Find a story worth carrying with you.",
+              "Encuentra una historia que quieras llevar contigo.",
+            )}
+          </h2>
           <p className="footer-callout-copy">
             {t(
               "Step beyond the ordinary into public journals, imagined worlds, and quiet discoveries shared by the MAblog community.",
@@ -27,13 +38,31 @@ export function SiteFooter({ showCallout }: SiteFooterProps) {
             )}
           </p>
           <Button asChild size="lg" className="footer-callout-action">
-            <Link href="/public">{t("Enter the collection", "Entrar en la colección")}<ArrowRight aria-hidden="true" /></Link>
+            <Link href="/public">
+              {t("Enter the collection", "Entrar en la colección")}
+              <ArrowRight aria-hidden="true" />
+            </Link>
           </Button>
-          <ul className="footer-value-list" aria-label={t("What MAblog offers", "Lo que ofrece MAblog")}>
-            <li><BookOpenText aria-hidden="true" />{t("Living stories", "Historias vivas")}</li>
-            <li><Sparkles aria-hidden="true" />{t("Freeform ateliers", "Talleres libres")}</li>
-            <li><LockKeyhole aria-hidden="true" />{t("Creator-led sharing", "Compartir bajo control del autor")}</li>
-            <li><Search aria-hidden="true" />{t("Grounded discovery", "Descubrimiento fundamentado")}</li>
+          <ul
+            className="footer-value-list"
+            aria-label={t("What MAblog offers", "Lo que ofrece MAblog")}
+          >
+            <li>
+              <BookOpenText aria-hidden="true" />
+              {t("Living stories", "Historias vivas")}
+            </li>
+            <li>
+              <Sparkles aria-hidden="true" />
+              {t("Freeform ateliers", "Talleres libres")}
+            </li>
+            <li>
+              <LockKeyhole aria-hidden="true" />
+              {t("Creator-led sharing", "Compartir bajo control del autor")}
+            </li>
+            <li>
+              <Search aria-hidden="true" />
+              {t("Grounded discovery", "Descubrimiento fundamentado")}
+            </li>
           </ul>
         </section>
       ) : null}
@@ -41,14 +70,28 @@ export function SiteFooter({ showCallout }: SiteFooterProps) {
       <div className="footer-navigation">
         <div className="footer-navigation-inner">
           <div className="footer-brand-column">
-            <Link href="/" className="footer-brand" aria-label={t("MAblog home", "Inicio de MAblog")}>
-              <span className="footer-seal" aria-hidden="true">M</span>
+            <Link
+              href="/"
+              className="footer-brand"
+              aria-label={t("MAblog home", "Inicio de MAblog")}
+            >
+              <span className="footer-seal" aria-hidden="true">
+                M
+              </span>
               <span>MAblog</span>
             </Link>
-            <p>{t("A home for imagined worlds, personal journals, and stories made together.", "Un hogar para mundos imaginados, diarios personales e historias creadas en compañía.")}</p>
+            <p>
+              {t(
+                "A home for imagined worlds, personal journals, and stories made together.",
+                "Un hogar para mundos imaginados, diarios personales e historias creadas en compañía.",
+              )}
+            </p>
           </div>
 
-          <nav className="footer-link-groups" aria-label={t("Footer navigation", "Navegación del pie de página")}>
+          <nav
+            className="footer-link-groups"
+            aria-label={t("Footer navigation", "Navegación del pie de página")}
+          >
             <section aria-labelledby="footer-explore-heading">
               <h3 id="footer-explore-heading">{t("Explore", "Explorar")}</h3>
               <Link href="/">{t("Discover", "Descubrir")}</Link>
@@ -78,7 +121,12 @@ export function SiteFooter({ showCallout }: SiteFooterProps) {
 
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} MAblog</span>
-          <span>{t("Made for stories beyond the ordinary.", "Creado para historias más allá de lo cotidiano.")}</span>
+          <span>
+            {t(
+              "Made for stories beyond the ordinary.",
+              "Creado para historias más allá de lo cotidiano.",
+            )}
+          </span>
         </div>
       </div>
     </footer>

@@ -1,32 +1,50 @@
 """FastAPI application composition, middleware, and global error translation."""
+
+import logging
+
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
+
 from .api.router import api_router
 from .config import APP_ORIGIN
+from .logging_setup import configure_logging
+
+# PostgreSQL SQLSTATE for unique_violation; other integrity failures indicate programming errors.
+UNIQUE_VIOLATION_SQLSTATE = "23505"
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="MAblog API", version="0.1.0")
 app.include_router(api_router)
 
+
 @app.middleware("http")
 async def request_security(request: Request, call_next):
-    """Require same-origin intent for mutations and prevent browser caching of private data."""
+    """Require same-origin intent for mutations and prevent browser caching of private data.
+
+    Endpoints that serve public, immutable content (such as public media) may set their own
+    ``Cache-Control``; every other response defaults to ``no-store``.
+    """
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         if request.headers.get("x-mablog") != "1" or request.headers.get("origin", APP_ORIGIN) != APP_ORIGIN:
             return JSONResponse({"detail": "Invalid request origin"}, status_code=403)
     response = await call_next(request)
-    response.headers["Cache-Control"] = "no-store"
+    response.headers.setdefault("Cache-Control", "no-store")
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
 
 @app.exception_handler(ValidationError)
 async def invalid_document(request: Request, error: ValidationError):
     """Return a client error for invalid nested composition data."""
     return JSONResponse({"detail": "Invalid document: check block dimensions and content limits"}, status_code=422)
+
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, error: RequestValidationError):
@@ -35,9 +53,15 @@ async def invalid_request(request: Request, error: RequestValidationError):
         return JSONResponse({"detail": "Invalid provider key input"}, status_code=422)
     return await request_validation_exception_handler(request, error)
 
+
 @app.exception_handler(IntegrityError)
-async def duplicate_record(request: Request, error: IntegrityError):
-    """Translate concurrent uniqueness conflicts into a retryable API response."""
-    return JSONResponse({"detail": "This record already exists; refresh and try again"}, status_code=409)
+async def integrity_conflict(request: Request, error: IntegrityError):
+    """Translate concurrent uniqueness conflicts into a retryable 409; report other violations as 500.
 
-
+    Foreign-key, not-null, and check violations are bugs rather than races, so they are logged with
+    their traceback and returned as a generic server error instead of a misleading "already exists".
+    """
+    if getattr(error.orig, "sqlstate", None) == UNIQUE_VIOLATION_SQLSTATE:
+        return JSONResponse({"detail": "This record already exists; refresh and try again"}, status_code=409)
+    logger.exception("Database integrity violation on %s %s", request.method, request.url.path, exc_info=error)
+    return JSONResponse({"detail": "Internal server error"}, status_code=500)

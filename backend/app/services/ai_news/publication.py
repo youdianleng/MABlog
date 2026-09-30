@@ -27,10 +27,7 @@ def compatibility_document(structured: dict) -> dict:
     document = Document().model_dump()
     document["details"] = dict(structured["details"])
     citations = {
-        int(citation["number"]): citation
-        for block in structured.get("blocks", [])
-        if block.get("type") == "sources"
-        for citation in block.get("citations", [])
+        int(citation["number"]): citation for block in structured.get("blocks", []) if block.get("type") == "sources" for citation in block.get("citations", [])
     }
     blocks = []
     y = 40
@@ -40,13 +37,24 @@ def compatibility_document(structured: dict) -> dict:
         heading = f"<h2>{escape(str(block.get('title', '')))}</h2>" if block.get("title") else ""
         visible_paragraphs = [*block.get("paragraphs", []), *block.get("benchmarks", [])]
         paragraphs = "".join(
-            f"<p>{escape(str(paragraph.get('text', '')))} {_citation_links(paragraph.get('citations', []), citations)}</p>"
-            for paragraph in visible_paragraphs
+            f"<p>{escape(str(paragraph.get('text', '')))} {_citation_links(paragraph.get('citations', []), citations)}</p>" for paragraph in visible_paragraphs
         )
         # The compatibility copy feeds older readers and search indexing, so
         # source-backed benchmark text must not disappear outside AiNewsReader.
         height = max(180, 80 + 34 * sum(max(1, len(str(paragraph.get("text", ""))) // 80) for paragraph in visible_paragraphs))
-        blocks.append({"id": str(block.get("id", f"section-{order}")), "x": 60, "y": y, "width": 880, "height": height, "rotation": 0, "z": order, "order": order, "html": heading + paragraphs})
+        blocks.append(
+            {
+                "id": str(block.get("id", f"section-{order}")),
+                "x": 60,
+                "y": y,
+                "width": 880,
+                "height": height,
+                "rotation": 0,
+                "z": order,
+                "order": order,
+                "html": heading + paragraphs,
+            }
+        )
         y += height + 28
     document["canvas"] = {"x": 0, "y": 0, "width": 1000, "height": max(900, y + 40)}
     document["blocks"] = blocks
@@ -91,11 +99,15 @@ def publish_edition(db, run: NewsRun, edition: AutomatedEdition, *, allow_eviden
         # Only the protected, audited manual-preview endpoint may set this
         # approval; automatic and activation-test runs can never use it.
         if not (
-            run.kind == "preview" and not run.publication_intent
+            run.kind == "preview"
+            and not run.publication_intent
             and not run.result.get("verify_for_activation")
-            and run.status == "preview" and edition.status == "safety_cleared_preview"
-            and not edition.post_id and edition.verification.get("fact_check_performed") is False
-            and safety.get("passed") is True and approval.get("approved_by")
+            and run.status == "preview"
+            and edition.status == "safety_cleared_preview"
+            and not edition.post_id
+            and edition.verification.get("fact_check_performed") is False
+            and safety.get("passed") is True
+            and approval.get("approved_by")
         ):
             raise RuntimeError("unverified_preview_not_eligible")
     elif edition.status not in {"verified_preview", "corrected_verified", "unpublished"} or not edition.verification.get("passed"):
@@ -140,9 +152,19 @@ def publish_edition(db, run: NewsRun, edition: AutomatedEdition, *, allow_eviden
     run.status = "published"
     run.progress = 100
     run.completed = now()
-    run.result = {**run.result, "post_id": post.id, "edition_id": edition.id, **({"evidence_override_published": True} if allow_evidence_override else {}), **({"manual_unverified_preview_published": True} if allow_unverified_preview else {})}
+    run.result = {
+        **run.result,
+        "post_id": post.id,
+        "edition_id": edition.id,
+        **({"evidence_override_published": True} if allow_evidence_override else {}),
+        **({"manual_unverified_preview_published": True} if allow_unverified_preview else {}),
+    }
     settings = db.get(NewsSetting, 1)
-    if not allow_evidence_override and not allow_unverified_preview and (run.kind in {"scheduled", "catchup"} or (run.kind == "preview" and not run.historical)):
+    if (
+        not allow_evidence_override
+        and not allow_unverified_preview
+        and (run.kind in {"scheduled", "catchup"} or (run.kind == "preview" and not run.historical))
+    ):
         settings.last_successful_scan = max(settings.last_successful_scan, run.window_end)
         settings.updated = now()
     synchronize_post_search(db, post)

@@ -1,4 +1,6 @@
 """Integration tests against an isolated PostgreSQL test database."""
+
+import asyncio
 import copy
 import io
 import re
@@ -6,17 +8,21 @@ import re
 import pytest
 import redis
 from PIL import Image
-from sqlalchemy import delete, select
+from sqlalchemy import event, select
+from sqlalchemy.exc import IntegrityError
+from starlette.requests import Request
 
-from app import bootstrap
-from app.services import authentication as auth
-from app.services import email_delivery
-from app.api import media as media_routes, posts as post_routes
-from app.database import SessionLocal
-from app.models import Challenge, Draft, Grant, Like, LoginSession, Post, Proposal, User
+from app import bootstrap, main
+from app.api import media as media_routes
+from app.api import posts as post_routes
+from app.config import PUBLIC_MEDIA_CACHE_SECONDS
+from app.database import SessionLocal, engine
+from app.models import Challenge, Grant, Like, LoginSession, Post, User
 from app.schemas import Document
-from app.utils import digest, now
+from app.services import authentication as auth
+from app.services import email_delivery, public_cache
 from app.services.public_cache import invalidate_public_cache
+from app.utils import digest, now
 
 
 @pytest.fixture(autouse=True)
@@ -29,10 +35,18 @@ def isolated_database(reset_database, monkeypatch, tmp_path):
     invalidate_public_cache()
     yield
 
+
 def account(name: str) -> tuple[str, str]:
     """Create a verified fixture account and an opaque session token."""
     with SessionLocal() as db:
-        user = User(email=f"{name}@example.com", username=name, password=auth.password_hasher.hash("test-password-123"), active=True, verified_until=now() + 604800, display_name=name)
+        user = User(
+            email=f"{name}@example.com",
+            username=name,
+            password=auth.password_hasher.hash("test-password-123"),
+            active=True,
+            verified_until=now() + 604800,
+            display_name=name,
+        )
         db.add(user)
         db.flush()
         token = f"fixture-token-{name}"
@@ -83,7 +97,10 @@ def test_local_admin_bootstrap_allows_password_only_login(client, monkeypatch):
 def save_document(client, post_id, document, baseline=None, versions=None):
     """Save a working copy without making it visible to readers."""
     current = client.get(f"/api/posts/{post_id}/draft").json()
-    response = client.put(f"/api/posts/{post_id}/draft", json={"document": document, "baseline": baseline or current["baseline"], "versions": current["versions"] if versions is None else versions})
+    response = client.put(
+        f"/api/posts/{post_id}/draft",
+        json={"document": document, "baseline": baseline or current["baseline"], "versions": current["versions"] if versions is None else versions},
+    )
     assert response.status_code == 200, response.text
 
 
@@ -162,18 +179,24 @@ def test_public_post_numbered_pages_are_limited_to_fifteen(client):
 def test_registration_codes_and_weekly_expiry(client, monkeypatch):
     """Verify activation, wrong-code handling, one-time consumption, and weekly logout."""
     messages = []
+
     class Inbox:
         """Capture test messages without depending on the development SMTP inbox."""
+
         def __init__(self, *args, **kwargs):
             """Accept the SMTP connection signature without opening a socket."""
+
         def __enter__(self):
             """Expose the fake SMTP connection within the application's context manager."""
             return self
+
         def __exit__(self, *args):
             """Close the fake SMTP context without suppressing failures."""
+
         def send_message(self, message):
             """Retain the delivered plaintext only in the test process."""
             messages.append(message.get_content())
+
     monkeypatch.setattr(email_delivery.smtplib, "SMTP", Inbox)
     response = client.post("/api/auth/register", json={"email": "new@example.com", "username": "newwriter", "password": "test-password-123"})
     assert response.status_code == 200, response.text
@@ -290,7 +313,9 @@ def test_independent_review_conflicts_and_revocation(client):
     updated = client.get(f"/api/posts/{post}").json()["document"]
     assert updated["canvas"] == original["canvas"]
     layout = next(p for p in statuses if p["target"] == "canvas")
-    assert client.post(f"/api/posts/{post}/proposals/{layout['id']}", json={"action": "approve", "current_version": layout["current_version"]}).status_code == 200
+    assert (
+        client.post(f"/api/posts/{post}/proposals/{layout['id']}", json={"action": "approve", "current_version": layout["current_version"]}).status_code == 200
+    )
     assert client.get(f"/api/posts/{post}").json()["pending_reviews"] == 1
     updated = client.get(f"/api/posts/{post}").json()["document"]
     assert updated["canvas"]["width"] == 700
@@ -332,7 +357,9 @@ def test_sanitization_and_stale_creator_save(client):
     original = publishable(client, post)
     snapshot = client.get(f"/api/posts/{post}/draft").json()
     doc = copy.deepcopy(original)
-    doc["blocks"][0]["html"] = '<h4>Fourth level</h4><h5>Fifth level</h5><h6>Sixth level</h6><p onclick="alert(1)">Safe</p><script>alert(1)</script><img src="https://evil.invalid/pixel" width="640" onerror="alert(1)"><img width="9000"><iframe src="https://evil.invalid"></iframe>'
+    doc["blocks"][0]["html"] = (
+        '<h4>Fourth level</h4><h5>Fifth level</h5><h6>Sixth level</h6><p onclick="alert(1)">Safe</p><script>alert(1)</script><img src="https://evil.invalid/pixel" width="640" onerror="alert(1)"><img width="9000"><iframe src="https://evil.invalid"></iframe>'
+    )
     save_document(client, post, doc)
     client.post(f"/api/posts/{post}/submit")
     result = client.get(f"/api/posts/{post}").json()["document"]
@@ -361,15 +388,19 @@ def test_rolling_likes_and_cache_outage(client, monkeypatch):
     assert client.post(f"/api/posts/{first}/like").json()["likes"] == 1
     assert client.get("/api/carousel").json()[0]["id"] == first
     assert client.post(f"/api/posts/{first}/like").json()["likes"] == 0
+
     class OfflineCache:
         """Simulate Redis downtime without interfering with the database."""
+
         def get(self, *args):
             """Fail reads exactly as an unavailable Redis connection would."""
             raise redis.ConnectionError()
+
         def set(self, *args, **kwargs):
             """Fail cache population while permitting uncached content delivery."""
             raise redis.ConnectionError()
-    monkeypatch.setattr(post_routes, "cache", OfflineCache())
+
+    monkeypatch.setattr(public_cache, "cache", OfflineCache())
     assert client.get("/api/carousel").status_code == 200
 
 
@@ -422,7 +453,10 @@ def test_stale_review_and_invalid_draft_are_rejected(client):
     changed["canvas"]["width"] = 1000
     save_document(client, post, changed)
     assert client.post(f"/api/posts/{post}/submit").status_code == 200
-    assert client.post(f"/api/posts/{post}/proposals/{proposal['id']}", json={"action": "approve", "current_version": proposal["current_version"]}).status_code == 409
+    assert (
+        client.post(f"/api/posts/{post}/proposals/{proposal['id']}", json={"action": "approve", "current_version": proposal["current_version"]}).status_code
+        == 409
+    )
     assert client.get(f"/api/posts/{post}").json()["document"]["canvas"]["width"] == 1000
 
 
@@ -451,4 +485,64 @@ def test_editor_media_stays_private_until_submission(client):
     assert client.get(upload).status_code == 404
 
 
+def test_public_listing_query_count_does_not_grow_with_page_size(client):
+    """Batched post summaries keep a listing page at a fixed number of SQL statements."""
+    author_id, author = account("author")
+    sign_in(client, author)
 
+    def add_public_posts(count: int) -> None:
+        """Insert approved public posts directly so only the listing request is measured."""
+        with SessionLocal() as db:
+            for index in range(count):
+                document = Document().model_dump()
+                document["details"] = {"title": f"Story {index}", "summary": "Batch", "category": "travel"}
+                db.add(Post(author_id=author_id, document=document, versions={}, public=True, published=now() + index))
+            db.commit()
+
+    def count_listing_queries() -> int:
+        """Count statements issued while serving one filtered collection page."""
+        statements: list[str] = []
+
+        def record(conn, cursor, statement, parameters, context, executemany):
+            """Collect each SQL statement sent to PostgreSQL."""
+            statements.append(statement)
+
+        event.listen(engine, "before_cursor_execute", record)
+        try:
+            response = client.get("/api/posts/page?category=travel")
+        finally:
+            event.remove(engine, "before_cursor_execute", record)
+        assert response.status_code == 200, response.text
+        return len(statements)
+
+    add_public_posts(2)
+    small_page = count_listing_queries()
+    add_public_posts(10)
+    full_page = count_listing_queries()
+    assert full_page == small_page
+
+
+def test_only_public_approved_media_is_browser_cacheable(client):
+    """Public post media gets a shared cache lifetime while private media stays no-store."""
+    _, author = account("author")
+    sign_in(client, author)
+    post = create(client)
+    cover = publishable(client, post)["details"]["cover"]
+    assert client.get(cover).headers["cache-control"] == "no-store"
+    assert client.post(f"/api/posts/{post}/publication", json={"public": True}).status_code == 200
+    assert client.get(cover).headers["cache-control"] == f"public, max-age={PUBLIC_MEDIA_CACHE_SECONDS}"
+    assert client.get("/api/posts/page").headers["cache-control"] == "no-store"
+
+
+@pytest.mark.parametrize(("sqlstate", "status"), [("23505", 409), ("23503", 500), (None, 500)])
+def test_integrity_errors_distinguish_races_from_bugs(sqlstate, status):
+    """Only unique violations are reported as retryable conflicts."""
+
+    class DriverError(Exception):
+        """Stand in for a psycopg error carrying a PostgreSQL SQLSTATE."""
+
+    orig = DriverError()
+    orig.sqlstate = sqlstate
+    request = Request({"type": "http", "method": "POST", "path": "/api/posts", "headers": [], "query_string": b""})
+    response = asyncio.run(main.integrity_conflict(request, IntegrityError("INSERT", {}, orig)))
+    assert response.status_code == status

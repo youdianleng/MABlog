@@ -1,10 +1,10 @@
 """Bounded untrusted-source extraction for HTML, PDF, Markdown, and plain text."""
 
-from dataclasses import dataclass
 import hashlib
-from html.parser import HTMLParser
 import io
 import re
+from dataclasses import dataclass
+from html.parser import HTMLParser
 
 from pypdf import PdfReader
 

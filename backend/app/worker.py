@@ -1,11 +1,14 @@
 """Dedicated durable OpenAI passage-indexing worker and administrator recovery commands."""
+
 import argparse
+import logging
 import time
 
 from sqlalchemy import or_, select, update
 
 from .config import GLOBAL_INDEXED_PASSAGES_PER_DAY, INDEX_RETRY_SECONDS, INDEX_WORKER_POLL_SECONDS, OPENAI_EMBEDDING_MODEL
 from .database import SessionLocal
+from .logging_setup import configure_logging
 from .models import IndexingJob, SearchPassage
 from .services.capacity import consume_capacity, seconds_until_window_reset
 from .services.embeddings import OpenAIServiceError, cloud_ai_configured, embed_texts
@@ -16,6 +19,8 @@ from .utils import now
 PROCESSING_LEASE_SECONDS = 600
 # One initial attempt plus the five documented delayed retries may run before terminal failure.
 MAX_INDEX_ATTEMPTS = len(INDEX_RETRY_SECONDS) + 1
+
+logger = logging.getLogger(__name__)
 
 
 def claim_job() -> tuple[str, str] | None:
@@ -131,9 +136,7 @@ def retry_failed_jobs() -> int:
     """Reset terminal jobs for administrator-directed recovery without changing passages."""
     with SessionLocal() as db:
         result = db.execute(
-            update(IndexingJob)
-            .where(IndexingJob.status == "failed")
-            .values(status="pending", attempts=0, last_error="", available_at=now(), updated=now())
+            update(IndexingJob).where(IndexingJob.status == "failed").values(status="pending", attempts=0, last_error="", available_at=now(), updated=now())
         )
         db.commit()
         return int(result.rowcount or 0)
@@ -141,9 +144,15 @@ def retry_failed_jobs() -> int:
 
 def run_worker(prepared: int) -> None:
     """Poll durable jobs until the container stops after reporting prepared keyword records."""
-    print(f"Prepared search records for {prepared} posts.", flush=True)
+    logger.info("Prepared search records for %d posts", prepared)
     while True:
-        if not process_next_job():
+        try:
+            found = process_next_job()
+        except Exception:
+            # Keep the long-running worker alive; a leased job is reclaimed after PROCESSING_LEASE_SECONDS.
+            logger.exception("Indexing worker cycle failed")
+            found = False
+        if not found:
             time.sleep(INDEX_WORKER_POLL_SECONDS)
 
 
@@ -154,6 +163,7 @@ def main() -> None:
     parser.add_argument("--once", action="store_true", help="Prepare passages and process at most one due job")
     parser.add_argument("--retry-failed", action="store_true", help="Reset all failed jobs to pending, then exit")
     arguments = parser.parse_args()
+    configure_logging()
     if arguments.retry_failed:
         print(f"Reset {retry_failed_jobs()} failed indexing jobs.")
         return

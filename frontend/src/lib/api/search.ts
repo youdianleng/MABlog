@@ -21,7 +21,9 @@ export async function searchPosts(input: SearchInput): Promise<SearchResponse> {
 }
 
 /** Read another signed result page without repeating retrieval or cloud generation. */
-export async function loadSearchResults(cursor: string): Promise<{ items: SearchPost[]; cursor: string | null }> {
+export async function loadSearchResults(
+  cursor: string,
+): Promise<{ items: SearchPost[]; cursor: string | null }> {
   return api("/search/more", "POST", { cursor });
 }
 
@@ -42,7 +44,11 @@ function dispatchEvent(block: string, handlers: ExplanationHandlers): void {
 }
 
 /** Stream one grounded explanation and preserve ranked results when generation fails. */
-export async function streamExplanation(token: string, signal: AbortSignal, handlers: ExplanationHandlers): Promise<void> {
+export async function streamExplanation(
+  token: string,
+  signal: AbortSignal,
+  handlers: ExplanationHandlers,
+): Promise<void> {
   const response = await fetch("/api/search/explanation", {
     method: "POST",
     credentials: "same-origin",

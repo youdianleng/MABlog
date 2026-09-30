@@ -4,6 +4,7 @@ x-backend-environment: &backend-environment
   REDIS_URL: redis://redis:6379/0
   SMTP_HOST: mailpit
   APP_ENV: ${APP_ENV:-local}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
   APP_SECRET: ${APP_SECRET:-local-development-change-before-production-at-least-32-characters}
   APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
   UPLOAD_DIR: /data/uploads
@@ -86,14 +87,19 @@ services:
       - "127.0.0.1:8025:8025"
   migrate:
     build: ./backend
-    command: ["sh", "-c", "alembic upgrade head && python -m app.bootstrap"]
+    # Runs as root once so upload volumes created before the non-root image become writable by UID 10001.
+    user: "0:0"
+    command: ["sh", "-c", "chown -R 10001:10001 /data/uploads && alembic upgrade head && python -m app.bootstrap"]
     environment: *backend-environment
+    volumes:
+      - uploads:/data/uploads
     depends_on:
       db:
         condition: service_healthy
     restart: "no"
   backend:
     build: ./backend
+    restart: unless-stopped
     environment: *backend-environment
     volumes:
       - uploads:/data/uploads
@@ -113,6 +119,7 @@ services:
       retries: 30
   worker:
     build: ./backend
+    restart: unless-stopped
     command: ["python", "-m", "app.worker"]
     environment: *backend-environment
     depends_on:
@@ -122,6 +129,7 @@ services:
         condition: service_started
   news-worker:
     build: ./backend
+    restart: unless-stopped
     command: ["python", "-m", "app.news_worker"]
     environment: *backend-environment
     volumes:
@@ -159,6 +167,7 @@ services:
     command: ["python", "-m", "pytest", "tests", "-q"]
   frontend:
     build: ./frontend
+    restart: unless-stopped
     environment:
       BACKEND_URL: http://backend:8000
     ports:

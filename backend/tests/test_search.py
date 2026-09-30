@@ -1,4 +1,5 @@
 """Search/RAG integration tests against an isolated pgvector PostgreSQL database."""
+
 import asyncio
 import copy
 import json
@@ -9,16 +10,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import delete, select
 
 from app import worker
-from app.services import authentication as auth
 from app.api import search as search_routes
+from app.config import INDEX_RETRY_SECONDS
 from app.database import SessionLocal
 from app.models import Draft, Grant, IndexingJob, LoginSession, Post, Proposal, RateLimit, SearchPassage, User
 from app.schemas import Document
-from app.utils import digest, now
+from app.services import authentication as auth
 from app.services import generation
-from app.config import INDEX_RETRY_SECONDS
 from app.services.embeddings import OpenAIServiceError
 from app.services.indexing import extract_passages, synchronize_post_search
+from app.utils import digest, now
 
 
 @pytest.fixture(autouse=True)
@@ -28,6 +29,7 @@ def isolated_search_database(reset_database, monkeypatch):
     reset_database("Search tests")
     monkeypatch.setattr(search_routes, "cloud_ai_configured", lambda: False)
     yield
+
 
 def create_account(name: str, cloud: bool = False) -> tuple[str, str]:
     """Create a verified search fixture account and return its ID and raw cookie token."""
@@ -106,7 +108,15 @@ def test_keyword_search_enforces_visibility_and_excludes_proposals(client):
         private_draft["blocks"][0]["html"] = "<p>unapproved phoenix draft secret</p>"
         db.add(Grant(post_id=private_id, user_id=viewer_id, role="viewer"))
         db.add(Draft(post_id=private_id, user_id=author_id, document=private_draft, baseline=private_post.document, versions={}))
-        db.add(Proposal(post_id=private_id, editor_id=viewer_id, target="block:source-block", base_version=0, value={"id": "source-block", "html": "unapproved dragon secret"}))
+        db.add(
+            Proposal(
+                post_id=private_id,
+                editor_id=viewer_id,
+                target="block:source-block",
+                base_version=0,
+                value={"id": "source-block", "html": "unapproved dragon secret"},
+            )
+        )
         db.commit()
     sign_in(client, None)
     assert [item["id"] for item in search(client, "crimson constellation")["public"]["items"]] == [public_id]
@@ -457,6 +467,7 @@ def test_operational_search_log_excludes_query_and_post_text(client, caplog):
 
 def test_generation_rejects_a_truncated_provider_stream(monkeypatch):
     """Do not report success when a provider connection ends without a completion event."""
+
     class FakeResponse:
         """Provide one text delta and then simulate an early transport close."""
 
@@ -500,6 +511,3 @@ def test_generation_rejects_a_truncated_provider_stream(monkeypatch):
     monkeypatch.setattr(generation.httpx, "AsyncClient", FakeClient)
     with pytest.raises(OpenAIServiceError, match="generation_incomplete_response"):
         asyncio.run(consume_stream())
-
-
-

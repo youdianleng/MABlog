@@ -1,4 +1,5 @@
 """Post composition, collaboration, profile, and publication request schemas."""
+
 from typing import Literal
 
 from pydantic import Field

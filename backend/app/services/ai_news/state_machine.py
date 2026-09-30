@@ -1,5 +1,6 @@
 """Checkpointed AI-news stage execution, leasing, retries, and terminal alerts."""
 
+import logging
 import os
 from urllib.parse import urlsplit
 
@@ -24,6 +25,8 @@ from .safe_fetch import SafeFetchError, fetch_public_document
 from .safety import publication_safety
 from .scheduler import promote_waiting_run
 from .verification import verify_with_repairs
+
+logger = logging.getLogger(__name__)
 
 STAGES = ("readiness", "monitor", "discover", "fetch", "classify", "compose", "verify", "safety", "finalize", "retention")
 PROGRESS = {stage: int(index * 100 / len(STAGES)) for index, stage in enumerate(STAGES)}
@@ -51,7 +54,13 @@ def _stage_discover(db, run: NewsRun) -> dict:
     discovered = discover_candidates(db, run)
     for value in discovered:
         if value.get("discovered_by") != "registry" and not match_official_source(db, value["url"]):
-            suggest_unknown_source(db, value.get("provider") or (urlsplit(value["url"]).hostname or ""), value["url"], value.get("discovered_by", "web"), {"title": value.get("title", "")})
+            suggest_unknown_source(
+                db,
+                value.get("provider") or (urlsplit(value["url"]).hostname or ""),
+                value["url"],
+                value.get("discovered_by", "web"),
+                {"title": value.get("title", "")},
+            )
     run.result = {**run.result, "discovered": discovered}
     return {"candidates": len(discovered)}
 
@@ -325,6 +334,8 @@ def process_job(job_id: str) -> str:
             db.commit()
             return "retrying" if job.status == "retrying" else "failed"
         except Exception:
+            # The durable record stores only a stable code; the traceback goes to the worker log.
+            logger.exception("Unexpected AI-news stage error for run %s job %s", run.id, job.id)
             _fail_stage(db, job, run, "unexpected_stage_error")
             db.commit()
             return "retrying" if job.status == "retrying" else "failed"

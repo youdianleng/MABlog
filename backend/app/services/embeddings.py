@@ -1,4 +1,5 @@
 """Minimal OpenAI embedding adapter with content-safe failure reporting."""
+
 import httpx
 
 from ..config import EMBEDDING_DIMENSIONS, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_EMBEDDING_MODEL, OPENAI_TIMEOUT_SECONDS
@@ -38,4 +39,3 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
         return vectors
     except (KeyError, TypeError, ValueError) as error:
         raise OpenAIServiceError("embedding_invalid_response") from error
-

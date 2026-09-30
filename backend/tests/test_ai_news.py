@@ -28,7 +28,7 @@ from app.models import (
 )
 from app.schemas import Document
 from app.services import authentication as auth
-from app.services.ai_news import classification, publication, safety, state_machine, verification
+from app.services.ai_news import classification, publication, publication_checks, safety, state_machine, verification
 from app.services.ai_news.classification import _classification_excerpt
 from app.services.ai_news.composition import _paragraphs, public_text, structured_document, validate_structured_documents
 from app.services.ai_news.corrections import _restore_locked_evidence, validate_correction
@@ -51,10 +51,19 @@ def isolated_news_database(reset_database):
     invalidate_public_cache()
     yield
 
+
 def create_account(name: str, administrator: bool = False) -> tuple[str, str]:
     """Create one active account and its raw fixture cookie token."""
     with SessionLocal() as db:
-        user = User(email=f"{name}@example.com", username=name, display_name=name, password=auth.password_hasher.hash("test-password-123"), active=True, verified_until=now() + 604800, is_admin=administrator)
+        user = User(
+            email=f"{name}@example.com",
+            username=name,
+            display_name=name,
+            password=auth.password_hasher.hash("test-password-123"),
+            active=True,
+            verified_until=now() + 604800,
+            is_admin=administrator,
+        )
         db.add(user)
         db.flush()
         token = f"ai-news-token-{name}"
@@ -74,8 +83,19 @@ def localized_document(language: str, title: str) -> dict:
         "tags": ["ai-news", "model-release"],
         "blocks": [
             {"id": "overview", "type": "overview", "paragraphs": [{"text": "Evidence-backed overview.", "citations": [1]}]},
-            {"id": "release-one", "type": "release", "release_id": "one", "title": "Model update", "paragraphs": [{"text": "The model became available.", "citations": [1]}], "source_numbers": [1]},
-            {"id": "sources", "type": "sources", "citations": [{"number": 1, "url": "https://openai.com/products/release-notes/", "title": "Official release notes", "official": True}]},
+            {
+                "id": "release-one",
+                "type": "release",
+                "release_id": "one",
+                "title": "Model update",
+                "paragraphs": [{"text": "The model became available.", "citations": [1]}],
+                "source_numbers": [1],
+            },
+            {
+                "id": "sources",
+                "type": "sources",
+                "citations": [{"number": 1, "url": "https://openai.com/products/release-notes/", "title": "Official release notes", "official": True}],
+            },
         ],
     }
 
@@ -160,7 +180,18 @@ def test_bilingual_reader_and_carousel_limit_automated_editions(client):
             db.flush()
             documents = {"en": localized_document("en", f"English AI {index}"), "es": localized_document("es", f"IA española {index}")}
             db.add_all([PostLocalization(post_id=post.id, language=language, document=document) for language, document in documents.items()])
-            db.add(AutomatedEdition(id=new_id(), run_id=_completed_run(db), post_id=post.id, status="published", documents=documents, verification={"passed": True}, source_count=1, verified_at=now()))
+            db.add(
+                AutomatedEdition(
+                    id=new_id(),
+                    run_id=_completed_run(db),
+                    post_id=post.id,
+                    status="published",
+                    documents=documents,
+                    verification={"passed": True},
+                    source_count=1,
+                    verified_at=now(),
+                )
+            )
         for index in range(4):
             document = Document().model_dump()
             document["details"].update({"title": f"Community {index}", "summary": "Human story", "cover": "/api/media/human", "category": "general"})
@@ -176,7 +207,16 @@ def test_bilingual_reader_and_carousel_limit_automated_editions(client):
 
 def _completed_run(db) -> str:
     """Persist a terminal run that can own one automated edition fixture."""
-    run = NewsRun(kind="scheduled", status="published", stage="retention", publication_intent=True, window_start=now() - 86400, window_end=now(), progress=100, idempotency_key=f"fixture:{new_id()}")
+    run = NewsRun(
+        kind="scheduled",
+        status="published",
+        stage="retention",
+        publication_intent=True,
+        window_start=now() - 86400,
+        window_end=now(),
+        progress=100,
+        idempotency_key=f"fixture:{new_id()}",
+    )
     db.add(run)
     db.flush()
     return run.id
@@ -193,12 +233,57 @@ def create_failed_evidence_preview(*, unsafe_text: bool = False) -> str:
     if unsafe_text:
         documents["en"]["blocks"][0]["paragraphs"][0]["text"] = "Secret sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     with SessionLocal() as db:
-        run = NewsRun(kind="preview", status="failed", stage="verify", publication_intent=False, window_start=now() - 86400, window_end=now(), progress=60, last_error="verification_failed_after_repairs", idempotency_key=f"override:{new_id()}")
+        run = NewsRun(
+            kind="preview",
+            status="failed",
+            stage="verify",
+            publication_intent=False,
+            window_start=now() - 86400,
+            window_end=now(),
+            progress=60,
+            last_error="verification_failed_after_repairs",
+            idempotency_key=f"override:{new_id()}",
+        )
         db.add(run)
         db.flush()
-        db.add(NewsCandidate(id=release_id, run_id=run.id, provider="Example", model_name="Example 1", normalized_key=f"example:{run.id}", title="Example release", url=source_url, official_url=source_url, published_at=now(), status="qualifying"))
-        db.add(NewsDocument(run_id=run.id, url=source_url, canonical_url=source_url, mime="text/html", content_hash="retained-hash", extracted_text="Example release", official=True, snapshot_expires=now() + 86400))
-        db.add(AutomatedEdition(run_id=run.id, status="composed", documents=documents, verification={"passed": False, "issues": [{"release_id": release_id, "language": "both", "reason": "Citation does not establish the model name."}]}, source_count=1))
+        db.add(
+            NewsCandidate(
+                id=release_id,
+                run_id=run.id,
+                provider="Example",
+                model_name="Example 1",
+                normalized_key=f"example:{run.id}",
+                title="Example release",
+                url=source_url,
+                official_url=source_url,
+                published_at=now(),
+                status="qualifying",
+            )
+        )
+        db.add(
+            NewsDocument(
+                run_id=run.id,
+                url=source_url,
+                canonical_url=source_url,
+                mime="text/html",
+                content_hash="retained-hash",
+                extracted_text="Example release",
+                official=True,
+                snapshot_expires=now() + 86400,
+            )
+        )
+        db.add(
+            AutomatedEdition(
+                run_id=run.id,
+                status="composed",
+                documents=documents,
+                verification={
+                    "passed": False,
+                    "issues": [{"release_id": release_id, "language": "both", "reason": "Citation does not establish the model name."}],
+                },
+                source_count=1,
+            )
+        )
         db.add(NewsJob(run_id=run.id, stage="verify", status="failed", attempts=1, idempotency_key=f"{run.id}:verify", last_error=run.last_error))
         db.commit()
         return run.id
@@ -267,7 +352,6 @@ def test_preview_policy_skips_claim_review_only_for_ordinary_administrator_runs(
 
 def test_manual_unverified_preview_requires_explicit_approval_and_discloses_status(client, monkeypatch):
     """Allow a reviewed manual preview without enabling the schedule or claiming verification."""
-    from app.api.ai_news import dashboard
 
     run_id = create_safety_cleared_manual_preview()
     path = f"/api/admin/ai-news/runs/{run_id}/publish-unverified-preview"
@@ -304,8 +388,8 @@ def test_manual_unverified_preview_requires_explicit_approval_and_discloses_stat
         """Keep search indexing outside this publication-boundary test."""
         return None
 
-    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
-    monkeypatch.setattr(dashboard, "extract_source", changed_hash)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", current_source)
+    monkeypatch.setattr(publication_checks, "extract_source", changed_hash)
     monkeypatch.setattr(safety, "moderate_text", safe_moderation)
     monkeypatch.setattr(publication, "render_cover", local_cover)
     monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
@@ -329,7 +413,6 @@ def test_manual_unverified_preview_requires_explicit_approval_and_discloses_stat
 
 def test_unverified_preview_cannot_bypass_safety_or_full_path_policy(client, monkeypatch):
     """Reject unsafe text and forbid a full-path rehearsal from using manual approval."""
-    from app.api.ai_news import dashboard
 
     _, token = create_account("manual_safety_curator", True)
     client.cookies.set("mablog_session", token)
@@ -351,8 +434,8 @@ def test_unverified_preview_cannot_bypass_safety_or_full_path_policy(client, mon
         """Let the deterministic secret rule trigger the intended rejection."""
         return {"flagged": False, "categories": {}}
 
-    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
-    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", current_source)
+    monkeypatch.setattr(publication_checks, "extract_source", retained_hash)
     monkeypatch.setattr(safety, "moderate_text", safe_moderation)
     path = f"/api/admin/ai-news/runs/{run_id}/publish-unverified-preview"
     blocked = client.post(path, json=payload)
@@ -381,7 +464,19 @@ def test_verified_preview_explains_duplicate_publication_before_source_recheck(c
         db.add(post)
         db.flush()
         post_id = post.id
-        db.add(NewsCandidate(run_id=_completed_run(db), provider=candidate.provider, model_name=candidate.model_name, normalized_key=candidate.normalized_key, title=candidate.title, url=candidate.url, official_url=candidate.official_url, status="published", details={"published_post_id": post.id}))
+        db.add(
+            NewsCandidate(
+                run_id=_completed_run(db),
+                provider=candidate.provider,
+                model_name=candidate.model_name,
+                normalized_key=candidate.normalized_key,
+                title=candidate.title,
+                url=candidate.url,
+                official_url=candidate.official_url,
+                status="published",
+                details={"published_post_id": post.id},
+            )
+        )
         db.commit()
     _, token = create_account("duplicate_curator", True)
     client.cookies.set("mablog_session", token)
@@ -399,7 +494,6 @@ def test_verified_preview_explains_duplicate_publication_before_source_recheck(c
 
 def test_evidence_override_requires_step_up_and_acknowledgement_then_discloses_publicly(client, monkeypatch):
     """Allow only a deliberate administrator exception and never relabel it verified."""
-    from app.api.ai_news import dashboard
 
     run_id = create_failed_evidence_preview()
     path = f"/api/admin/ai-news/runs/{run_id}/publish-evidence-override"
@@ -446,8 +540,8 @@ def test_evidence_override_requires_step_up_and_acknowledgement_then_discloses_p
         """Leave search indexing outside this publication-boundary test."""
         return None
 
-    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
-    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", current_source)
+    monkeypatch.setattr(publication_checks, "extract_source", retained_hash)
     monkeypatch.setattr(safety, "moderate_text", safe_moderation)
     monkeypatch.setattr(publication, "render_cover", local_cover)
     monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
@@ -475,7 +569,6 @@ def test_evidence_override_requires_step_up_and_acknowledgement_then_discloses_p
 
 def test_evidence_override_accepts_source_drift_but_still_blocks_unsafe_content(client, monkeypatch):
     """Audit changed official pages in an exception while retaining safety and normal-publication gates."""
-    from app.api.ai_news import dashboard
 
     _, admin_token = create_account("override_safety_curator", True)
     client.cookies.set("mablog_session", admin_token)
@@ -509,8 +602,8 @@ def test_evidence_override_accepts_source_drift_but_still_blocks_unsafe_content(
         """Keep the source-drift regression independent of search indexing."""
         return None
 
-    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
-    monkeypatch.setattr(dashboard, "extract_source", changed_hash)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", current_source)
+    monkeypatch.setattr(publication_checks, "extract_source", changed_hash)
     monkeypatch.setattr(safety, "moderate_text", safe_moderation)
     monkeypatch.setattr(publication, "render_cover", local_cover)
     monkeypatch.setattr(publication, "synchronize_post_search", no_search_index)
@@ -539,11 +632,11 @@ def test_evidence_override_accepts_source_drift_but_still_blocks_unsafe_content(
         """Keep unsafe or unreachable official pages outside the override."""
         raise SafeFetchError("source_unavailable")
 
-    monkeypatch.setattr(dashboard, "fetch_public_document", unavailable_source)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", unavailable_source)
     assert client.post(f"/api/admin/ai-news/runs/{unreachable_run_id}/publish-evidence-override", json=payload).status_code == 409
     unsafe_run_id = create_failed_evidence_preview(unsafe_text=True)
-    monkeypatch.setattr(dashboard, "fetch_public_document", current_source)
-    monkeypatch.setattr(dashboard, "extract_source", retained_hash)
+    monkeypatch.setattr(publication_checks, "fetch_public_document", current_source)
+    monkeypatch.setattr(publication_checks, "extract_source", retained_hash)
     unsafe = client.post(f"/api/admin/ai-news/runs/{unsafe_run_id}/publish-evidence-override", json=payload)
     assert unsafe.status_code == 409
     assert "secret_pattern:en" in unsafe.text
@@ -608,7 +701,14 @@ def test_verification_excludes_rejected_claims_from_later_repair_evidence(monkey
             "passed": len(requests) == 2,
             "language_consistent": True,
             "citations_valid": len(requests) == 2,
-            "claims": [{"claim_key": key, "status": "unsupported" if key == "rejected-price" else "supported", "reason": "quote omits units" if key == "rejected-price" else ""} for key in keys],
+            "claims": [
+                {
+                    "claim_key": key,
+                    "status": "unsupported" if key == "rejected-price" else "supported",
+                    "reason": "quote omits units" if key == "rejected-price" else "",
+                }
+                for key in keys
+            ],
             "issues": [] if len(requests) == 2 else [{"release_id": "release", "language": "both", "reason": "Price quote omits units."}],
         }
         return OpenAIResult(text=json.dumps(report), input_tokens=0, output_tokens=0, model=model)
@@ -626,13 +726,30 @@ def test_verification_excludes_rejected_claims_from_later_repair_evidence(monkey
     monkeypatch.setattr(verification, "record_openai_usage", ignore_accounting)
     monkeypatch.setattr(verification, "model_for", test_model)
     with SessionLocal() as db:
-        run = NewsRun(kind="preview", status="running", stage="verify", publication_intent=False, window_start=now() - 86400, window_end=now(), idempotency_key=f"fixture:{new_id()}")
+        run = NewsRun(
+            kind="preview",
+            status="running",
+            stage="verify",
+            publication_intent=False,
+            window_start=now() - 86400,
+            window_end=now(),
+            idempotency_key=f"fixture:{new_id()}",
+        )
         db.add(run)
         db.flush()
-        db.add_all([
-            NewsClaim(run_id=run.id, claim_key="eligible-release", text_en="Released.", text_es="Lanzado.", status="supported", evidence=[]),
-            NewsClaim(run_id=run.id, claim_key="rejected-price", text_en="Price per million tokens.", text_es="Precio por millón de tokens.", status="supported", evidence=[]),
-        ])
+        db.add_all(
+            [
+                NewsClaim(run_id=run.id, claim_key="eligible-release", text_en="Released.", text_es="Lanzado.", status="supported", evidence=[]),
+                NewsClaim(
+                    run_id=run.id,
+                    claim_key="rejected-price",
+                    text_en="Price per million tokens.",
+                    text_es="Precio por millón de tokens.",
+                    status="supported",
+                    evidence=[],
+                ),
+            ]
+        )
         db.flush()
         first = verification.verify_once(db, run, {"en": {}, "es": {}}, 0)
         second = verification.verify_once(db, run, {"en": {}, "es": {}}, 1)
@@ -662,7 +779,46 @@ def test_classification_retains_only_exact_official_benchmark_evidence(monkeypat
     """Store provider score claims separately from release facts only when their quote exists."""
     source_url = "https://example.com/release"
     quote = "Terminal-Bench 4.0 Opus 5.5 66.4% with tools"
-    payload = {"releases": [{"provider": "Example", "model_name": "Opus 5.5", "model_version": "5.5", "update_type": "release", "title": "Opus 5.5 release", "published_date": "2026-09-22", "official_url": source_url, "source_urls": [source_url], "claims": [{"key": "release", "kind": "fact", "text_en": "Opus 5.5 launched.", "text_es": "Se lanzó Opus 5.5.", "evidence_quote": "Opus 5.5 launched", "source_url": source_url}, {"key": "terminal-bench", "kind": "benchmark", "text_en": "Opus 5.5 scored 66.4% on Terminal-Bench 4.0 with tools.", "text_es": "Opus 5.5 logró un 66,4 % en Terminal-Bench 4.0 con herramientas.", "evidence_quote": quote, "source_url": source_url}, {"key": "invented", "kind": "benchmark", "text_en": "An unsupported score.", "text_es": "Una puntuación no respaldada.", "evidence_quote": "Unpublished benchmark 99.9%", "source_url": source_url}]}]}
+    payload = {
+        "releases": [
+            {
+                "provider": "Example",
+                "model_name": "Opus 5.5",
+                "model_version": "5.5",
+                "update_type": "release",
+                "title": "Opus 5.5 release",
+                "published_date": "2026-09-22",
+                "official_url": source_url,
+                "source_urls": [source_url],
+                "claims": [
+                    {
+                        "key": "release",
+                        "kind": "fact",
+                        "text_en": "Opus 5.5 launched.",
+                        "text_es": "Se lanzó Opus 5.5.",
+                        "evidence_quote": "Opus 5.5 launched",
+                        "source_url": source_url,
+                    },
+                    {
+                        "key": "terminal-bench",
+                        "kind": "benchmark",
+                        "text_en": "Opus 5.5 scored 66.4% on Terminal-Bench 4.0 with tools.",
+                        "text_es": "Opus 5.5 logró un 66,4 % en Terminal-Bench 4.0 con herramientas.",
+                        "evidence_quote": quote,
+                        "source_url": source_url,
+                    },
+                    {
+                        "key": "invented",
+                        "kind": "benchmark",
+                        "text_en": "An unsupported score.",
+                        "text_es": "Una puntuación no respaldada.",
+                        "evidence_quote": "Unpublished benchmark 99.9%",
+                        "source_url": source_url,
+                    },
+                ],
+            }
+        ]
+    }
 
     def fake_responses_call(*args, **kwargs):
         """Return a deterministic classification without contacting a paid model."""
@@ -670,10 +826,27 @@ def test_classification_retains_only_exact_official_benchmark_evidence(monkeypat
 
     monkeypatch.setattr(classification, "responses_call", fake_responses_call)
     with SessionLocal() as db:
-        run = NewsRun(kind="preview", status="running", window_start=datetime(2026, 9, 21, tzinfo=UTC).timestamp(), window_end=datetime(2026, 9, 23, tzinfo=UTC).timestamp(), idempotency_key=f"test:{new_id()}")
+        run = NewsRun(
+            kind="preview",
+            status="running",
+            window_start=datetime(2026, 9, 21, tzinfo=UTC).timestamp(),
+            window_end=datetime(2026, 9, 23, tzinfo=UTC).timestamp(),
+            idempotency_key=f"test:{new_id()}",
+        )
         db.add(run)
         db.flush()
-        db.add(NewsDocument(run_id=run.id, url=source_url, canonical_url=source_url, mime="text/html", content_hash="source-hash", extracted_text=f"Opus 5.5 launched. {quote}", official=True, snapshot_expires=now() + 86400))
+        db.add(
+            NewsDocument(
+                run_id=run.id,
+                url=source_url,
+                canonical_url=source_url,
+                mime="text/html",
+                content_hash="source-hash",
+                extracted_text=f"Opus 5.5 launched. {quote}",
+                official=True,
+                snapshot_expires=now() + 86400,
+            )
+        )
         db.flush()
         candidates = classification.classify_releases(db, run)
         db.flush()
@@ -686,11 +859,32 @@ def test_classification_retains_only_exact_official_benchmark_evidence(monkeypat
 def test_new_roundup_preserves_cited_benchmarks_and_distinct_audience_impacts():
     """Keep provider scores visible and searchable while requiring useful release sections."""
     citations = [{"number": 1, "url": "https://example.com/release", "title": "Official release", "official": True}]
-    claims = {"one": [{"kind": "benchmark", "text_en": "Terminal-Bench 4.0: 66.4% with tools; predecessor 55.8%.", "text_es": "Terminal-Bench 4.0: 66,4 % con herramientas; predecesor 55,8 %.", "evidence": [{"citation": 1}]}]}
+    claims = {
+        "one": [
+            {
+                "kind": "benchmark",
+                "text_en": "Terminal-Bench 4.0: 66.4% with tools; predecessor 55.8%.",
+                "text_es": "Terminal-Bench 4.0: 66,4 % con herramientas; predecesor 55,8 %.",
+                "evidence": [{"citation": 1}],
+            }
+        ]
+    }
 
     def release_value(language: str) -> dict:
         """Build one cited section with separate release, developer, and reader impacts."""
-        return {"title": "Weekly AI models", "summary": "Evidence-based changes", "overview": [{"text": "A model launched.", "citations": [1]}], "sections": [{"release_id": "one", "title": "New model", "paragraphs": [{"focus": focus, "text": f"{focus} detail in {language}.", "citations": [1]} for focus in ("change", "developer", "reader")], "source_numbers": [1]}]}
+        return {
+            "title": "Weekly AI models",
+            "summary": "Evidence-based changes",
+            "overview": [{"text": "A model launched.", "citations": [1]}],
+            "sections": [
+                {
+                    "release_id": "one",
+                    "title": "New model",
+                    "paragraphs": [{"focus": focus, "text": f"{focus} detail in {language}.", "citations": [1]} for focus in ("change", "developer", "reader")],
+                    "source_numbers": [1],
+                }
+            ],
+        }
 
     run = SimpleNamespace(window_end=1_789_646_400)
     documents = {language: structured_document(language, release_value(language), citations, run, release_claims=claims) for language in ("en", "es")}
@@ -717,6 +911,3 @@ def test_new_roundup_preserves_cited_benchmarks_and_distinct_audience_impacts():
     restored = _restore_locked_evidence(documents["es"], translated)
     assert restored["blocks"][1]["benchmarks"] == documents["es"]["blocks"][1]["benchmarks"]
     assert restored["blocks"][1]["paragraphs"][0]["focus"] == "change"
-
-
-

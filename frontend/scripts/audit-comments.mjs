@@ -9,7 +9,13 @@ const { parse } = require("next/dist/compiled/babel/parser");
 const frontendDirectory = dirname(dirname(fileURLToPath(import.meta.url)));
 const scanDirectories = [join(frontendDirectory, "src"), join(frontendDirectory, "tests")];
 const missing = [];
-const functionTypes = new Set(["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression", "ObjectMethod", "ClassMethod"]);
+const functionTypes = new Set([
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "ArrowFunctionExpression",
+  "ObjectMethod",
+  "ClassMethod",
+]);
 
 /** Collect TypeScript source paths without entering generated or dependency directories. */
 function sourceFiles(directory) {
@@ -17,7 +23,8 @@ function sourceFiles(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) result.push(...sourceFiles(path));
-    else if ([".ts", ".tsx"].includes(extname(entry.name)) && !entry.name.endsWith(".d.ts")) result.push(path);
+    else if ([".ts", ".tsx"].includes(extname(entry.name)) && !entry.name.endsWith(".d.ts"))
+      result.push(path);
   }
   return result;
 }

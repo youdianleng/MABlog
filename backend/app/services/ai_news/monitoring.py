@@ -47,7 +47,13 @@ def monitor_recent_sources(db, current_run: NewsRun) -> dict:
     cutoff = now() - NEWS_SNAPSHOT_SECONDS
     # Manually approved editions have no successful verified_at timestamp, but
     # still need the same post-publication source-change monitoring window.
-    editions = list(db.scalars(select(AutomatedEdition).where(AutomatedEdition.status == "published", or_(AutomatedEdition.verified_at >= cutoff, AutomatedEdition.updated >= cutoff))))
+    editions = list(
+        db.scalars(
+            select(AutomatedEdition).where(
+                AutomatedEdition.status == "published", or_(AutomatedEdition.verified_at >= cutoff, AutomatedEdition.updated >= cutoff)
+            )
+        )
+    )
     for edition in editions:
         documents = list(db.scalars(select(NewsDocument).where(NewsDocument.run_id == edition.run_id, NewsDocument.official.is_(True))))
         for document in documents:
@@ -57,19 +63,55 @@ def monitor_recent_sources(db, current_run: NewsRun) -> dict:
                 extracted = extract_source(fetched)
             except (SafeFetchError, ValueError) as error:
                 unavailable += 1
-                db.add(NewsSourceCheck(id=new_id(), edition_id=edition.id, document_id=document.id, previous_hash=document.content_hash, current_hash="", status="unavailable", details={"code": str(error)[:120]}))
+                db.add(
+                    NewsSourceCheck(
+                        id=new_id(),
+                        edition_id=edition.id,
+                        document_id=document.id,
+                        previous_hash=document.content_hash,
+                        current_hash="",
+                        status="unavailable",
+                        details={"code": str(error)[:120]},
+                    )
+                )
                 continue
             if extracted.content_hash == document.content_hash:
-                db.add(NewsSourceCheck(id=new_id(), edition_id=edition.id, document_id=document.id, previous_hash=document.content_hash, current_hash=extracted.content_hash, status="unchanged", details={}))
+                db.add(
+                    NewsSourceCheck(
+                        id=new_id(),
+                        edition_id=edition.id,
+                        document_id=document.id,
+                        previous_hash=document.content_hash,
+                        current_hash=extracted.content_hash,
+                        status="unchanged",
+                        details={},
+                    )
+                )
                 continue
             changed += 1
             report = _reverify_change(db, current_run, edition, document, extracted.text)
             status = "contradicted" if report.get("contradicted") else "changed_supported"
-            db.add(NewsSourceCheck(id=new_id(), edition_id=edition.id, document_id=document.id, previous_hash=document.content_hash, current_hash=extracted.content_hash, status=status, details=report))
+            db.add(
+                NewsSourceCheck(
+                    id=new_id(),
+                    edition_id=edition.id,
+                    document_id=document.id,
+                    previous_hash=document.content_hash,
+                    current_hash=extracted.content_hash,
+                    status=status,
+                    details=report,
+                )
+            )
             if report.get("contradicted"):
                 unpublish_edition(db, edition)
                 edition.status = "unpublished_contradicted"
                 edition.verification = {**edition.verification, "source_contradicted": True, "source_monitoring": report}
                 unpublished += 1
-                create_alert(db, current_run, f"source_contradiction:{edition.id}", "Published AI-news source now contradicts a claim", f"Edition {edition.id} was automatically unpublished after reverification of {document.canonical_url}.")
+                create_alert(
+                    db,
+                    current_run,
+                    f"source_contradiction:{edition.id}",
+                    "Published AI-news source now contradicts a claim",
+                    f"Edition {edition.id} was automatically unpublished after reverification of {document.canonical_url}.",
+                )
     return {"checked": checked, "changed": changed, "unavailable": unavailable, "unpublished": unpublished}

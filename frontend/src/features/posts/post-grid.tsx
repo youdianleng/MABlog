@@ -16,12 +16,7 @@ export function PostGrid({ posts, reveal = false }: PostGridProps) {
     return (
       <div className="empty">
         <h2>{t("A story begins with you", "Una historia comienza contigo")}</h2>
-        <p>
-          {t(
-            "There are no stories here yet.",
-            "Todavía no hay historias aquí.",
-          )}
-        </p>
+        <p>{t("There are no stories here yet.", "Todavía no hay historias aquí.")}</p>
       </div>
     );
   return (

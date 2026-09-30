@@ -1,4 +1,5 @@
 """Grounded Responses API streaming over permission-checked MAblog evidence."""
+
 import json
 
 import httpx
@@ -57,4 +58,3 @@ async def stream_grounded_explanation(query: str, evidence: list[dict]):
                     raise OpenAIServiceError("generation_incomplete_response")
     except httpx.HTTPError as error:
         raise OpenAIServiceError("generation_transport_error") from error
-

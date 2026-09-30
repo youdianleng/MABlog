@@ -30,4 +30,3 @@ def public_admin(user: User) -> dict:
         "is_admin": user.is_admin,
         "ai_news_email": user.ai_news_email,
     }
-

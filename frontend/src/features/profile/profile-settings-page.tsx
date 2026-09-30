@@ -46,9 +46,7 @@ export function ProfileSettings() {
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif"
           onChange={
-            /** Read the selected avatar file for upload. */ function avatar(
-              event,
-            ) {
+            /** Read the selected avatar file for upload. */ function avatar(event) {
               const file = event.target.files?.[0];
               if (file)
                 void run(
@@ -64,11 +62,7 @@ export function ProfileSettings() {
       </label>
       <label>
         {t("Display name", "Nombre visible")}
-        <Input
-          name="display_name"
-          defaultValue={user.display_name}
-          maxLength={80}
-        />
+        <Input name="display_name" defaultValue={user.display_name} maxLength={80} />
       </label>
       <label>
         {t("Biography", "Biografía")}
@@ -94,12 +88,19 @@ export function ProfileSettings() {
               }
             }
           />
-          <span>{t("Enable cloud semantic search for personal posts", "Activar búsqueda semántica en la nube para publicaciones personales")}</span>
+          <span>
+            {t(
+              "Enable cloud semantic search for personal posts",
+              "Activar búsqueda semántica en la nube para publicaciones personales",
+            )}
+          </span>
         </label>
-        <p>{t(
-          "When enabled, approved text from personal posts you create may be sent to OpenAI for embeddings. Your search question and authorized personal passages may also be sent when producing semantic results and explanations. A shared personal post uses AI only when both its author and the searcher enable this setting. OpenAI API data is not used for training unless the API account opts in; standard abuse-monitoring data may be retained for up to 30 days. Turning this off removes your personal-post vectors. Permission-safe keyword search remains available.",
-          "Al activarla, el texto aprobado de las publicaciones personales que creas puede enviarse a OpenAI para crear representaciones. Tu pregunta de búsqueda y los fragmentos personales autorizados también pueden enviarse para producir resultados semánticos y explicaciones. Una publicación personal compartida usa IA solo si su autor y quien busca activan esta opción. Los datos de la API de OpenAI no se usan para entrenamiento salvo que la cuenta API lo autorice; los datos estándar de control de abuso pueden conservarse hasta 30 días. Al desactivarla se eliminan los vectores de tus publicaciones personales. La búsqueda segura por palabras sigue disponible.",
-        )}</p>
+        <p>
+          {t(
+            "When enabled, approved text from personal posts you create may be sent to OpenAI for embeddings. Your search question and authorized personal passages may also be sent when producing semantic results and explanations. A shared personal post uses AI only when both its author and the searcher enable this setting. OpenAI API data is not used for training unless the API account opts in; standard abuse-monitoring data may be retained for up to 30 days. Turning this off removes your personal-post vectors. Permission-safe keyword search remains available.",
+            "Al activarla, el texto aprobado de las publicaciones personales que creas puede enviarse a OpenAI para crear representaciones. Tu pregunta de búsqueda y los fragmentos personales autorizados también pueden enviarse para producir resultados semánticos y explicaciones. Una publicación personal compartida usa IA solo si su autor y quien busca activan esta opción. Los datos de la API de OpenAI no se usan para entrenamiento salvo que la cuenta API lo autorice; los datos estándar de control de abuso pueden conservarse hasta 30 días. Al desactivarla se eliminan los vectores de tus publicaciones personales. La búsqueda segura por palabras sigue disponible.",
+          )}
+        </p>
       </fieldset>
       <Button type="submit">{t("Save profile", "Guardar perfil")}</Button>
       <Link href={`/profiles/${user.username}`}>

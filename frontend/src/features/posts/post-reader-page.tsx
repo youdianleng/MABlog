@@ -28,15 +28,18 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
   const [revision, setRevision] = useState(0),
     [likeState, setLikeState] = useState<LikeState | null>(null),
     [liking, setLiking] = useState(false),
-    { data: post, error } = useData<Post>("/posts/" + id + "?language=" + locale, revision, initialPost);
+    { data: post, error } = useData<Post>(
+      "/posts/" + id + "?language=" + locale,
+      revision,
+      initialPost,
+    );
   /** Refresh the current reader after a like or publication change. */
   function reload() {
     setRevision(revision + 1);
   }
   if (!post) return <Loading error={error} />;
-  const displayedLikeState = likeState?.postId === id
-    ? likeState
-    : { postId: id, likes: post.likes, liked: post.liked };
+  const displayedLikeState =
+    likeState?.postId === id ? likeState : { postId: id, likes: post.likes, liked: post.liked };
   return (
     <>
       <div className="toolbar">
@@ -45,15 +48,11 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
         {["author", "editor"].includes(post.role) && (
           <>
             <Link href={`/compose/${id}`}>
-              <Button variant="outline">
-                {t("Edit story", "Editar historia")}
-              </Button>
+              <Button variant="outline">{t("Edit story", "Editar historia")}</Button>
             </Link>
             <PendingReviewLink
               postId={id}
-              pendingCount={
-                post.role === "author" ? post.pending_reviews || 0 : 0
-              }
+              pendingCount={post.role === "author" ? post.pending_reviews || 0 : 0}
             />
           </>
         )}
@@ -76,9 +75,7 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
                 }
               }
             >
-              {post.public
-                ? t("Make personal", "Hacer personal")
-                : t("Publish", "Publicar")}
+              {post.public ? t("Make personal", "Hacer personal") : t("Publish", "Publicar")}
             </Button>
             <Button
               variant="ghost"
@@ -114,18 +111,18 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
         </div>
         <h1>{post.title || t("Untitled story", "Historia sin título")}</h1>
         <p>{post.summary}</p>
-        <Link href={`/profiles/${post.author.username}`}>
-          {post.author.display_name}
-        </Link>
+        <Link href={`/profiles/${post.author.username}`}>{post.author.display_name}</Link>
         {post.public && !post.ai_news_document && (
           <Button
             className="reader-like-button ml-4"
             variant="outline"
             disabled={liking}
             aria-pressed={displayedLikeState.liked}
-            aria-label={displayedLikeState.liked
-              ? t("Remove like from story", "Quitar Me gusta de la historia")
-              : t("Like story", "Me gusta esta historia")}
+            aria-label={
+              displayedLikeState.liked
+                ? t("Remove like from story", "Quitar Me gusta de la historia")
+                : t("Like story", "Me gusta esta historia")
+            }
             onClick={
               /** Run the authenticated like action. */ function like() {
                 if (liking) return;
@@ -139,7 +136,10 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
                 void run(
                   /** Toggle the like without unmounting the reader, then reconcile its optimistic count. */ async function toggleLike() {
                     try {
-                      const updated = await api<Pick<Post, "likes" | "liked">>(`/posts/${id}/like`, "POST");
+                      const updated = await api<Pick<Post, "likes" | "liked">>(
+                        `/posts/${id}/like`,
+                        "POST",
+                      );
                       setLikeState({ postId: id, likes: updated.likes, liked: updated.liked });
                     } catch (requestError) {
                       setLikeState(previous);
@@ -152,17 +152,33 @@ export function Reader({ id, initialPost }: { id: string; initialPost?: Post }) 
               }
             }
           >
-            <Heart size={15} fill={displayedLikeState.liked ? "currentColor" : "none"} aria-hidden="true" />{" "}
+            <Heart
+              size={15}
+              fill={displayedLikeState.liked ? "currentColor" : "none"}
+              aria-hidden="true"
+            />{" "}
             {displayedLikeState.likes}
           </Button>
         )}
       </div>
       {post.ai_news_document && post.ai_news ? (
-        <AiNewsReader document={post.ai_news_document} sourceCount={post.ai_news.source_count} verifiedAt={post.ai_news.verified_at} correctionNote={post.ai_news.correction_note} factCheckPassed={post.ai_news.fact_check_passed} manualUnverifiedPreview={post.ai_news.manual_unverified_preview} sourceChangedOnPublish={post.ai_news.source_changed_on_publish} />
+        <AiNewsReader
+          document={post.ai_news_document}
+          sourceCount={post.ai_news.source_count}
+          verifiedAt={post.ai_news.verified_at}
+          correctionNote={post.ai_news.correction_note}
+          factCheckPassed={post.ai_news.fact_check_passed}
+          manualUnverifiedPreview={post.ai_news.manual_unverified_preview}
+          sourceChangedOnPublish={post.ai_news.source_changed_on_publish}
+        />
       ) : (
-        <CompositionReader document={post.document} highlightedBlockId={searchParams.get("highlight") === "search" ? searchParams.get("block") : null} />
+        <CompositionReader
+          document={post.document}
+          highlightedBlockId={
+            searchParams.get("highlight") === "search" ? searchParams.get("block") : null
+          }
+        />
       )}
     </>
   );
 }
-

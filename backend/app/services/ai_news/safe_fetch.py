@@ -1,8 +1,8 @@
 """SSRF-resistant HTTPS retrieval with redirect, robots, size, and media limits."""
 
-from dataclasses import dataclass
 import ipaddress
 import socket
+from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit, urlunsplit
 from urllib.robotparser import RobotFileParser
 
@@ -64,7 +64,15 @@ def validate_public_https(url: str) -> str:
         raise SafeFetchError("dns_empty")
     for address in addresses:
         value = ipaddress.ip_address(address)
-        if not value.is_global or value.is_private or value.is_loopback or value.is_link_local or value.is_multicast or value.is_reserved or value.is_unspecified:
+        if (
+            not value.is_global
+            or value.is_private
+            or value.is_loopback
+            or value.is_link_local
+            or value.is_multicast
+            or value.is_reserved
+            or value.is_unspecified
+        ):
             raise SafeFetchError("unsafe_address")
     return canonical_url(url)
 
@@ -96,7 +104,9 @@ def fetch_public_document(url: str) -> FetchedDocument:
         for redirect_count in range(NEWS_FETCH_MAX_REDIRECTS + 1):
             validate_public_https(current)
             try:
-                with client.stream("GET", current, headers={"User-Agent": NEWS_CRAWLER_USER_AGENT, "Accept": ", ".join(sorted(ALLOWED_MEDIA_TYPES))}) as response:
+                with client.stream(
+                    "GET", current, headers={"User-Agent": NEWS_CRAWLER_USER_AGENT, "Accept": ", ".join(sorted(ALLOWED_MEDIA_TYPES))}
+                ) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         if redirect_count >= NEWS_FETCH_MAX_REDIRECTS:
                             raise SafeFetchError("too_many_redirects")

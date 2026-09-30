@@ -3,7 +3,8 @@ import { SiteInfoPage, type InfoSection } from "@/features/site-info/site-info-p
 
 export const metadata: Metadata = {
   title: "Community guidelines",
-  description: "The standards that help MAblog remain a thoughtful and creator-led writing community.",
+  description:
+    "The standards that help MAblog remain a thoughtful and creator-led writing community.",
 };
 
 const SECTIONS: InfoSection[] = [
@@ -42,7 +43,10 @@ export default function GuidelinesPage() {
   return (
     <SiteInfoPage
       eyebrow={{ en: "Community guidelines", es: "Normas de la comunidad" }}
-      title={{ en: "Make room for brave work—and for one another.", es: "Haz sitio para obras valientes y para los demás." }}
+      title={{
+        en: "Make room for brave work—and for one another.",
+        es: "Haz sitio para obras valientes y para los demás.",
+      }}
       intro={{
         en: "Creative freedom grows when authorship, privacy, and the people behind the work are treated with care. These standards apply across drafts, invitations, reviews, and public posts.",
         es: "La libertad creativa crece cuando la autoría, la privacidad y las personas detrás de la obra se tratan con cuidado. Estas normas se aplican a borradores, invitaciones, revisiones y publicaciones públicas.",

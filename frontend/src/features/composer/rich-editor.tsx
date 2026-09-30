@@ -80,12 +80,9 @@ function embedSource(raw: string) {
         url.hostname === "youtu.be"
           ? url.pathname.slice(1)
           : url.searchParams.get("v") || url.pathname.split("/").pop();
-      if (id && /^[\w-]{6,30}$/.test(id))
-        return `https://www.youtube-nocookie.com/embed/${id}`;
+      if (id && /^[\w-]{6,30}$/.test(id)) return `https://www.youtube-nocookie.com/embed/${id}`;
     }
-    if (
-      ["vimeo.com", "www.vimeo.com", "player.vimeo.com"].includes(url.hostname)
-    ) {
+    if (["vimeo.com", "www.vimeo.com", "player.vimeo.com"].includes(url.hostname)) {
       const id = url.pathname.split("/").pop();
       if (id && /^\d+$/.test(id)) return `https://player.vimeo.com/video/${id}`;
     }
@@ -123,8 +120,7 @@ export function RichEditor({
   /** Upload selected media and insert a native node at the current writing selection. */
   async function insertFile(file: File) {
     const media = await uploadMedia(file, postId);
-    if (media.mime.startsWith("image/"))
-      editor!.chain().focus().setImage({ src: media.url }).run();
+    if (media.mime.startsWith("image/")) editor!.chain().focus().setImage({ src: media.url }).run();
     else
       editor!
         .chain()
@@ -167,9 +163,16 @@ export function RichEditor({
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content className="editor-heading-menu" sideOffset={4} align="start" aria-label={t("Heading level", "Nivel de título")}>
+            <DropdownMenu.Content
+              className="editor-heading-menu"
+              sideOffset={4}
+              align="start"
+              aria-label={t("Heading level", "Nivel de título")}
+            >
               {HEADING_LEVELS.map(
-                /** Offer every semantic HTML heading level in the editor menu. */ function headingOption(level) {
+                /** Offer every semantic HTML heading level in the editor menu. */ function headingOption(
+                  level,
+                ) {
                   return (
                     <DropdownMenu.Item
                       className="editor-heading-option"
@@ -203,9 +206,7 @@ export function RichEditor({
           type="button"
           onClick={
             /** Insert a validated web or email link at the selection. */ function link() {
-              const href = prompt(
-                t("Link URL (https://…)", "URL del enlace (https://…)"),
-              );
+              const href = prompt(t("Link URL (https://…)", "URL del enlace (https://…)"));
               if (href && /^(https?:\/\/|mailto:)/.test(href))
                 editor.chain().focus().setLink({ href }).run();
             }
@@ -227,9 +228,7 @@ export function RichEditor({
           type="button"
           onClick={
             /** Normalize a supported video URL before inserting an embed node. */ function embed() {
-              const raw = prompt(
-                t("YouTube or Vimeo URL", "URL de YouTube o Vimeo"),
-              );
+              const raw = prompt(t("YouTube or Vimeo URL", "URL de YouTube o Vimeo"));
               if (!raw) return;
               const src = embedSource(raw);
               if (src)

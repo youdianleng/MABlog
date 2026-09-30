@@ -22,7 +22,13 @@ def _live_validation(url: str) -> dict:
     try:
         fetched = fetch_public_document(url)
         extracted = extract_source(fetched)
-        return {"passed": True, "canonical_url": fetched.canonical_url, "mime": fetched.media_type, "content_hash": extracted.content_hash, "warnings": extracted.warnings}
+        return {
+            "passed": True,
+            "canonical_url": fetched.canonical_url,
+            "mime": fetched.media_type,
+            "content_hash": extracted.content_hash,
+            "warnings": extracted.warnings,
+        }
     except (SafeFetchError, ValueError) as error:
         return {"passed": False, "code": str(error)[:120]}
 
@@ -48,7 +54,18 @@ def create_source(data: NewsSourcePayload, db=Depends(database), user: User = De
     validation = _live_validation(data.url)
     if data.active and not validation["passed"]:
         raise HTTPException(422, f"Source validation failed: {validation.get('code', 'unknown')}")
-    source = NewsSource(id=new_id(), provider_key=data.provider_key, provider_name=data.provider_name, name=data.name, url=data.url, kind=data.kind, active=data.active, validation_status="passed" if validation["passed"] else "failed", validation=validation, last_checked=now())
+    source = NewsSource(
+        id=new_id(),
+        provider_key=data.provider_key,
+        provider_name=data.provider_name,
+        name=data.name,
+        url=data.url,
+        kind=data.kind,
+        active=data.active,
+        validation_status="passed" if validation["passed"] else "failed",
+        validation=validation,
+        last_checked=now(),
+    )
     db.add(source)
     audit(db, user, "ai_news.source.created", "news_source", source.id, data.reason, after=source_summary(source))
     db.commit()
@@ -105,7 +122,18 @@ def review_suggestion(suggestion_id: str, data: NewsSuggestionPayload, db=Depend
     validation = _live_validation(suggestion.url)
     if not validation["passed"]:
         raise HTTPException(422, f"Source validation failed: {validation.get('code', 'unknown')}")
-    source = NewsSource(id=new_id(), provider_key=data.provider_key, provider_name=data.provider_name, name=data.name, url=suggestion.url, kind=data.kind, active=True, validation_status="passed", validation=validation, last_checked=now())
+    source = NewsSource(
+        id=new_id(),
+        provider_key=data.provider_key,
+        provider_name=data.provider_name,
+        name=data.name,
+        url=suggestion.url,
+        kind=data.kind,
+        active=True,
+        validation_status="passed",
+        validation=validation,
+        last_checked=now(),
+    )
     db.add(source)
     suggestion.status = "approved"
     suggestion.reviewed_by = user.id
@@ -113,5 +141,3 @@ def review_suggestion(suggestion_id: str, data: NewsSuggestionPayload, db=Depend
     audit(db, user, "ai_news.suggestion.approved", "news_source_suggestion", suggestion.id, data.reason, after=source_summary(source))
     db.commit()
     return {"suggestion": suggestion_summary(suggestion), "source": source_summary(source)}
-
-

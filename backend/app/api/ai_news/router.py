@@ -10,5 +10,3 @@ router.include_router(sources.router)
 router.include_router(notifications.router)
 router.include_router(editions.router)
 router.include_router(providers.router)
-
-

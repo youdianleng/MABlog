@@ -21,7 +21,13 @@ REQUIRED_RELEASE_FOCUS = {"change", "developer", "reader"}
 
 def evidence_bundle(db, run: NewsRun) -> tuple[list[dict], list[dict]]:
     """Build stable release and citation catalogs from persisted qualifying claims."""
-    candidates = list(db.scalars(select(NewsCandidate).where(NewsCandidate.run_id == run.id, NewsCandidate.status == "qualifying").order_by(NewsCandidate.published_at, NewsCandidate.id)))
+    candidates = list(
+        db.scalars(
+            select(NewsCandidate)
+            .where(NewsCandidate.run_id == run.id, NewsCandidate.status == "qualifying")
+            .order_by(NewsCandidate.published_at, NewsCandidate.id)
+        )
+    )
     claims = list(db.scalars(select(NewsClaim).where(NewsClaim.run_id == run.id, NewsClaim.status == "supported").order_by(NewsClaim.claim_key)))
     citation_by_url: dict[str, int] = {}
     citations: list[dict] = []
@@ -35,7 +41,16 @@ def evidence_bundle(db, run: NewsRun) -> tuple[list[dict], list[dict]]:
                 citations.append({"number": citation_by_url[url], "url": url, "title": url, "official": True})
             evidence_values.append({"citation": citation_by_url[url], "quote": evidence.get("quote", "")})
         kind = "benchmark" if any(evidence.get("kind") == "benchmark" for evidence in claim.evidence) else "fact"
-        claim_values.append({"release_id": claim.candidate_id, "claim_key": claim.claim_key, "kind": kind, "text_en": claim.text_en, "text_es": claim.text_es, "evidence": evidence_values})
+        claim_values.append(
+            {
+                "release_id": claim.candidate_id,
+                "claim_key": claim.claim_key,
+                "kind": kind,
+                "text_en": claim.text_en,
+                "text_es": claim.text_es,
+                "evidence": evidence_values,
+            }
+        )
     releases = [
         {
             "id": candidate.id,
@@ -82,7 +97,9 @@ def _benchmark_rows(release_claims: list[dict], language: str) -> list[dict]:
     return rows
 
 
-def structured_document(language: str, value: dict, citations: list[dict], run: NewsRun, tags: list[str] | None = None, release_claims: dict[str, list[dict]] | None = None) -> dict:
+def structured_document(
+    language: str, value: dict, citations: list[dict], run: NewsRun, tags: list[str] | None = None, release_claims: dict[str, list[dict]] | None = None
+) -> dict:
     """Convert model prose and deterministic source-backed benchmarks into safe blocks."""
     valid_numbers = {citation["number"] for citation in citations}
     blocks = [{"id": "overview", "type": "overview", "paragraphs": _paragraphs(value.get("overview"), valid_numbers)}]
@@ -95,7 +112,10 @@ def structured_document(language: str, value: dict, citations: list[dict], run: 
             continue
         seen_release_ids.add(release_id)
         benchmarks = _benchmark_rows((release_claims or {}).get(release_id, []), language)
-        source_numbers = sorted({int(number) for number in section.get("source_numbers", []) if isinstance(number, int) and number in valid_numbers} | {number for row in benchmarks for number in row["citations"]})
+        source_numbers = sorted(
+            {int(number) for number in section.get("source_numbers", []) if isinstance(number, int) and number in valid_numbers}
+            | {number for row in benchmarks for number in row["citations"]}
+        )
         blocks.append(
             {
                 "id": f"release-{release_id}",
@@ -154,15 +174,19 @@ def compose_roundup(db, run: NewsRun, repair_context: dict | None = None) -> tup
     if repair_context:
         input_value["repair"] = repair_context
     suffix = f"repair-{repair_context.get('attempt')}" if repair_context else "initial"
-    result = responses_call(model_for(db, "strong"), COMPOSITION_INSTRUCTIONS, json.dumps(input_value, ensure_ascii=False), 9000, idempotency_key=f"news:{run.id}:composition:{suffix}", db=db)
+    result = responses_call(
+        model_for(db, "strong"),
+        COMPOSITION_INSTRUCTIONS,
+        json.dumps(input_value, ensure_ascii=False),
+        9000,
+        idempotency_key=f"news:{run.id}:composition:{suffix}",
+        db=db,
+    )
     record_openai_usage(db, run, "composition" if not repair_context else "repair", result)
     value = json_value(result)
     tags = value.get("tags", []) if isinstance(value.get("tags"), list) else []
     claims_by_release = {release["id"]: release["claims"] for release in releases}
-    documents = {
-        language: structured_document(language, value.get(language, {}), citations, run, tags, claims_by_release)
-        for language in ("en", "es")
-    }
+    documents = {language: structured_document(language, value.get(language, {}), citations, run, tags, claims_by_release) for language in ("en", "es")}
     validate_structured_documents(documents, {release["id"] for release in releases})
     return documents, citations
 

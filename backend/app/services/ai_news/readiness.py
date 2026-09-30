@@ -1,24 +1,22 @@
 """Redacted provider and schedule readiness for administrator and worker use."""
 
-import os
 import socket
 
-from ...config import NEWS_MASTER_ENABLED
+from ...config import NEWS_MASTER_ENABLED, SMTP_HOST, SMTP_PORT
 from .provider_settings import provider_status
 
 
 def email_configured() -> bool:
     """Treat local Mailpit or an explicitly configured SMTP host as available configuration."""
-    return bool(os.getenv("SMTP_HOST", "").strip())
+    return bool(SMTP_HOST)
 
 
 def smtp_reachable() -> bool:
     """Perform a short redacted TCP readiness check without sending a message."""
-    host = os.getenv("SMTP_HOST", "").strip()
-    if not host:
+    if not SMTP_HOST:
         return False
     try:
-        with socket.create_connection((host, int(os.getenv("SMTP_PORT", "1025"))), timeout=1):
+        with socket.create_connection((SMTP_HOST, SMTP_PORT), timeout=1):
             return True
     except OSError:
         return False

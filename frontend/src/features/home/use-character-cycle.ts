@@ -42,12 +42,14 @@ export function useCharacterCycle(): CharacterCycleState {
       const observer = new IntersectionObserver(
         /** Pause decorative state updates as soon as the scene leaves the viewport. */
         function updateShowcaseVisibility(entries) {
-          setInViewport(entries.some(
-            /** Identify whether any observation reports visible hero content. */
-            function isVisible(entry) {
-              return entry.isIntersecting;
-            },
-          ));
+          setInViewport(
+            entries.some(
+              /** Identify whether any observation reports visible hero content. */
+              function isVisible(entry) {
+                return entry.isIntersecting;
+              },
+            ),
+          );
         },
         { threshold: 0.01 },
       );

@@ -8,10 +8,14 @@ export function useReducedMotion() {
     /** Subscribe to the media query and remove the listener when its consumer unmounts. */ function trackMotion() {
       const media = matchMedia("(prefers-reduced-motion: reduce)");
       /** Copy the current media-query result into React state. */
-      function update() { setReduced(media.matches); }
+      function update() {
+        setReduced(media.matches);
+      }
       update();
       media.addEventListener("change", update);
-      return /** Stop observing the media query after unmount. */ function cleanup() { media.removeEventListener("change", update); };
+      return /** Stop observing the media query after unmount. */ function cleanup() {
+        media.removeEventListener("change", update);
+      };
     },
     [],
   );

@@ -1,4 +1,5 @@
 """Approved-content extraction, immediate keyword indexing, and durable job state."""
+
 import hashlib
 import json
 import re
@@ -101,13 +102,31 @@ def _composition_passages(document: dict, author: User, language: str | None = N
     passage_values: list[dict] = []
     if title or summary:
         metadata = f"Title: {title}\nSummary: {summary}\nCategory: {category}\nAuthor: {author_name}".strip()
-        passage_values.append({"block_id": None, "source_kind": "metadata", "chunk_index": 0, "reading_order": -1, "content": metadata, "language": language or detect_language(metadata)})
+        passage_values.append(
+            {
+                "block_id": None,
+                "source_kind": "metadata",
+                "chunk_index": 0,
+                "reading_order": -1,
+                "content": metadata,
+                "language": language or detect_language(metadata),
+            }
+        )
     for block in sorted(document.get("blocks", []), key=lambda value: (value.get("order", 0), value.get("id", ""))):
         visible = plain_text(str(block.get("html", "")))
         if useful_characters(visible) < MIN_BLOCK_USEFUL_CHARACTERS:
             continue
         for index, chunk in enumerate(chunk_text(visible)):
-            passage_values.append({"block_id": str(block.get("id")), "source_kind": "block", "chunk_index": index, "reading_order": int(block.get("order", 0)), "content": chunk, "language": language or detect_language(chunk)})
+            passage_values.append(
+                {
+                    "block_id": str(block.get("id")),
+                    "source_kind": "block",
+                    "chunk_index": index,
+                    "reading_order": int(block.get("order", 0)),
+                    "content": chunk,
+                    "language": language or detect_language(chunk),
+                }
+            )
     return passage_values
 
 
@@ -126,7 +145,16 @@ def _automated_passages(document: dict, author: User) -> list[dict]:
         if useful_characters(content) < MIN_BLOCK_USEFUL_CHARACTERS:
             continue
         for index, chunk in enumerate(chunk_text(content)):
-            values.append({"block_id": str(block.get("id", "")) or None, "source_kind": "ai_news_block", "chunk_index": index, "reading_order": order, "content": chunk, "language": language})
+            values.append(
+                {
+                    "block_id": str(block.get("id", "")) or None,
+                    "source_kind": "ai_news_block",
+                    "chunk_index": index,
+                    "reading_order": order,
+                    "content": chunk,
+                    "language": language,
+                }
+            )
     return values
 
 
@@ -152,7 +180,11 @@ def _cloud_eligible(post: Post, author: User) -> bool:
 def synchronize_post_search(db, post: Post) -> str:
     """Refresh keyword passages immediately and enqueue only a needed latest-revision embedding job."""
     author = db.get(User, post.author_id)
-    localizations = list(db.scalars(select(PostLocalization).where(PostLocalization.post_id == post.id).order_by(PostLocalization.language))) if post.kind == "ai_news" else []
+    localizations = (
+        list(db.scalars(select(PostLocalization).where(PostLocalization.post_id == post.id).order_by(PostLocalization.language)))
+        if post.kind == "ai_news"
+        else []
+    )
     revision_hash, values = extract_passages(post, author, [record.document for record in localizations] or None)
     existing = list(db.scalars(select(SearchPassage).where(SearchPassage.post_id == post.id)))
     unchanged = bool(existing) and all(item.revision_hash == revision_hash for item in existing) and len(existing) == len(values)
@@ -213,12 +245,15 @@ def prepare_all_posts(db) -> int:
     return len(posts)
 
 
-def post_search_status(db, post: Post) -> str:
-    """Map durable indexing state to the creator-facing three-state status vocabulary."""
-    job = db.get(IndexingJob, post.id)
+def search_status_for(job: IndexingJob | None) -> str:
+    """Map one durable indexing job (or its absence) to the creator-facing three-state vocabulary."""
     if not job or job.status == "done":
         return "ready"
     if job.status == "failed":
         return "failed"
     return "indexing"
 
+
+def post_search_status(db, post: Post) -> str:
+    """Return the creator-facing indexing status for one post."""
+    return search_status_for(db.get(IndexingJob, post.id))

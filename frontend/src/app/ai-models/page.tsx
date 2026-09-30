@@ -3,7 +3,8 @@ import { AiModelsRankingPageContent } from "@/features/site-info/ai-models-ranki
 
 export const metadata: Metadata = {
   title: "AI Models",
-  description: "Evidence-based Top 5 AI model rankings for production coding, image, video, and music.",
+  description:
+    "Evidence-based Top 5 AI model rankings for production coding, image, video, and music.",
 };
 
 /** Render the bilingual, evidence-based AI model ranking snapshot. */

@@ -1,22 +1,14 @@
 """Create the explicitly enabled local test administrator after migrations."""
-import os
+
 import re
 
 from sqlalchemy import select
 
-from .services.authentication import password_hasher
+from .config import NEWS_BRAVE_QUERY_BUDGET, NEWS_HOUR, NEWS_MINUTE, NEWS_MONTH_BUDGET_USD, NEWS_RUN_BUDGET_USD, NEWS_TIMEZONE, NEWS_WEEKDAY, load_settings
 from .database import SessionLocal
 from .models import NewsSetting, NewsSource, User
+from .services.authentication import password_hasher
 from .utils import new_id, now
-from .config import NEWS_BRAVE_QUERY_BUDGET, NEWS_HOUR, NEWS_MINUTE, NEWS_MONTH_BUDGET_USD, NEWS_RUN_BUDGET_USD, NEWS_TIMEZONE, NEWS_WEEKDAY
-
-# Ten years keeps the local test login convenient without adding a verification bypass to auth routes.
-DEFAULT_VERIFICATION_SECONDS = 10 * 365 * 24 * 60 * 60
-
-
-def enabled(value: str | None) -> bool:
-    """Interpret common environment boolean spellings for the local bootstrap switch."""
-    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def ensure_local_admin() -> bool:
@@ -27,12 +19,14 @@ def ensure_local_admin() -> bool:
     Existing credentials are never overwritten, preventing a container restart from undoing a
     password change. Conflicting username/email records stop startup instead of modifying a user.
     """
-    if not enabled(os.getenv("LOCAL_ADMIN_ENABLED", "false")):
+    # Read the environment now rather than at import so one-shot runs and tests see current values.
+    settings = load_settings()
+    if not settings.local_admin_enabled:
         return False
-    username = os.getenv("LOCAL_ADMIN_USERNAME", "mablog_admin").strip().lower()
-    email = os.getenv("LOCAL_ADMIN_EMAIL", "admin@mablog.local").strip().lower()
-    password = os.getenv("LOCAL_ADMIN_PASSWORD", "mablog-admin-local-2026")
-    verification_seconds = int(os.getenv("LOCAL_ADMIN_VERIFICATION_SECONDS", str(DEFAULT_VERIFICATION_SECONDS)))
+    username = settings.local_admin_username
+    email = settings.local_admin_email
+    password = settings.local_admin_password
+    verification_seconds = settings.local_admin_verification_seconds
     if not re.fullmatch(r"[a-z0-9_]{3,30}", username):
         raise RuntimeError("LOCAL_ADMIN_USERNAME must contain 3-30 letters, numbers, or underscores")
     if "@" not in email or len(email) > 254:
@@ -134,4 +128,3 @@ if __name__ == "__main__":
         print("Local test administrator is ready.")
     ensure_ai_news_foundation()
     print("AI-news publisher, settings, and core registry are ready.")
-

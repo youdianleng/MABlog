@@ -138,10 +138,7 @@ export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
             </label>
           )}
           <button type="button" onClick={resend} disabled={busy}>
-            {t(
-              "Resend code (after 60 seconds)",
-              "Reenviar código (tras 60 segundos)",
-            )}
+            {t("Resend code (after 60 seconds)", "Reenviar código (tras 60 segundos)")}
           </button>
         </>
       ) : (
@@ -184,15 +181,10 @@ export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
           )}
           {mode !== "recover" && (
             <label>
-              {t(
-                "Password (at least 10 characters)",
-                "Contraseña (mínimo 10 caracteres)",
-              )}
+              {t("Password (at least 10 characters)", "Contraseña (mínimo 10 caracteres)")}
               <Input
                 type="password"
-                autoComplete={
-                  mode === "register" ? "new-password" : "current-password"
-                }
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
                 minLength={10}
                 value={password}
                 onChange={
@@ -224,10 +216,7 @@ export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
                 ? t("Send recovery code", "Enviar código")
                 : t("Sign in", "Entrar")}
       </Button>
-      <div
-        className="toolbar"
-        style={{ justifyContent: "space-between", fontSize: 12 }}
-      >
+      <div className="toolbar" style={{ justifyContent: "space-between", fontSize: 12 }}>
         <button
           type="button"
           onClick={
@@ -257,5 +246,3 @@ export function AccountForm({ onSuccess }: { onSuccess: () => Promise<void> }) {
     </form>
   );
 }
-
-

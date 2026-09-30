@@ -5,7 +5,8 @@ These project instructions record the user's requirements for implementation and
 ## Project layout and stack
 
 - Keep Next.js application code in `frontend/` and FastAPI application code in `backend/` as separate top-level folders. Each application should have its own dependencies, configuration, and Dockerfile so it can be deployed independently.
-- Use shadcn/ui and Tailwind CSS for frontend design. Zustand owns transient client-side feature state such as independent search requests and streamed explanations.
+- Use shadcn/ui primitives styled with Tailwind CSS for shared interface controls. Feature presentation may use focused class-based stylesheets in `frontend/src/styles/` (one per feature area); do not mix Tailwind utilities and feature-stylesheet rules on the same element. Zustand owns transient client-side feature state such as independent search requests and streamed explanations.
+- Format frontend code with Prettier (`npm run format`) and backend code with `ruff format`; CI (`.github/workflows/ci.yml`) rejects unformatted code, lint errors, type errors, missing function comments, and failing unit or backend tests.
 - Use PostgreSQL for durable application records, Redis for selected caches, and Docker Compose for local services. Store durable data and uploads in persistent volumes.
 - Keep shared documentation in `docs/`. Use `docs/design-review.md` and `docs/design-interview.md` for product requirements; preserve their distinction between confirmed requirements and proposed defaults.
 - Follow `docs/architecture.md`. Frontend page/component code belongs in feature folders, reusable effects belong in named hooks, shared primitives belong in `components/`, and API transport code belongs in `lib/api/`. Give every independently understandable component its own file; keep compatibility barrels free of implementation logic.

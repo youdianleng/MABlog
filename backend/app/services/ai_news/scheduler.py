@@ -39,7 +39,16 @@ def active_run(db) -> NewsRun | None:
     return db.scalar(select(NewsRun).where(NewsRun.status.in_(ACTIVE_STATUSES)).order_by(NewsRun.created))
 
 
-def create_run(db, kind: str, publication_intent: bool, requested_by: str | None = None, historical_days: int | None = None, idempotency_key: str | None = None, waiting: bool = False, verify_for_activation: bool = False) -> tuple[NewsRun, bool]:
+def create_run(
+    db,
+    kind: str,
+    publication_intent: bool,
+    requested_by: str | None = None,
+    historical_days: int | None = None,
+    idempotency_key: str | None = None,
+    waiting: bool = False,
+    verify_for_activation: bool = False,
+) -> tuple[NewsRun, bool]:
     """Create one durable run, atomically recording an optional full-path preview policy."""
     existing = active_run(db)
     if existing and not waiting:

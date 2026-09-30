@@ -1,4 +1,5 @@
 """Shared fixtures for isolated FastAPI integration suites."""
+
 from collections.abc import Callable
 
 import pytest

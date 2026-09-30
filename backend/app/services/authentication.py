@@ -1,7 +1,7 @@
 """Reusable password, verification-code, throttling, and session behavior."""
+
 import hashlib
 import hmac
-import os
 import secrets
 
 from fastapi import HTTPException, Response
@@ -9,7 +9,7 @@ from pwdlib import PasswordHash
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
-from ..config import APP_SECRET, CODE_SECONDS, RESEND_SECONDS
+from ..config import APP_SECRET, CODE_SECONDS, COOKIE_SECURE, RESEND_SECONDS
 from ..models import Challenge, LoginSession, RateLimit, User
 from ..utils import digest, new_id, now
 from .email_delivery import EmailDeliveryError, send_verification_email
@@ -64,6 +64,5 @@ def establish_session(db, user: User, response: Response) -> dict:
     token = secrets.token_urlsafe(32)
     db.add(LoginSession(token=digest(token), user_id=user.id, expires=user.verified_until))
     db.commit()
-    response.set_cookie("mablog_session", token, httponly=True, samesite="lax", secure=os.getenv("COOKIE_SECURE", "false") == "true", max_age=max(0, int(user.verified_until - now())))
+    response.set_cookie("mablog_session", token, httponly=True, samesite="lax", secure=COOKIE_SECURE, max_age=max(0, int(user.verified_until - now())))
     return {"ok": True}
-

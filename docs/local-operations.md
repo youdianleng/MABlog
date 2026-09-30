@@ -4,6 +4,8 @@
 
 The Compose project is named `mablog`. Its persistent volumes are `mablog_postgres_data`, `mablog_uploads`, and `mablog_mail_data`. PostgreSQL holds all domain and search records, including pgvector embeddings, durable indexing jobs, and the weekly AI-news state machine; the uploads volume holds image/video bytes. Mailpit captures local email and does not deliver to external mailboxes.
 
+The backend, `worker`, and `news-worker` containers run as the unprivileged user UID/GID 10001. The one-shot `migrate` service runs as root only to `chown -R 10001:10001 /data/uploads` before applying migrations, so upload volumes created by earlier root-based images stay writable; file contents are never modified. Long-running services use `restart: unless-stopped`, so they restart after a crash and start with Docker Desktop; use `docker compose stop` to keep them stopped. Worker logs use the `LOG_LEVEL` setting (default `INFO`) and appear in `docker compose logs worker news-worker`.
+
 The backend applies the Alembic migration history before serving requests. Add new migration files for later schema changes; the initial migration contains fixed schema operations and does not import future model definitions.
 
 ## Consistent database and upload backup
@@ -39,7 +41,7 @@ docker compose exec -T redis redis-cli FLUSHDB
 docker compose start backend worker news-worker frontend
 ```
 
-Upload extraction restores the checkpoint's files. Any newer orphaned files can remain inaccessible because their database records are absent; the restore procedure does not recursively delete directories. Use the schema-compatible application revision for a historical backup, then apply newer migrations deliberately.
+Upload extraction runs as UID 10001, which owns `/data/uploads` after any `migrate` run; if a restore fails with a permission error, run `docker compose run --rm migrate` once and repeat the extraction. Upload extraction restores the checkpoint's files. Any newer orphaned files can remain inaccessible because their database records are absent; the restore procedure does not recursively delete directories. Use the schema-compatible application revision for a historical backup, then apply newer migrations deliberately.
 
 ## Search and RAG operations
 

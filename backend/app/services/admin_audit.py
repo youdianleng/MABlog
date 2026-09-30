@@ -16,7 +16,9 @@ def bounded_metadata(value: dict | None) -> dict | None:
     return value if len(encoded) <= MAX_AUDIT_JSON_CHARACTERS else {"truncated": True, "characters": len(encoded)}
 
 
-def audit(db, actor: User | None, action: str, target_type: str, target_id: str, reason: str = "", before: dict | None = None, after: dict | None = None) -> AdminAuditEvent:
+def audit(
+    db, actor: User | None, action: str, target_type: str, target_id: str, reason: str = "", before: dict | None = None, after: dict | None = None
+) -> AdminAuditEvent:
     """Append an administrator action to the current transaction without committing it."""
     event = AdminAuditEvent(
         actor_id=actor.id if actor else None,
@@ -29,4 +31,3 @@ def audit(db, actor: User | None, action: str, target_type: str, target_id: str,
     )
     db.add(event)
     return event
-

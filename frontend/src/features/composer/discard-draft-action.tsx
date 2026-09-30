@@ -37,15 +37,22 @@ export function DiscardDraftAction({
     <Button
       variant="ghost"
       className="mt-6"
-      onClick={/** Ask before permanently discarding this account's draft. */ function discard() {
-        if (confirm(t("Discard your draft and reload approved content?", "¿Descartar el borrador y cargar la versión aprobada?"))) {
-          void run(reloadApproved);
+      onClick={
+        /** Ask before permanently discarding this account's draft. */ function discard() {
+          if (
+            confirm(
+              t(
+                "Discard your draft and reload approved content?",
+                "¿Descartar el borrador y cargar la versión aprobada?",
+              ),
+            )
+          ) {
+            void run(reloadApproved);
+          }
         }
-      }}
+      }
     >
       {t("Discard draft", "Descartar borrador")}
     </Button>
   );
 }
-
-

@@ -20,9 +20,7 @@ export function Workspace() {
     <>
       <div className="section-heading">
         <div>
-          <div className="eyebrow">
-            {t("YOUR CREATIVE SPACE", "TU ESPACIO CREATIVO")}
-          </div>
+          <div className="eyebrow">{t("YOUR CREATIVE SPACE", "TU ESPACIO CREATIVO")}</div>
           <h1 style={{ fontSize: 42 }}>{t("My atelier", "Mi taller")}</h1>
         </div>
       </div>
@@ -32,10 +30,7 @@ export function Workspace() {
           ["shared", t("Shared with me", "Compartidas conmigo")],
           ["reviews", t("Review requests", "Solicitudes de revisión")],
         ].map(
-          /** Render a workspace category selector. */ function renderTab([
-            id,
-            title,
-          ]) {
+          /** Render a workspace category selector. */ function renderTab([id, title]) {
             return (
               <button
                 key={id}
@@ -58,22 +53,14 @@ export function Workspace() {
         <div className="stack">
           {data.reviews
             .filter(
-              /** Select posts with outstanding creator reviews. */ function pending(
-                item,
-              ) {
+              /** Select posts with outstanding creator reviews. */ function pending(item) {
                 return item.count > 0;
               },
             )
             .map(
-              /** Render a link to the post awaiting review. */ function request(
-                item,
-              ) {
+              /** Render a link to the post awaiting review. */ function request(item) {
                 return (
-                  <Link
-                    className="notice"
-                    key={item.id}
-                    href={`/review/${item.id}`}
-                  >
+                  <Link className="notice" key={item.id} href={`/review/${item.id}`}>
                     {item.title || t("Untitled", "Sin título")} · {item.count}{" "}
                     {t("pending changes", "cambios pendientes")} ↗
                   </Link>

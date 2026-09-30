@@ -24,6 +24,22 @@ The classifier now seeks up to six representative benchmark results per release 
 
 New editions use versioned structured blocks so their focus labels and locked benchmark evidence survive bilingual correction. Existing published editions remain unchanged. This amendment refines the presentation of qualifying releases; benchmark-only promotions still do not qualify as news, the independent verification and safety gates still apply, and automatic scheduling remains disabled until the existing activation requirements are met.
 
+## Implementation notes
+
+_Moved from `docs/architecture.md` on 2026-09-30. These paragraphs describe how the confirmed decisions below are implemented; they are not additional requirements._
+
+Generated AI-news editions use versioned structured blocks. New release blocks separate sourced change, developer, and reader implications from deterministic provider-benchmark rows built out of exact official-source claims. The public reader labels reported results as provider-published, while correction preserves their citation and score evidence; legacy editions without these fields remain readable.
+
+The normal publication service requires a passing bilingual evidence report and rejects official-source hash drift. A separate step-up-protected evidence-exception endpoint is limited to failed preview verification, requires human reason and acknowledgement, rechecks official-source reachability and duplicates, but records changed current hashes instead of blocking the explicit exception. It reruns deterministic safety and moderation, calls the shared publisher only with an explicit override flag, retains the failed verification and approval in edition metadata and administrator audit, and exposes distinct public unverified-evidence and changed-source warnings. Exceptions do not satisfy schedule activation or advance the verified scan cursor; subsequent source-contradiction monitoring still includes them. A later passing correction replaces the current badge while preserving the override history.
+
+Ordinary administrator previews take a separate compose → safety path, omitting only the claim-to-source verify stage. They remain private as `safety_cleared_preview`; a step-up-protected `publish-unverified-preview` action requires reason and acknowledgement, structural/source/duplicate rechecks, and fresh moderation before publication. This path records `manual_unverified_preview`, discloses its unverified status publicly, and advances neither schedule activation nor the successful scan cursor. The explicit activation-test preview, scheduled/catch-up runs, and immediate **Run and publish** retain the full verify stage and normal publisher gate. Corrections remain their own verified workflow; historic failed-verifier exceptions keep their separate eligibility and label.
+
+Run detail exposes already-published release conflicts, including a public post link when one exists. The shared publication source recheck rejects these conflicts before reporting source drift, and the verified-preview control surfaces API errors and completed-publication feedback in the drawer. This prevents an old duplicate preview from presenting as an inert publish button while preserving the original duplicate and source-integrity gates.
+
+The administrator newsroom's Providers & models tab reads a redacted status endpoint. Step-up-protected mutations store encrypted OpenAI/Brave key overrides and model IDs on the durable news-settings row; the API and worker resolve those values for each AI-news stage, falling back to environment defaults. General site AI services remain on their separate environment configuration. The server rejects override changes while a newsletter run is active.
+
+The duplicate-release and official-source rechecks shared by these publication paths live in `backend/app/services/ai_news/publication_checks.py`. They refetch every retained official source through the safe-fetch controls, so publication requests make outbound HTTPS calls and can take up to the configured fetch timeout per source.
+
 ## User-supplied objective
 
 - Add an automatic weekly publisher focused on recent AI model releases and meaningful lifecycle updates.

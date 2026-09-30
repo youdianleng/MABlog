@@ -1,9 +1,11 @@
 """Validated upload and permission-checked media delivery endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from PIL import Image
+
+from ..config import IMAGE_LIMIT_MB, PUBLIC_MEDIA_CACHE_SECONDS, UPLOAD_DIR, VIDEO_LIMIT_MB
 from ..dependencies import current_user, database, signed_in
-from ..config import IMAGE_LIMIT_MB, VIDEO_LIMIT_MB, UPLOAD_DIR
 from ..models import Media, User
 from ..services.documents import media_ids
 from ..services.permissions import require_post, role_for
@@ -11,6 +13,7 @@ from ..services.posts import submitted_media
 from ..utils import new_id
 
 router = APIRouter()
+
 
 @router.post("/uploads")
 def upload(file: UploadFile, post_id: str | None = None, user=Depends(signed_in), db=Depends(database)):
@@ -56,7 +59,12 @@ def upload(file: UploadFile, post_id: str | None = None, user=Depends(signed_in)
 
 @router.get("/media/{identifier}")
 def read_media(identifier: str, user=Depends(current_user), db=Depends(database)):
-    """Recheck access for each media request, distinguishing approved from draft-only uploads."""
+    """Recheck access for each media request, distinguishing approved from draft-only uploads.
+
+    Only media that anyone may read (approved content of a public post, or a current avatar) is sent
+    with a shared browser cache lifetime. Everything else keeps the global ``no-store`` policy so a
+    revoked grant or unpublished post stops serving private bytes on the next request.
+    """
     media = db.get(Media, identifier)
     if not media:
         raise HTTPException(404, "Media not found")
@@ -69,10 +77,14 @@ def read_media(identifier: str, user=Depends(current_user), db=Depends(database)
         private_allowed = owns_upload or can_review
         if not approved and not private_allowed:
             raise HTTPException(404, "Media not found")
+        publicly_readable = approved and post.public
     else:
         owner = db.get(User, media.owner_id)
-        if owner.avatar != f"/api/media/{identifier}" and (not user or user.id != owner.id):
+        publicly_readable = owner.avatar == f"/api/media/{identifier}"
+        if not publicly_readable and (not user or user.id != owner.id):
             raise HTTPException(404, "Media not found")
-    return FileResponse(UPLOAD_DIR / media.filename, media_type=media.mime)
-
-
+    response = FileResponse(UPLOAD_DIR / media.filename, media_type=media.mime)
+    if publicly_readable:
+        # Accepted trade-off: after unpublication a browser may keep showing this file until max-age expires.
+        response.headers["Cache-Control"] = f"public, max-age={PUBLIC_MEDIA_CACHE_SECONDS}"
+    return response

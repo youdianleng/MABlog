@@ -21,4 +21,3 @@ export interface ComposerSettingsProps {
   historyRef: MutableRefObject<Composition[]>;
   futureRef: MutableRefObject<Composition[]>;
 }
-

@@ -29,7 +29,10 @@ const SECTIONS: InfoSection[] = [
     },
   },
   {
-    title: { en: "Automated material needs context", es: "El material automatizado necesita contexto" },
+    title: {
+      en: "Automated material needs context",
+      es: "El material automatizado necesita contexto",
+    },
     body: {
       en: "AI-assisted discovery and automated newsroom content can be incomplete or mistaken. Source links and editorial review remain important before relying on or republishing results.",
       es: "El descubrimiento asistido por IA y el contenido automatizado de la sala de noticias pueden ser incompletos o erróneos. Los enlaces a fuentes y la revisión editorial siguen siendo importantes antes de confiar en los resultados o volver a publicarlos.",
@@ -42,7 +45,10 @@ export default function TermsPage() {
   return (
     <SiteInfoPage
       eyebrow={{ en: "Terms overview", es: "Resumen de términos" }}
-      title={{ en: "Clear roles make better collaborations.", es: "Los roles claros crean mejores colaboraciones." }}
+      title={{
+        en: "Clear roles make better collaborations.",
+        es: "Los roles claros crean mejores colaboraciones.",
+      }}
       intro={{
         en: "MAblog's product rules center on authorship, scoped permissions, responsible publishing, and honest use of automated tools.",
         es: "Las reglas de producto de MAblog se centran en la autoría, los permisos limitados, la publicación responsable y el uso honesto de herramientas automatizadas.",

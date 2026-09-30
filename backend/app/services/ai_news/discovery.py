@@ -1,6 +1,6 @@
 """Hybrid official-registry, OpenAI web-search, and Brave release discovery."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlsplit
 
 from sqlalchemy import select
@@ -16,7 +16,7 @@ DISCOVERY_INSTRUCTIONS = """You discover publicly announced AI model releases an
 
 def _iso_date(timestamp: float) -> str:
     """Format a UTC date for bounded provider search prompts."""
-    return datetime.fromtimestamp(timestamp, tz=timezone.utc).date().isoformat()
+    return datetime.fromtimestamp(timestamp, tz=UTC).date().isoformat()
 
 
 def _normalized_result(value: dict, discovered_by: str) -> dict | None:
@@ -51,7 +51,9 @@ def discover_candidates(db, run: NewsRun) -> list[dict]:
     try:
         assert_paid_stage_budget(db, run, 0.15)
         prompt = f"Find qualifying AI model releases announced from {_iso_date(run.window_start)} through {_iso_date(run.window_end)}. Prefer official provider URLs."
-        result = responses_call(model_for(db, "small"), DISCOVERY_INSTRUCTIONS, prompt, 1800, tools=[{"type": "web_search"}], idempotency_key=f"news:{run.id}:web-discovery", db=db)
+        result = responses_call(
+            model_for(db, "small"), DISCOVERY_INSTRUCTIONS, prompt, 1800, tools=[{"type": "web_search"}], idempotency_key=f"news:{run.id}:web-discovery", db=db
+        )
         record_openai_usage(db, run, "web_discovery", result)
         values = json_value(result).get("results", [])
         candidates.extend(filter(None, (_normalized_result(value, "openai_web") for value in values if isinstance(value, dict))))
@@ -59,7 +61,7 @@ def discover_candidates(db, run: NewsRun) -> list[dict]:
     except (NewsProviderError, RuntimeError) as error:
         run.warnings = [*run.warnings, str(error)]
     try:
-        query = f'AI model release OR model API update official after:{_iso_date(run.window_start)} before:{_iso_date(run.window_end)}'
+        query = f"AI model release OR model API update official after:{_iso_date(run.window_start)} before:{_iso_date(run.window_end)}"
         results = brave_search(query, count=15, db=db)
         run.brave_queries += 1
         candidates.extend(

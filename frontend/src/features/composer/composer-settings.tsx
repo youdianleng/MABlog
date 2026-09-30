@@ -68,5 +68,3 @@ export function ComposerSettings(props: ComposerSettingsProps) {
     </details>
   );
 }
-
-

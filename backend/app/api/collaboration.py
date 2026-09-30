@@ -1,18 +1,19 @@
 """Per-post grants, private drafts, submissions, and creator review endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select, update
-from ..dependencies import current_user, database, signed_in
-from ..config import CACHE_SECONDS, LIKE_WINDOW_SECONDS, UPLOAD_DIR
-from ..models import Draft, Grant, Like, Media, Post, Proposal, User
-from ..schemas import Document, DraftPayload, GrantPayload, PostCategory, ProposalReviewPayload
-from ..services.documents import clean_document, media_ids, targets
+
+from ..dependencies import database, signed_in
+from ..models import Draft, Grant, Proposal, User
+from ..schemas import DraftPayload, GrantPayload, ProposalReviewPayload
+from ..services.documents import clean_document, targets
 from ..services.indexing import synchronize_post_search
 from ..services.permissions import require_post, role_for
-from ..services.posts import apply_target, ensure_publishable, post_summary, submitted_media, user_profile, validate_media
-from ..services.public_cache import cache, invalidate_public_cache
-from ..utils import now
+from ..services.posts import apply_target, ensure_publishable, user_profile, validate_media
+from ..services.public_cache import invalidate_public_cache
 
 router = APIRouter()
+
 
 @router.get("/posts/{post_id}/grants")
 def grants(post_id: str, user=Depends(signed_in), db=Depends(database)):
@@ -57,7 +58,12 @@ def read_draft(post_id: str, user=Depends(signed_in), db=Depends(database)):
     """Read only the caller's draft or initialize from the approved document."""
     post = require_post(db, post_id, user, ["author", "editor"])
     draft = db.get(Draft, (post_id, user.id))
-    return {"document": draft.document if draft else post.document, "baseline": draft.baseline if draft else post.document, "versions": draft.versions if draft else post.versions, "role": role_for(db, post, user)}
+    return {
+        "document": draft.document if draft else post.document,
+        "baseline": draft.baseline if draft else post.document,
+        "versions": draft.versions if draft else post.versions,
+        "role": role_for(db, post, user),
+    }
 
 
 @router.put("/posts/{post_id}/draft")
@@ -122,7 +128,18 @@ def proposals(post_id: str, user=Depends(signed_in), db=Depends(database)):
     query = select(Proposal).where(Proposal.post_id == post_id)
     if user.id != post.author_id:
         query = query.where(Proposal.editor_id == user.id)
-    return [{"id": p.id, "target": p.target, "value": p.value, "base_version": p.base_version, "current_version": post.versions.get(p.target, 0), "status": p.status, "editor": user_profile(db.get(User, p.editor_id))} for p in db.scalars(query.order_by(Proposal.created.desc()))]
+    return [
+        {
+            "id": p.id,
+            "target": p.target,
+            "value": p.value,
+            "base_version": p.base_version,
+            "current_version": post.versions.get(p.target, 0),
+            "status": p.status,
+            "editor": user_profile(db.get(User, p.editor_id)),
+        }
+        for p in db.scalars(query.order_by(Proposal.created.desc()))
+    ]
 
 
 @router.post("/posts/{post_id}/proposals/{proposal_id}")
@@ -142,7 +159,9 @@ def review(post_id: str, proposal_id: str, data: ProposalReviewPayload, user=Dep
             ensure_publishable(post.document)
         # Creator approval changes the authoritative Post.document immediately.
         synchronize_post_search(db, post)
-        db.execute(update(Proposal).where(Proposal.post_id == post.id, Proposal.target == proposal.target, Proposal.status == "pending").values(status="rejected"))
+        db.execute(
+            update(Proposal).where(Proposal.post_id == post.id, Proposal.target == proposal.target, Proposal.status == "pending").values(status="rejected")
+        )
         proposal.status = "approved"
     elif data.action == "reject":
         proposal.status = "rejected"
@@ -151,5 +170,3 @@ def review(post_id: str, proposal_id: str, data: ProposalReviewPayload, user=Dep
     db.commit()
     invalidate_public_cache()
     return {"ok": True}
-
-

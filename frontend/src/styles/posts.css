@@ -165,19 +165,43 @@
   border: 1px solid #a98d66;
   background: #f6f1e7;
   color: #5e302f;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }
-.post-pagination button:hover:not(:disabled) { background: #eee7dc; border-color: #8f6c3c; }
-.post-pagination button:focus-visible { outline: 2px solid #993c3d; outline-offset: 3px; }
-.post-pagination button:disabled { cursor: not-allowed; opacity: 0.42; }
-.post-pagination-pages { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.post-pagination .post-pagination-number { padding-inline: 8px; font-variant-numeric: tabular-nums; }
+.post-pagination button:hover:not(:disabled) {
+  background: #eee7dc;
+  border-color: #8f6c3c;
+}
+.post-pagination button:focus-visible {
+  outline: 2px solid #993c3d;
+  outline-offset: 3px;
+}
+.post-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.post-pagination-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.post-pagination .post-pagination-number {
+  padding-inline: 8px;
+  font-variant-numeric: tabular-nums;
+}
 .post-pagination .post-pagination-number[aria-current="page"] {
   border-color: #993c3d;
   background: #993c3d;
   color: #fffaf0;
 }
-.post-pagination-ellipsis { min-width: 22px; text-align: center; color: #877866; }
+.post-pagination-ellipsis {
+  min-width: 22px;
+  text-align: center;
+  color: #877866;
+}
 .post-pagination-summary {
   flex-basis: 100%;
   text-align: center;
