@@ -31,6 +31,38 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
+/** Build the user-visible error for a failed response from its JSON `detail`, if any. */
+function responseError(response: Response, payload: unknown): ApiError {
+  const detail =
+    payload && typeof payload === "object" && "detail" in payload ? payload.detail : undefined;
+  const fallback = response.status >= 500 ? UNAVAILABLE_ERROR : GENERIC_ERROR;
+  return new ApiError(
+    localizedError(typeof detail === "string" ? detail : fallback),
+    response.status,
+  );
+}
+
+/**
+ * Read a same-origin API resource as text (for example a Markdown document).
+ *
+ * @throws ApiError with the server's `detail` and status for non-2xx responses, or status 0 when
+ * the server could not be reached.
+ */
+export async function apiText(path: string): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "X-MAblog": "1" },
+    });
+  } catch {
+    throw new ApiError(localizedError(UNAVAILABLE_ERROR), 0);
+  }
+  if (!response.ok) throw responseError(response, await readJson(response));
+  return response.text();
+}
+
 /**
  * Fetch same-origin API data with session cookies and explicit mutation intent.
  *
@@ -54,14 +86,6 @@ export async function api<T>(path: string, method = "GET", data?: unknown): Prom
     throw new ApiError(localizedError(UNAVAILABLE_ERROR), 0);
   }
   const payload = await readJson(response);
-  if (!response.ok) {
-    const detail =
-      payload && typeof payload === "object" && "detail" in payload ? payload.detail : undefined;
-    const fallback = response.status >= 500 ? UNAVAILABLE_ERROR : GENERIC_ERROR;
-    throw new ApiError(
-      localizedError(typeof detail === "string" ? detail : fallback),
-      response.status,
-    );
-  }
+  if (!response.ok) throw responseError(response, payload);
   return payload as T;
 }

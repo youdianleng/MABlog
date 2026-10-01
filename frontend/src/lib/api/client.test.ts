@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, api } from "./client";
+import { ApiError, api, apiText } from "./client";
 
 /** Replace global fetch with one canned response or failure for a single test. */
 function mockFetch(result: Response | Error) {
@@ -57,5 +57,22 @@ describe("api client", () => {
   it("reports network failures with status 0", async () => {
     mockFetch(new TypeError("Failed to fetch"));
     await expect(api("/posts")).rejects.toMatchObject({ status: 0 });
+  });
+
+  // Text resources (Markdown) come back unparsed; failures still carry the server detail.
+  it("reads text resources and reports text request failures", async () => {
+    mockFetch(new Response("# Heading" + String.fromCharCode(10), { status: 200 }));
+    await expect(apiText("/ai-news/instructions")).resolves.toBe(
+      "# Heading" + String.fromCharCode(10),
+    );
+    mockFetch(
+      new Response(JSON.stringify({ detail: "Please sign in and verify your email" }), {
+        status: 401,
+      }),
+    );
+    await expect(apiText("/ai-news/instructions")).rejects.toMatchObject({
+      message: "Please sign in and verify your email",
+      status: 401,
+    });
   });
 });

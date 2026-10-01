@@ -1,4 +1,5 @@
-export { api, ApiError } from "./client";
+export { api, apiText, ApiError } from "./client";
+export { AI_NEWS_INSTRUCTIONS_FILENAME, fetchAiNewsInstructions } from "./ai-news-instructions";
 export { uploadMedia } from "./media";
 export { loadSearchResults, searchPosts, streamExplanation } from "./search";
 export type { ExplanationHandlers, SearchInput } from "./search";
