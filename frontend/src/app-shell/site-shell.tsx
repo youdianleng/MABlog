@@ -1,21 +1,28 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LogOut, Newspaper, Plus } from "lucide-react";
-import { api } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/features/posts";
 import { useAccount } from "@/features/auth/account-context";
 import { HeaderSearch } from "@/features/search";
 import { SiteFooter } from "@/app-shell/site-footer";
+import { isActiveLink, PRIMARY_LINKS } from "./navigation-links";
+import { SideMenu } from "./side-menu";
+import { useShellActions } from "./use-shell-actions";
 
-/** Render persistent navigation around route-native Next.js page content. */
+/**
+ * Render persistent navigation around route-native Next.js page content.
+ *
+ * Elements marked `header-bar-only` disappear below the header collapse breakpoint (narrow
+ * windows or heavy browser zoom); the side menu then carries all navigation and account actions.
+ */
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const router = useRouter();
   const { t, locale, setLocale } = useLanguage();
-  const { user, run, refresh } = useAccount();
+  const { user } = useAccount();
+  const { writePost, signOut } = useShellActions();
   const showFooterCallout =
     path !== "/about" &&
     path !== "/help" &&
@@ -25,40 +32,36 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     !path.startsWith("/sharing/") &&
     !path.startsWith("/admin/");
 
-  /** Create a personal post and navigate to its freeform composer. */
-  async function createPost(): Promise<void> {
-    const post = await api<{ id: string }>("/posts", "POST");
-    router.push("/compose/" + post.id);
-  }
-
   return (
     <div className="shell">
       <a className="skip-link" href="#main-content">
         {t("Skip to main content", "Saltar al contenido principal")}
       </a>
       <header className="site-header">
+        <SideMenu />
         <Link href="/" className="brand">
           <span className="seal">M</span>MAblog<span className="brand-star">✦</span>
         </Link>
-        <nav className="nav" aria-label={t("Primary navigation", "Navegación principal")}>
-          <Link className={path === "/" ? "active" : ""} href="/">
-            {t("Discover", "Descubrir")}
-          </Link>
-          <Link className={path === "/public" ? "active" : ""} href="/public">
-            {t("The collection", "La colección")}
-          </Link>
-          <Link className={path === "/ai-models" ? "active" : ""} href="/ai-models">
-            {t("AI Models", "Modelos IA")}
-          </Link>
-          <Link
-            className={path === "/workspace" ? "optional active" : "optional"}
-            href="/workspace"
-          >
-            {t("My atelier", "Mi taller")}
-          </Link>
+        <nav
+          className="nav header-bar-only"
+          aria-label={t("Primary navigation", "Navegación principal")}
+        >
+          {PRIMARY_LINKS.map(
+            /** Render one primary destination with its current-page state. */ (link) => (
+              <Link
+                key={link.href}
+                className={isActiveLink(path, link.href) ? "active" : undefined}
+                href={link.href}
+              >
+                {t(link.en, link.es)}
+              </Link>
+            ),
+          )}
         </nav>
-        <HeaderSearch />
-        <div className="account-nav">
+        <div className="header-bar-only header-search-slot">
+          <HeaderSearch />
+        </div>
+        <div className="account-nav header-bar-only">
           <select
             className="language"
             aria-label={t("Language", "Idioma")}
@@ -89,34 +92,14 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               <Link href="/profile" title={user.username}>
                 <Avatar user={user} />
               </Link>
-              <button
-                title={t("Sign out", "Cerrar sesión")}
-                onClick={
-                  /** Revoke the session through shared action handling. */ function logout() {
-                    void run(
-                      /** End the session and refresh account state. */ async function endSession() {
-                        await api("/auth/logout", "POST");
-                        await refresh();
-                        router.push("/");
-                      },
-                    );
-                  }
-                }
-              >
+              <button title={t("Sign out", "Cerrar sesión")} onClick={signOut}>
                 <LogOut size={15} />
               </button>
             </>
           ) : (
             <Link href="/account">{t("Sign in", "Entrar")}</Link>
           )}
-          <Button
-            size="sm"
-            onClick={
-              /** Create an authenticated post through shared error handling. */ function newPost() {
-                void run(createPost);
-              }
-            }
-          >
+          <Button size="sm" onClick={writePost}>
             <Plus size={14} />
             {t("Write", "Escribir")}
           </Button>

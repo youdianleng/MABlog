@@ -286,11 +286,6 @@
   }
 }
 
-@media (max-width: 1050px) {
-  .header-search {
-    width: 140px;
-  }
-}
 @media (max-width: 700px) {
   .search-question-row {
     grid-template-columns: auto minmax(0, 1fr);
@@ -321,11 +316,6 @@
   }
 }
 @media (max-width: 480px) {
-  .header-search {
-    order: 3;
-    flex-basis: 100%;
-    width: 100%;
-  }
   .search-form {
     margin-left: -8px;
     margin-right: -8px;

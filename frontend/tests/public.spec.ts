@@ -59,6 +59,66 @@ test("navbar routes keep the shared shell anchored", /** Prevent scrollbar and a
   }
 });
 
+test("side menu replaces the header navigation when the page is zoomed or narrow", /** Verify the header collapses below 1180 CSS px (what heavy browser zoom produces) and the drawer offers full, keyboard-safe navigation. */ async function sideMenu({
+  page,
+}) {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/");
+  const primaryNav = page.getByRole("navigation", { name: "Primary navigation" });
+  await expect(primaryNav).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu" })).toBeVisible();
+
+  // 1440px at 200% zoom and a 720px window share the same CSS viewport width.
+  for (const [width, height] of [
+    [720, 800],
+    [375, 812],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    await expect(primaryNav).toBeHidden();
+    await expect(page.getByRole("search").first()).toBeHidden();
+    await expect(page.getByRole("button", { name: "Write", exact: true })).toBeHidden();
+    expect(
+      await page.evaluate(
+        /** Confirm the collapsed header leaves no horizontal overflow. */ function fits() {
+          return document.documentElement.scrollWidth <= window.innerWidth;
+        },
+      ),
+    ).toBe(true);
+
+    const trigger = page.getByRole("button", { name: "Menu" });
+    await trigger.click();
+    const drawer = page.getByRole("dialog", { name: "MAblog" });
+    await expect(drawer).toBeVisible();
+    const siteMenu = drawer.getByRole("navigation", { name: "Site menu" });
+    for (const label of ["Discover", "The collection", "AI Models", "My atelier"]) {
+      await expect(siteMenu.getByRole("link", { name: label, exact: true })).toBeVisible();
+    }
+    await expect(siteMenu.getByRole("link", { name: "Discover" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(drawer.getByRole("button", { name: "Write a story" })).toBeVisible();
+    await expect(drawer.getByRole("search")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(trigger).toBeFocused();
+  }
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page
+    .getByRole("dialog", { name: "MAblog" })
+    .getByRole("link", { name: "AI Models", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/ai-models$/);
+  await expect(page.getByRole("dialog", { name: "MAblog" })).toBeHidden();
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Español" }).click();
+  await expect(page.getByRole("dialog").getByRole("link", { name: "Modelos IA" })).toBeVisible();
+  await page.getByRole("dialog").getByRole("button", { name: "English" }).click();
+});
+
 test("default local administrator signs in without email verification", /** Verify the Compose bootstrap account reaches the workspace using only its password. */ async function localAdmin({
   page,
 }) {
@@ -306,9 +366,12 @@ test("five-card carousel advances, pauses, navigates, and respects reduced motio
 test("public content is server rendered and unknown routes return 404", /** Verify App Router HTML and route boundaries without relying on hydration. */ async function routeDocuments({
   request,
 }) {
+  // Use whichever public post is newest so earlier test runs that publish posts cannot break this.
+  const firstPage = await request.get("/api/posts/page");
+  const newestTitle: string = (await firstPage.json()).items[0].title;
   const home = await request.get("/");
   expect(home.status()).toBe(200);
-  expect(await home.text()).toContain("Where the mountains remember");
+  expect(await home.text()).toContain(newestTitle);
   const missing = await request.get("/path-that-does-not-exist");
   expect(missing.status()).toBe(404);
   expect(await missing.text()).toContain("Story path not found");

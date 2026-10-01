@@ -23,6 +23,17 @@ html {
      navigation changes between short and scrollable pages. */
   scrollbar-gutter: stable;
 }
+/* Radix dialogs (side menu, sign-in overlay) lock scrolling by hiding <body> overflow and adding
+   a scrollbar-width margin-right. With the stable gutter above, that margin is counted twice and
+   the whole page narrows and shifts. Lock on <html> instead: the gutter stays reserved, so the
+   layout width does not change. The `html` prefix outranks the library's injected !important rule. */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+  overflow: visible !important;
+}
+html:has(body[data-scroll-locked]) {
+  overflow: hidden;
+}
 :root {
   --background: #f6f1e7;
   --foreground: #302c29;
