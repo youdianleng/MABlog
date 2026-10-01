@@ -1,0 +1,281 @@
+/* Side menu and header collapse.
+   HEADER COLLAPSE BREAKPOINT = 1180px of CSS width. With labels kept on one line, the full header
+   (Menu, brand, four links, search, language, account, Write) measures about 1,080px plus padding
+   in its tightened layout. Browser zoom reduces CSS width, so this also triggers at about 122%
+   zoom on a 1440px screen or 163% on a 1920px screen, and on tablets and phones. Below it, everything marked .header-bar-only hides and the side menu carries all
+   navigation. Keep the value in sync with the max-width query below. */
+
+.side-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d3c6b3;
+  border-radius: 4px;
+  background: transparent;
+  color: #302c29;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.side-menu-trigger:hover {
+  border-color: #9b3d3e;
+  color: #9b3d3e;
+}
+.side-menu-trigger:focus-visible {
+  outline: 2px solid #9b3d3e;
+  outline-offset: 2px;
+}
+.side-menu-trigger svg {
+  width: 18px;
+  height: 18px;
+}
+
+.header-search-slot {
+  display: flex;
+}
+/* Header labels never wrap; the header collapses into the side menu before they would. */
+.site-header .nav a,
+.site-header .account-nav a {
+  white-space: nowrap;
+}
+
+.side-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  background: rgba(34, 30, 27, 0.42);
+}
+.side-menu {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 161;
+  display: flex;
+  width: min(360px, 88vw);
+  flex-direction: column;
+  gap: 22px;
+  padding: 18px 20px 28px;
+  overflow-y: auto;
+  border-right: 1px solid #d3c6b3;
+  background: #f8f3ea;
+  box-shadow: 12px 0 40px rgba(34, 30, 27, 0.18);
+  color: #302c29;
+}
+/* The drawer scrolls instead of squeezing: sections keep their natural height. */
+.side-menu > * {
+  flex-shrink: 0;
+}
+.side-menu:focus {
+  outline: none;
+}
+.side-menu[data-state="open"] {
+  animation: side-menu-in 180ms ease-out;
+}
+.side-menu-overlay[data-state="open"] {
+  animation: side-menu-fade 180ms ease-out;
+}
+@keyframes side-menu-in {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+@keyframes side-menu-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.side-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #ddd2c2;
+}
+.side-menu-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font:
+    24px Georgia,
+    serif;
+  letter-spacing: 1px;
+}
+.side-menu-title .seal {
+  width: 30px;
+  height: 34px;
+  font-size: 20px;
+}
+.side-menu-close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #302c29;
+  cursor: pointer;
+}
+.side-menu-close:hover {
+  background: #ece3d5;
+}
+.side-menu-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* The drawer reuses the header search form at full drawer width. */
+.side-menu .header-search {
+  width: 100%;
+  padding: 2px 4px;
+}
+.side-menu .header-search input {
+  width: 100%;
+  font-size: 15px;
+}
+
+.side-menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.side-menu-section > a,
+.side-menu-section > button:not(.side-menu-write) {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #302c29;
+  font-size: 15px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.side-menu-section > a:hover,
+.side-menu-section > button:not(.side-menu-write):hover {
+  background: #ece3d5;
+}
+.side-menu-section > a.active {
+  background: #f1e1d9;
+  color: #8f3739;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 #9b3d3e;
+}
+.side-menu-section svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #9b3d3e;
+}
+
+.side-menu-account {
+  gap: 6px;
+  padding-top: 18px;
+  border-top: 1px solid #ddd2c2;
+}
+.side-menu-write {
+  width: 100%;
+  min-height: 46px;
+  justify-content: center;
+  font-size: 14px;
+}
+/* The section rule tints icons crimson; on the crimson Write button that hid the plus icon while it
+   still took space, pushing the label off-centre. Keep it in the button's text colour. */
+.side-menu-write svg {
+  color: currentColor;
+}
+.side-menu-profile .avatar {
+  flex: none;
+}
+.side-menu-profile span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.side-menu-profile small {
+  color: #7d6f63;
+  font-size: 12px;
+}
+
+.side-menu-language {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #d3c6b3;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.side-menu-language button {
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  color: #5f554d;
+  font-size: 13px;
+  cursor: pointer;
+}
+.side-menu-language button + button {
+  border-left: 1px solid #d3c6b3;
+}
+.side-menu-language button[aria-pressed="true"] {
+  background: #302c29;
+  color: #fffaf0;
+  font-weight: 700;
+}
+
+.side-menu-secondary {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #ddd2c2;
+}
+.side-menu-secondary > a {
+  min-height: 40px;
+  color: #6f655c;
+  font-size: 13px;
+}
+
+/* Between the breakpoint and wide desktops, tighten header spacing so the Menu button fits. */
+@media (max-width: 1320px) {
+  .site-header {
+    gap: 20px;
+    padding: 0 3%;
+  }
+  .nav {
+    gap: 20px;
+  }
+  .site-header .header-search {
+    width: 180px;
+  }
+}
+
+/* Header collapse: keep only the Menu button and brand. */
+@media (max-width: 1180px) {
+  .header-bar-only {
+    display: none !important;
+  }
+  .site-header {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .side-menu-trigger {
+    padding: 0 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-menu[data-state="open"],
+  .side-menu-overlay[data-state="open"] {
+    animation: none;
+  }
+}

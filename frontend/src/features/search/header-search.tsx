@@ -5,8 +5,12 @@ import { Search } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { queueHeaderSearch } from "./search-store";
 
-/** Offer global search navigation while keeping the actual question transient. */
-export function HeaderSearch() {
+/**
+ * Offer global search navigation while keeping the actual question transient.
+ *
+ * @param onSubmitted called after navigation starts, so a containing menu can close itself.
+ */
+export function HeaderSearch({ onSubmitted }: { onSubmitted?: () => void } = {}) {
   const { t } = useLanguage();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -22,6 +26,7 @@ export function HeaderSearch() {
           if (value) queueHeaderSearch(value);
           setQuery("");
           router.push("/search");
+          onSubmitted?.();
         }
       }
     >

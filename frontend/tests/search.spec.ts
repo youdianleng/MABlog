@@ -42,7 +42,9 @@ test("global search ranks public posts and deep-links to the matched block", /**
     page.getByRole("heading", { name: "Encuentra la historia que permanece contigo" }),
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByLabel("Buscar publicaciones")).toBeVisible();
+  // At phone width the header search moves into the side menu; the page keeps its own form.
+  await expect(page.getByLabel("Pregunta de búsqueda")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menú" })).toBeVisible();
   expect(
     await page.evaluate(
       /** Confirm the search controls and grouped results do not widen the phone document. */ function searchFitsPhone() {

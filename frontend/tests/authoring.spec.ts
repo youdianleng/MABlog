@@ -238,7 +238,10 @@ test("registration, actual email verification, freeform draft, approval, publish
   await categories.getByRole("button", { name: "Travel", exact: true }).click();
   await expect(publishedCard).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByLabel("Language").selectOption("es");
+  // Phone width collapses the header, so the language switch lives in the side menu.
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Español" }).click();
+  await page.keyboard.press("Escape");
   await expect(
     page
       .getByRole("navigation", { name: "Categorías de publicaciones" })
@@ -251,7 +254,9 @@ test("registration, actual email verification, freeform draft, approval, publish
       },
     ),
   ).toBe(true);
-  await page.getByLabel("Idioma").selectOption("en");
+  await page.getByRole("button", { name: "Menú" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "English" }).click();
+  await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`/posts/${id}`);
   await page.getByRole("link", { name: "Sharing", exact: true }).click();

@@ -9,7 +9,7 @@ The confirmed search/RAG requirements and release gates are maintained in [`rag-
 ```text
 frontend/src/
 ├── app/                    Next.js entry files and global stylesheet imports
-├── app-shell/              Providers, persistent site shell (header, skip link), and footer
+├── app-shell/              Providers, site shell (header, skip link), side menu, shared nav links, footer
 ├── components/
 │   ├── feedback/           Shared loading and error presentation
 │   └── ui/                 Reusable shadcn/ui primitives (Tailwind utility classes)
@@ -31,7 +31,7 @@ frontend/src/
 └── styles/                 Focused feature stylesheets imported by app/globals.css
 ```
 
-The persistent application shell owns the global header, skip link, and footer. The footer links only to implemented routes; its public information destinations reuse `features/site-info/`, while their route files own metadata and page-specific bilingual copy. The `/ai-models` benchmark leaderboard and `/ai-models/[slug]` profiles read from the same typed, versioned `ai-model-rankings.ts` snapshot. `ai-model-benchmark-context.ts` adds per-placement rank reasons and dated published prices, `ai-model-benchmark-metrics.ts` computes the within-category recommendation and price bars (unit-tested), and the row, meter, and section components are styled by `styles/ai-benchmark.css`. These modules share the snapshot so native benchmark scores, access routes, and family identity cannot diverge between list and detail views; a future reviewed backend feed can replace this module without changing the presentation contracts.
+The persistent application shell owns the global header, skip link, side menu, and footer. `navigation-links.ts` is the single list of primary and information destinations for both the header bar and the side menu, and `use-shell-actions.ts` holds the shared Write and Sign out actions. Below 1,180 CSS px, which narrow windows and heavy browser zoom both produce, the header keeps only the Menu button and brand, and the side menu (`side-menu.tsx`, `styles/side-menu.css`) carries all navigation. The footer links only to implemented routes; its public information destinations reuse `features/site-info/`, while their route files own metadata and page-specific bilingual copy. The `/ai-models` benchmark leaderboard and `/ai-models/[slug]` profiles read from the same typed, versioned `ai-model-rankings.ts` snapshot. `ai-model-benchmark-context.ts` adds per-placement rank reasons and dated published prices, `ai-model-benchmark-metrics.ts` computes the within-category recommendation and price bars (unit-tested), and the row, meter, and section components are styled by `styles/ai-benchmark.css`. These modules share the snapshot so native benchmark scores, access routes, and family identity cannot diverge between list and detail views; a future reviewed backend feed can replace this module without changing the presentation contracts.
 
 AI-news publication paths, evidence exceptions, duplicate/source rechecks, and provider overrides are documented in [`ai-news-publisher-design.md`](ai-news-publisher-design.md#implementation-notes). The backend keeps those rechecks in `services/ai_news/publication_checks.py`; the newsroom routers only authorize, validate, and delegate.
 

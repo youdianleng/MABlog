@@ -1,23 +1,5 @@
+/* Header links, search, and account controls collapse into the side menu at 1180px (side-menu.css). */
 @media (max-width: 850px) {
-  .site-header {
-    gap: 20px;
-    height: auto;
-    min-height: 76px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  .header-search {
-    order: 3;
-    flex-basis: 100%;
-    width: 100%;
-  }
-  .nav {
-    gap: 15px;
-  }
-  .nav .optional {
-    display: none;
-  }
   .page {
     padding: 30px 20px 55px;
   }
@@ -57,18 +39,8 @@
     gap: 8px;
   }
   .site-header {
-    /* Let translated account controls wrap rather than overflow a phone viewport. */
-    height: auto;
-    min-height: 76px;
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .nav {
-    display: none;
-  }
-  .account-nav {
-    gap: 7px;
+    height: 72px;
+    padding: 0 16px;
   }
   .post-grid {
     grid-template-columns: 1fr;
