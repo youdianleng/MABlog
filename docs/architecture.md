@@ -28,6 +28,7 @@ frontend/src/
 ├── hooks/                  Cross-feature browser and data hooks
 ├── lib/
 │   └── api/                API client, upload client, and transport types
+│                           (lib/markdown-directory.ts: browser-local Markdown folder handle)
 └── styles/                 Focused feature stylesheets imported by app/globals.css
 ```
 
@@ -113,3 +114,7 @@ Public discovery routes server-render numbered pages of at most fifteen posts. F
 4. Keep API transport types in `frontend/src/lib/api/types.ts` and validated backend payloads in the matching `backend/app/schemas/` domain module.
 5. Do not place domain logic in `main.py`, route composition files, compatibility barrels, or global style imports.
 6. Document every function and callback, explain fixed business values, and update `docs/build-progress.md` after verified changes.
+
+## Browser-local Markdown folder
+
+The profile page lets a signed-in user choose a folder on their own computer for Markdown (`.md`) files, using the File System Access directory picker (Chrome and Edge on desktop). `lib/markdown-directory.ts` owns picking, permission checks, and keeping the handle in this browser's IndexedDB under a per-account key. `features/profile/use-markdown-directory.ts` exposes the status, and `markdown-folder-settings.tsx` renders the panel. Nothing is sent to the backend, and the page never sees the folder's full path. Browsers may require write access to be re-approved in a later session; the panel offers **Allow access** when that happens. Future features that write Markdown should load the handle through this module and check `markdownDirectoryPermission` before writing. `writeMarkdownFile` writes one plain `.md` file inside the folder. The panel's **Save AI-news instructions** button uses it to save the master instruction file, served by `GET /api/ai-news/instructions` (`backend/app/api/ai_news_instructions.py`). See [`ai-news-instructions.md`](ai-news-instructions.md).

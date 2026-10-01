@@ -2,11 +2,13 @@
 
 import copy
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import yaml
 from sqlalchemy import select
 
 from app import bootstrap
@@ -32,6 +34,7 @@ from app.services.ai_news import classification, publication, publication_checks
 from app.services.ai_news.classification import _classification_excerpt
 from app.services.ai_news.composition import _paragraphs, public_text, structured_document, validate_structured_documents
 from app.services.ai_news.corrections import _restore_locked_evidence, validate_correction
+from app.services.ai_news.instructions import read_instructions
 from app.services.ai_news.provider_settings import effective_key, model_for
 from app.services.ai_news.providers.openai import OpenAIResult
 from app.services.ai_news.publication import compatibility_document
@@ -911,3 +914,46 @@ def test_new_roundup_preserves_cited_benchmarks_and_distinct_audience_impacts():
     restored = _restore_locked_evidence(documents["es"], translated)
     assert restored["blocks"][1]["benchmarks"] == documents["es"]["blocks"][1]["benchmarks"]
     assert restored["blocks"][1]["paragraphs"][0]["focus"] == "change"
+
+
+def test_instructions_require_sign_in_and_serve_markdown(client):
+    """Serve the master instruction file to verified accounts only, as UTF-8 Markdown."""
+    client.cookies.clear()
+    assert client.get("/api/ai-news/instructions").status_code == 401
+    _, token = create_account("reader")
+    client.cookies.set("mablog_session", token)
+    response = client.get("/api/ai-news/instructions")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/markdown")
+    assert 'filename="ai-news-instructions.md"' in response.headers["content-disposition"]
+    assert response.text == read_instructions()
+
+
+def test_instruction_file_keeps_its_required_structure():
+    """Guard the sections and machine-readable blocks that agents and future imports rely on."""
+    text = read_instructions()
+    for heading in (
+        "## 1. Scope",
+        "## 2. Sources",
+        "## 5. Front matter",
+        "## 6. Body template",
+        "## 8. Self-check before saving a file",
+        "## 10. Weekly news post",
+    ):
+        assert heading in text
+    for category in ("`llm-agents`", "`image`", "`video`", "`music`", "`voice-sound`"):
+        assert category in text
+    # Both body languages must list the same number of sections.
+    template = text.split("# English", 1)[1].split("```", 1)[0]
+    english, spanish = template.split("# Español")
+    assert english.count("## ") == spanish.count("## ") == 10
+    # The source list and the front-matter template are fenced YAML; both must stay parseable.
+    blocks = re.findall(r"```yaml\n(.*?)```", text, flags=re.S)
+    sources = yaml.safe_load(blocks[0])
+    assert {source["provider_key"] for source in sources["sources"]} >= {"openai", "anthropic", "google", "xai", "deepseek", "elevenlabs"}
+    for source in sources["sources"]:
+        assert source["pages"] and all(page["url"].startswith("https://") for page in source["pages"])
+    front_matter = yaml.safe_load(blocks[1].strip().strip("-"))
+    assert front_matter["schema"] == "mablog-ai-model/1"
+    assert front_matter["review_status"] == "draft"
+    assert {"pricing", "plans", "benchmarks", "official_sources"} <= front_matter.keys()
