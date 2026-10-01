@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { PRICE_CHECKED_DATE } from "./ai-model-benchmark-context";
-import { RANKING_REVIEW_AFTER_DAYS, RANKING_SNAPSHOT_DATE } from "./ai-model-rankings";
+import type { AiModelsData } from "./ai-models-data";
 import { BenchmarkSection } from "./benchmark-section";
 
 /** MAblog editorial picks: [English label, Spanish label, model name, profile slug]. */
@@ -36,13 +36,20 @@ const EDITOR_PICKS: [string, string, string, string][] = [
   ["Best for beginners", "Mejor para principiantes", "Nano Banana 2", "nano-banana-2"],
 ];
 
-/** Five ranked categories (music counts twice: vocal and instrumental) of five families each. */
-const RANKED_CATEGORY_COUNT = 5;
-const MODELS_PER_CATEGORY = 5;
-
-/** Render the bilingual AI model benchmark: ranked leaderboards with reasons and relative bars. */
-export function AiModelsRankingPageContent() {
+/**
+ * Render the bilingual AI model benchmark: ranked leaderboards with reasons and relative bars.
+ *
+ * @param data merged rankings, reviewed model files, and snapshot fallback from the server loader
+ */
+export function AiModelsRankingPageContent({ data }: { data: AiModelsData }) {
   const { t } = useLanguage();
+  // Music models appear on both music leaderboards, so count distinct families, not placements.
+  const rankedModelCount = new Set(
+    Object.values(data.leaderboards).flatMap(
+      /** Collect the slugs on one leaderboard. */ (entries) =>
+        entries.map(/** Read one entry's slug. */ (entry) => entry.model.slug),
+    ),
+  ).size;
   return (
     <article className="models-page bench-page">
       <header className="bench-hero">
@@ -60,11 +67,11 @@ export function AiModelsRankingPageContent() {
           <dl className="bench-hero-stats">
             <div>
               <dt>{t("Models ranked", "Modelos clasificados")}</dt>
-              <dd>{RANKED_CATEGORY_COUNT * MODELS_PER_CATEGORY}</dd>
+              <dd>{rankedModelCount}</dd>
             </div>
             <div>
               <dt>{t("Scores evaluated", "Puntuaciones evaluadas")}</dt>
-              <dd>{RANKING_SNAPSHOT_DATE}</dd>
+              <dd>{data.scoresEvaluated}</dd>
             </div>
             <div>
               <dt>{t("Prices checked", "Precios consultados")}</dt>
@@ -73,7 +80,7 @@ export function AiModelsRankingPageContent() {
             <div>
               <dt>{t("Review cycle", "Revisión")}</dt>
               <dd>
-                {RANKING_REVIEW_AFTER_DAYS} {t("days", "días")}
+                {data.reviewAfterDays} {t("days", "días")}
               </dd>
             </div>
           </dl>
@@ -148,7 +155,8 @@ export function AiModelsRankingPageContent() {
 
       <BenchmarkSection
         id="coding"
-        category="coding"
+        entries={data.leaderboards["coding"]}
+        scoresEvaluated={data.scoresEvaluated}
         index="01"
         title={{ en: "Production coding", es: "Código de producción" }}
         description={{
@@ -158,7 +166,8 @@ export function AiModelsRankingPageContent() {
       />
       <BenchmarkSection
         id="image"
-        category="image"
+        entries={data.leaderboards["image"]}
+        scoresEvaluated={data.scoresEvaluated}
         index="02"
         title={{ en: "Image creation", es: "Creación de imágenes" }}
         description={{
@@ -168,7 +177,8 @@ export function AiModelsRankingPageContent() {
       />
       <BenchmarkSection
         id="video"
-        category="video"
+        entries={data.leaderboards["video"]}
+        scoresEvaluated={data.scoresEvaluated}
         index="03"
         title={{ en: "Video with native audio", es: "Vídeo con audio nativo" }}
         description={{
@@ -192,7 +202,8 @@ export function AiModelsRankingPageContent() {
         </div>
         <BenchmarkSection
           id="music-vocal"
-          category="music-vocal"
+          entries={data.leaderboards["music-vocal"]}
+          scoresEvaluated={data.scoresEvaluated}
           index="04A"
           title={{ en: "Music · Vocal", es: "Música · Vocal" }}
           description={{
@@ -202,7 +213,8 @@ export function AiModelsRankingPageContent() {
         />
         <BenchmarkSection
           id="music-instrumental"
-          category="music-instrumental"
+          entries={data.leaderboards["music-instrumental"]}
+          scoresEvaluated={data.scoresEvaluated}
           index="04B"
           title={{ en: "Music · Instrumental", es: "Música · Instrumental" }}
           description={{

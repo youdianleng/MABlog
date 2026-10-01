@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { ArrowUpRight, Crown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
-import {
-  getPlacementContext,
-  isPublishedPrice,
-  type PublishedPrice,
-} from "./ai-model-benchmark-context";
-import type { BenchmarkEntry } from "./ai-model-benchmark-metrics";
-import type { RankedModel, RankingCategory } from "./ai-model-rankings";
+import { isPublishedPrice, type PublishedPrice } from "./ai-model-benchmark-context";
+import type { BenchmarkBars } from "./ai-model-benchmark-metrics";
+import type { LeaderboardEntry } from "./ai-models-data";
 import { BenchmarkMeter } from "./benchmark-meter";
 import { CategoryIcon } from "./category-icon";
 import { accessTranslations } from "./ranking-labels";
@@ -17,6 +13,8 @@ function shortPrice(price: PublishedPrice): string {
   const amount = `$${price.amount.toFixed(2)}`;
   if (price.unit === "usd-per-1m-tokens-blended") return `${amount} / 1M tok`;
   if (price.unit === "usd-per-1k-images") return `${amount} / 1k img`;
+  if (price.unit === "usd-per-song") return `${amount} / song`;
+  if (price.unit === "usd-per-1k-characters") return `${amount} / 1k chars`;
   return `${amount} / min`;
 }
 
@@ -26,20 +24,18 @@ function shortPrice(price: PublishedPrice): string {
  * price source links live in the section footnote instead (links cannot nest).
  */
 export function BenchmarkRow({
-  model,
-  category,
   entry,
+  bars,
   showMissingPriceReason,
 }: {
-  model: RankedModel;
-  category: RankingCategory;
-  entry: BenchmarkEntry;
+  entry: LeaderboardEntry;
+  bars: BenchmarkBars;
   /** False when the section already explains that no model in the category has a price. */
   showMissingPriceReason: boolean;
 }) {
   const { t } = useLanguage();
-  const { placement, recommendation, price: priceLevel } = entry;
-  const { rankReason, price } = getPlacementContext(category, model.slug);
+  const { category, model, placement, rankReason, price } = entry;
+  const { recommendation, price: priceLevel } = bars;
   const isLeader = placement.rank === 1;
 
   const recommendationValue = isLeader

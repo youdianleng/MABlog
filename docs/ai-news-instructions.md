@@ -10,4 +10,8 @@ It defines how an AI agent finds weekly AI model releases from official sources,
 - **Saving a copy:** on the profile page, choose a Markdown folder, then press **Save AI-news instructions** to write `ai-news-instructions.md` into it. Saving again replaces the older copy.
 - **Design decisions:** recorded in the 2026-10-01 entries (I101 onward) of [`build-progress.md`](build-progress.md).
 
-The work is staged. Stage 1 (this file, the endpoint, and the profile button) is done. Stage 2 will create model files for the 25 ranked models in `frontend/content/ai-models/` and switch `/ai-models` to read reviewed files. Stage 3 will connect the MABlog_IA newsroom: it will read the new sources, write draft files through a writable mount, and build the weekly roundup from them.
+The work is staged.
+
+- **Stage 1 (done):** this file, the endpoint, and the profile button.
+- **Stage 2 (done, 2026-10-02):** 20 draft model files and `rankings.yaml` in `frontend/content/ai-models/`; `/ai-models` reads them and uses a file once it is marked reviewed (see [`ai-models-review-checklist.md`](ai-models-review-checklist.md)); the fixed newsletter cover is in `backend/app/services/ai_news/assets/`.
+- **Stage 3 (pending):** connect the MABlog_IA newsroom. It will read the new sources, write draft files through a writable mount, and build the weekly roundup from them.

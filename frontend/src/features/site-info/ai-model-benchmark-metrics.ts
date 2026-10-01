@@ -1,14 +1,6 @@
-import {
-  isPublishedPrice,
-  getPlacementContext,
-  type PublishedPrice,
-} from "./ai-model-benchmark-context";
-import {
-  getModelsForCategory,
-  getPlacement,
-  type RankingCategory,
-  type RankingPlacement,
-} from "./ai-model-rankings";
+import { isPublishedPrice, type PublishedPrice } from "./ai-model-benchmark-context";
+import type { RankingPlacement } from "./ai-model-rankings";
+import type { LeaderboardEntry } from "./ai-models-data";
 
 /**
  * Bar values for the benchmark cards. Both bars compare a model only with the other four models
@@ -61,16 +53,22 @@ export function recommendationLevel(
 /** Price bar for one placement: its share of the most expensive published price in the category. */
 export type PriceLevel = { share: number; cheapest: boolean; mostExpensive: boolean };
 
-/** Scale published prices within one category; returns null when this model has no price. */
+/**
+ * Scale one published price against the other prices in its leaderboard that use the same unit.
+ *
+ * Prices in different units (for example per song and per minute) are never compared; an entry
+ * whose unit has no other price still gets a full-width bar but no cheapest/most-expensive flag.
+ * Returns null when this model has no published price.
+ */
 export function priceLevel(
   price: PublishedPrice | undefined,
-  categoryPrices: PublishedPrice[],
+  leaderboardPrices: PublishedPrice[],
 ): PriceLevel | null {
-  if (!price || categoryPrices.length === 0) return null;
-  const amounts = categoryPrices.map(
-    /** Read the comparable amount; all entries in one category share a unit. */ (entry) =>
-      entry.amount,
-  );
+  if (!price) return null;
+  const amounts = leaderboardPrices
+    .filter(/** Compare like with like. */ (entry) => entry.unit === price.unit)
+    .map(/** Read the comparable amount. */ (entry) => entry.amount);
+  if (amounts.length === 0) return null;
   const highest = Math.max(...amounts);
   const lowest = Math.min(...amounts);
   return {
@@ -80,36 +78,23 @@ export function priceLevel(
   };
 }
 
-/** Everything a benchmark card needs for one ranked model. */
-export type BenchmarkEntry = {
-  slug: string;
-  placement: RankingPlacement;
-  recommendation: RecommendationLevel;
-  price: PriceLevel | null;
-};
+/** Bars for one leaderboard entry. */
+export type BenchmarkBars = { recommendation: RecommendationLevel; price: PriceLevel | null };
 
-/** Compute bar values for every model in a category, in editorial rank order. */
-export function getBenchmarkEntries(category: RankingCategory): BenchmarkEntry[] {
-  const models = getModelsForCategory(category);
-  const placements = models.map(
-    /** Read each model's placement for this category. */ (model) => getPlacement(model, category),
-  );
-  const leader = placements[0];
-  const prices = models.map(
-    /** Keep only published prices; missing prices never count as zero. */ (model) => {
-      const price = getPlacementContext(category, model.slug).price;
-      return isPublishedPrice(price) ? price : undefined;
-    },
+/** Compute both bars for every entry of one leaderboard, in its displayed order. */
+export function computeBars(entries: LeaderboardEntry[]): BenchmarkBars[] {
+  const leader = entries[0].placement;
+  const prices = entries.map(
+    /** Keep only published prices; missing prices never count as zero. */ (entry) =>
+      isPublishedPrice(entry.price) ? entry.price : undefined,
   );
   const published = prices.filter(
     /** Drop models without a published price from the scale. */ (price): price is PublishedPrice =>
       price !== undefined,
   );
-  return models.map(
-    /** Pair each model with its recommendation and price bars. */ (model, index) => ({
-      slug: model.slug,
-      placement: placements[index],
-      recommendation: recommendationLevel(placements[index], leader),
+  return entries.map(
+    /** Pair each entry with its recommendation and price bars. */ (entry, index) => ({
+      recommendation: recommendationLevel(entry.placement, leader),
       price: priceLevel(prices[index], published),
     }),
   );

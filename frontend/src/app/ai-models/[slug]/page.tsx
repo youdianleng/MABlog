@@ -1,34 +1,33 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AiModelProfile } from "@/features/site-info/ai-model-profile";
-import { getRankedModel, rankedModels } from "@/features/site-info/ai-model-rankings";
+import { loadAiModelsData } from "@/features/site-info/ai-models-content.server";
 
 interface AiModelProfileRouteProps {
   params: Promise<{ slug: string }>;
 }
 
-/** Prebuild every reviewed model-family profile from the versioned local snapshot. */
+/** Prebuild a profile for every ranked model and every reviewed model file. */
 export function generateStaticParams() {
-  return rankedModels.map(
-    /** Convert one stable model record into a dynamic-route parameter. */ (model) => ({
-      slug: model.slug,
-    }),
+  return Object.keys(loadAiModelsData().profiles).map(
+    /** Convert one profile slug into a dynamic-route parameter. */ (slug) => ({ slug }),
   );
 }
 
-/** Build model-specific title and description metadata when the family exists. */
+/** Build model-specific title and description metadata when the profile exists. */
 export async function generateMetadata({ params }: AiModelProfileRouteProps): Promise<Metadata> {
   const { slug } = await params;
-  const model = getRankedModel(slug);
-  return model
-    ? { title: `${model.name} AI Model Profile`, description: model.description.en }
+  const profile = loadAiModelsData().profiles[slug];
+  return profile
+    ? { title: `${profile.model.name} AI Model Profile`, description: profile.model.description.en }
     : { title: "AI model not found" };
 }
 
-/** Render one permanent family profile or the shared not-found route for an unknown slug. */
+/** Render one model profile, or the shared not-found route for an unknown slug. */
 export default async function AiModelProfilePage({ params }: AiModelProfileRouteProps) {
   const { slug } = await params;
-  const model = getRankedModel(slug);
-  if (!model) notFound();
-  return <AiModelProfile model={model} />;
+  const data = loadAiModelsData();
+  const profile = data.profiles[slug];
+  if (!profile) notFound();
+  return <AiModelProfile profile={profile} scoresEvaluated={data.scoresEvaluated} />;
 }

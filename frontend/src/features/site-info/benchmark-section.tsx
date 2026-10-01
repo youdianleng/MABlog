@@ -1,19 +1,13 @@
 import { ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import {
-  getPlacementContext,
   isPublishedPrice,
   PRICE_CHECKED_DATE,
   type PublishedPrice,
 } from "./ai-model-benchmark-context";
-import { getBenchmarkEntries } from "./ai-model-benchmark-metrics";
-import {
-  getModelsForCategory,
-  getPlacement,
-  type LocalizedText,
-  RANKING_SNAPSHOT_DATE,
-  type RankingCategory,
-} from "./ai-model-rankings";
+import { computeBars } from "./ai-model-benchmark-metrics";
+import type { LocalizedText } from "./ai-model-rankings";
+import type { LeaderboardEntry } from "./ai-models-data";
 import { BenchmarkRow } from "./benchmark-row";
 import { CategoryIcon } from "./category-icon";
 
@@ -25,54 +19,53 @@ const unitLabels: Record<PublishedPrice["unit"], LocalizedText> = {
   },
   "usd-per-1k-images": { en: "USD per 1,000 images", es: "USD por 1.000 imágenes" },
   "usd-per-minute": { en: "USD per generated minute", es: "USD por minuto generado" },
+  "usd-per-song": { en: "USD per song", es: "USD por canción" },
+  "usd-per-1k-characters": { en: "USD per 1,000 characters", es: "USD por 1.000 caracteres" },
 };
 
 /**
  * One category leaderboard: heading, ranked rows, and a footnote naming the benchmark and price
- * sources. Rows stay server-rendered in editorial order; there is no client-side re-sorting.
+ * sources. Rows arrive in the order fixed by `rankings.yaml`; there is no client-side re-sorting.
  */
 export function BenchmarkSection({
   id,
-  category,
+  entries,
   index,
   title,
   description,
+  scoresEvaluated,
 }: {
   id: string;
-  category: RankingCategory;
+  entries: LeaderboardEntry[];
   index: string;
   title: LocalizedText;
   description: LocalizedText;
+  scoresEvaluated: string;
 }) {
   const { t } = useLanguage();
-  const models = getModelsForCategory(category);
-  const entries = getBenchmarkEntries(category);
-  const firstPlacement = getPlacement(models[0], category);
-  const prices = models
-    .map(
-      /** Pair each model with its price for the source footnote. */ (model) => ({
-        model,
-        price: getPlacementContext(category, model.slug).price,
-      }),
-    )
+  const bars = computeBars(entries);
+  const firstPlacement = entries[0].placement;
+  const prices = entries
+    .map(/** Read each entry's price for the source footnote. */ (entry) => entry.price)
     .filter(
-      /** Keep published prices only. */ (
-        item,
-      ): item is {
-        model: (typeof models)[number];
-        price: PublishedPrice;
-      } => isPublishedPrice(item.price),
+      /** Keep published prices only. */ (price): price is PublishedPrice =>
+        isPublishedPrice(price),
     );
   const priceSources = Array.from(
     new Map(
       prices.map(
-        /** Deduplicate sources shared by several models. */ ({ price }) => [
-          price.sourceUrl,
-          price,
-        ],
+        /** Deduplicate sources shared by several models. */ (price) => [price.sourceUrl, price],
       ),
     ).values(),
   );
+  const units = Array.from(
+    new Set(prices.map(/** Collect distinct units. */ (price) => price.unit)),
+  );
+  const checkedDates = Array.from(
+    new Set(
+      prices.map(/** Each price's read date. */ (price) => price.checkedAt ?? PRICE_CHECKED_DATE),
+    ),
+  ).sort();
   const noPrices = prices.length === 0;
 
   return (
@@ -80,7 +73,7 @@ export function BenchmarkSection({
       <header className="bench-section-heading">
         <div className="bench-section-index">
           <span>{index}</span>
-          <CategoryIcon category={category} />
+          <CategoryIcon category={entries[0].category} />
         </div>
         <div className="bench-section-title">
           <h2 id={`${id}-title`}>{t(title.en, title.es)}</h2>
@@ -98,19 +91,18 @@ export function BenchmarkSection({
           </div>
           <div>
             <dt>{t("Evaluated", "Evaluado")}</dt>
-            <dd>{RANKING_SNAPSHOT_DATE}</dd>
+            <dd>{scoresEvaluated}</dd>
           </div>
         </dl>
       </header>
 
       <ol className="bench-board">
-        {models.map(
-          /** Render each reviewed family in its fixed editorial order. */ (model, position) => (
+        {entries.map(
+          /** Render each ranked family in its reviewed order. */ (entry, position) => (
             <BenchmarkRow
-              key={`${category}-${model.slug}`}
-              model={model}
-              category={category}
-              entry={entries[position]}
+              key={`${entry.category}-${entry.model.slug}`}
+              entry={entry}
+              bars={bars[position]}
               showMissingPriceReason={!noPrices}
             />
           ),
@@ -135,8 +127,13 @@ export function BenchmarkSection({
         ) : (
           <p>
             <strong>{t("Price", "Precio")}:</strong>{" "}
-            {t(unitLabels[prices[0].price.unit].en, unitLabels[prices[0].price.unit].es)};{" "}
-            {t("checked", "consultado")} {PRICE_CHECKED_DATE}. {t("Sources", "Fuentes")}:{" "}
+            {units
+              .map(
+                /** Name each unit compared in this leaderboard. */ (unit) =>
+                  t(unitLabels[unit].en, unitLabels[unit].es),
+              )
+              .join("; ")}
+            ; {t("checked", "consultado")} {checkedDates.join(", ")}. {t("Sources", "Fuentes")}:{" "}
             {priceSources.map(
               /** Link each distinct price source once. */ (price, sourceIndex) => (
                 <span key={price.sourceUrl}>

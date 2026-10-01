@@ -1,5 +1,6 @@
 """Integration coverage for the durable weekly AI-news extension."""
 
+import base64
 import copy
 import json
 import re
@@ -11,7 +12,7 @@ import pytest
 import yaml
 from sqlalchemy import select
 
-from app import bootstrap
+from app import bootstrap, generate_newsletter_cover
 from app.database import SessionLocal
 from app.models import (
     AdminAuditEvent,
@@ -953,7 +954,42 @@ def test_instruction_file_keeps_its_required_structure():
     assert {source["provider_key"] for source in sources["sources"]} >= {"openai", "anthropic", "google", "xai", "deepseek", "elevenlabs"}
     for source in sources["sources"]:
         assert source["pages"] and all(page["url"].startswith("https://") for page in source["pages"])
-    front_matter = yaml.safe_load(blocks[1].strip().strip("-"))
+    # Find each example by its schema line rather than its position in the file.
+    front_matter_block = next(block for block in blocks if "schema: mablog-ai-model/1" in block)
+    rankings_block = next(block for block in blocks if "schema: mablog-ai-rankings/1" in block)
+    rankings_example = yaml.safe_load(rankings_block)
+    assert set(rankings_example["leaderboards"]) == {"coding"}
+    front_matter = yaml.safe_load(front_matter_block.strip().strip("-"))
     assert front_matter["schema"] == "mablog-ai-model/1"
     assert front_matter["review_status"] == "draft"
     assert {"pricing", "plans", "benchmarks", "official_sources"} <= front_matter.keys()
+
+
+def test_newsletter_cover_prompt_comes_from_the_instruction_file():
+    """Read the cover prompt from section 10.1 so the image and its documented prompt match."""
+    prompt = generate_newsletter_cover.cover_prompt(read_instructions())
+    assert prompt.startswith('Editorial cover illustration for "MABlog AI Newsletter".')
+    assert "No company logos" in prompt
+    assert ">" not in prompt
+
+
+def test_newsletter_cover_request_uses_the_cheapest_model_and_refuses_overwrite(monkeypatch, tmp_path):
+    """Send one gpt-image-1-mini request, save the PNG, and never replace a cover without --force."""
+    png = b"\x89PNG\r\n\x1a\n" + b"image"
+    sent = {}
+
+    def fake_post(url, headers, json, timeout):
+        """Record the request and return a minimal successful image response."""
+        sent.update(url=url, body=json)
+        return SimpleNamespace(status_code=200, json=lambda: {"data": [{"b64_json": base64.b64encode(png).decode()}]})
+
+    monkeypatch.setattr(generate_newsletter_cover, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(generate_newsletter_cover.httpx, "post", fake_post)
+    output = tmp_path / "cover.png"
+    assert generate_newsletter_cover.generate_cover(output) == output
+    assert output.read_bytes() == png
+    assert sent["url"].endswith("/images/generations")
+    assert sent["body"]["model"] == "gpt-image-1-mini"
+    assert sent["body"]["size"] == "1536x1024"
+    with pytest.raises(generate_newsletter_cover.CoverGenerationError, match="already exists"):
+        generate_newsletter_cover.generate_cover(output)

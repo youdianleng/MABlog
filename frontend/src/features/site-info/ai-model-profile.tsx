@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, BookOpenCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
-import type { RankedModel, RankingCategory } from "./ai-model-rankings";
-import { RANKING_SNAPSHOT_DATE } from "./ai-model-rankings";
-import {
-  getPlacementContext,
-  isPublishedPrice,
-  PRICE_CHECKED_DATE,
-} from "./ai-model-benchmark-context";
+import type { RankingCategory } from "./ai-model-rankings";
+import { isPublishedPrice } from "./ai-model-benchmark-context";
+import type { FilePrice } from "./ai-model-files";
+import type { FileFacts, LeaderboardEntry, ProfileView } from "./ai-models-data";
 import { CategoryIcon } from "./category-icon";
 import { accessTranslations } from "./ranking-labels";
 
@@ -25,10 +22,10 @@ function categoryName(category: RankingCategory, spanish: boolean): string {
   return names[category][spanish ? 1 : 0];
 }
 
-/** Explain one placement and show its published price, or why no price is shown. */
-function PlacementContextDetails({ category, slug }: { category: RankingCategory; slug: string }) {
+/** Explain one placement and show its comparable price, or why no price is shown. */
+function PlacementContextDetails({ entry }: { entry: LeaderboardEntry }) {
   const { t } = useLanguage();
-  const { rankReason, price } = getPlacementContext(category, slug);
+  const { rankReason, price } = entry;
   return (
     <div className="model-score-context">
       <p>
@@ -44,8 +41,8 @@ function PlacementContextDetails({ category, slug }: { category: RankingCategory
           </a>
           {price.secondarySource
             ? ` · ${t("independent tracker, not a first-party page", "rastreador independiente, no página oficial")}`
-            : ""}{" "}
-          · {t("checked", "consultado")} {PRICE_CHECKED_DATE}
+            : ""}
+          {price.checkedAt ? ` · ${t("checked", "consultado")} ${price.checkedAt}` : ""}
         </p>
       ) : (
         <p>
@@ -56,10 +53,129 @@ function PlacementContextDetails({ category, slug }: { category: RankingCategory
   );
 }
 
-/** Render the minimal permanent family profile approved for the first ranking edition. */
-export function AiModelProfile({ model }: { model: RankedModel }) {
+/** Describe one API price from a reviewed file in plain words. */
+function filePriceText(price: FilePrice, spanish: boolean): string {
+  /** Dollars without a trailing .00 for whole amounts. */
+  const money = (value: number) => `$${Number.isInteger(value) ? value : value.toFixed(2)}`;
+  let text: string;
+  if (price.unit === "per-1m-tokens")
+    text =
+      price.output === null
+        ? `${money(price.input ?? 0)} ${spanish ? "por 1M de tokens" : "per 1M tokens"}`
+        : `${money(price.input ?? 0)} / ${money(price.output)} ${spanish ? "por 1M de tokens (entrada / salida)" : "per 1M tokens (input / output)"}`;
+  else
+    text = `${money(price.amount ?? 0)} ${price.unit
+      .replace("per-", spanish ? "por " : "per ")
+      .replace("1k-", "1k ")
+      .replace("1m-", "1M ")}`;
+  return price.variant ? `${text} (${price.variant})` : text;
+}
+
+/** Reviewed-file facts: what changed, capabilities, plans, prices, and caveats. */
+function ReviewedFacts({ facts }: { facts: FileFacts }) {
   const { locale, t } = useLanguage();
-  const firstPlacement = model.placements[0];
+  const language = locale === "es" ? "es" : "en";
+  /** Render a titled bullet list, or nothing when empty. */
+  const list = (title: string, items: string[]) =>
+    items.length ? (
+      <article>
+        <h3>{title}</h3>
+        <ul>
+          {items.map(
+            /** One bullet. */ (item) => (
+              <li key={item}>{item}</li>
+            ),
+          )}
+        </ul>
+      </article>
+    ) : null;
+  return (
+    <section className="model-reviewed-facts" aria-labelledby="model-facts-title">
+      <div className="model-profile-section-title">
+        <p className="eyebrow">
+          {t("REVIEWED MODEL FILE", "FICHA REVISADA")} · {t("checked", "consultado")}{" "}
+          {facts.checkedAt}
+        </p>
+        <h2 id="model-facts-title">{t("What to know", "Lo que debes saber")}</h2>
+      </div>
+      <div className="model-facts-grid">
+        {list(t("What's new", "Novedades"), facts.whatsNew[language])}
+        {list(t("Key capabilities", "Capacidades clave"), facts.capabilities[language])}
+        <article>
+          <h3>{t("Plans and pricing", "Planes y precios")}</h3>
+          <ul>
+            {facts.plans.map(
+              /** One subscription plan. */ (plan) => (
+                <li key={plan.name}>
+                  <strong>{plan.name}</strong>:{" "}
+                  {plan.price_monthly === null
+                    ? t("price not published", "precio no publicado")
+                    : t(`$${plan.price_monthly} per month`, `${plan.price_monthly} $ al mes`)}{" "}
+                  · {plan.includes.join(", ")}
+                </li>
+              ),
+            )}
+            {facts.pricing.map(
+              /** One API price. */ (price, index) => (
+                <li key={`${price.unit}-${index}`}>
+                  <strong>API</strong>: {filePriceText(price, language === "es")}
+                </li>
+              ),
+            )}
+            {facts.plans.length === 0 && facts.pricing.length === 0 ? (
+              <li>{t("Not published.", "No publicado.")}</li>
+            ) : null}
+          </ul>
+        </article>
+        {list(
+          t("Limitations and caveats", "Limitaciones y advertencias"),
+          facts.limitations[language],
+        )}
+      </div>
+      <p className="model-facts-sources">
+        {t("Official sources", "Fuentes oficiales")}:{" "}
+        {facts.officialSources.map(
+          /** Link one official source. */ (source, index) => (
+            <span key={source.url}>
+              {index > 0 ? ", " : ""}
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.label}
+              </a>
+            </span>
+          ),
+        )}
+      </p>
+    </section>
+  );
+}
+
+// Icon for profiles that are not on any leaderboard, by the file's category.
+const FALLBACK_ICON: Record<string, RankingCategory> = {
+  "llm-agents": "coding",
+  image: "image",
+  video: "video",
+  music: "music-vocal",
+  "voice-sound": "music-vocal",
+};
+
+/**
+ * Render a permanent model profile: identity, every leaderboard placement with its reason and
+ * price, verdicts, and, when a reviewed model file exists, its reviewed facts.
+ *
+ * @param scoresEvaluated date the shown benchmark scores were reviewed (from `rankings.yaml`)
+ */
+export function AiModelProfile({
+  profile,
+  scoresEvaluated,
+}: {
+  profile: ProfileView;
+  scoresEvaluated: string;
+}) {
+  const { locale, t } = useLanguage();
+  const { model, placements } = profile;
+  const iconCategory =
+    placements[0]?.category ?? (model.file ? FALLBACK_ICON[model.file.category] : "coding");
+  const intro = model.file ? model.file.summary : model.description;
   return (
     <article className="model-profile-page">
       <div className="model-profile-back">
@@ -71,7 +187,7 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
       <header className={`model-profile-hero models-accent-${model.accent}`}>
         <div className="models-cover model-profile-cover" aria-hidden="true">
           <div className="models-cover-orbit" />
-          <CategoryIcon category={firstPlacement.category} />
+          <CategoryIcon category={iconCategory} />
           <span>{model.provider}</span>
           <strong>{model.name}</strong>
         </div>
@@ -79,7 +195,7 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
           <p className="eyebrow">{t("MODEL FAMILY PROFILE", "FICHA DE FAMILIA")}</p>
           <h1>{model.name}</h1>
           <p className="model-profile-provider">{model.provider}</p>
-          <p>{t(model.description.en, model.description.es)}</p>
+          <p>{t(intro.en, intro.es)}</p>
           <div className="models-access-list">
             {model.access.map(
               /** Translate every documented access mode for the current interface language. */ (
@@ -105,46 +221,55 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
           <p className="eyebrow">{t("EVIDENCE SNAPSHOT", "RESUMEN DE EVIDENCIA")}</p>
           <h2 id="model-scores-title">{t("Category scores", "Puntuaciones por categoría")}</h2>
         </div>
-        <div className="model-score-grid">
-          {model.placements.map(
-            /** Present every category placement recorded under this permanent family profile. */ (
-              placement,
-            ) => (
-              <article key={placement.category}>
-                <div>
-                  <span>#{placement.rank}</span>
-                  <strong>{categoryName(placement.category, locale === "es")}</strong>
-                </div>
-                <p className="model-score-value">
-                  {placement.score} <small>{placement.confidenceInterval ?? ""}</small>
-                </p>
-                <p>{placement.metric}</p>
-                <dl>
-                  <div>
-                    <dt>{t("Source rank", "Rango fuente")}</dt>
-                    <dd>{placement.sourceRank}</dd>
-                  </div>
-                  <div>
-                    <dt>{t("Evidence", "Evidencia")}</dt>
-                    <dd>{placement.samples ?? t("Not published", "No publicada")}</dd>
-                  </div>
-                  <div>
-                    <dt>{t("Evaluated", "Evaluado")}</dt>
-                    <dd>{RANKING_SNAPSHOT_DATE}</dd>
-                  </div>
-                </dl>
-                {placement.tieNote ? (
-                  <p className="models-tie">{t(placement.tieNote.en, placement.tieNote.es)}</p>
-                ) : null}
-                <PlacementContextDetails category={placement.category} slug={model.slug} />
-                <a href={placement.sourceUrl} target="_blank" rel="noreferrer">
-                  {placement.sourceLabel} <ArrowUpRight aria-hidden="true" />
-                </a>
-              </article>
-            ),
-          )}
-        </div>
+        {placements.length === 0 ? (
+          <p className="model-not-ranked">
+            {t("Not ranked in this edition.", "No clasificado en esta edición.")}
+          </p>
+        ) : (
+          <div className="model-score-grid">
+            {placements.map(
+              /** Present every leaderboard placement recorded for this model. */ (entry) => {
+                const { placement } = entry;
+                return (
+                  <article key={entry.category}>
+                    <div>
+                      <span>#{placement.rank}</span>
+                      <strong>{categoryName(entry.category, locale === "es")}</strong>
+                    </div>
+                    <p className="model-score-value">
+                      {placement.score} <small>{placement.confidenceInterval ?? ""}</small>
+                    </p>
+                    <p>{placement.metric}</p>
+                    <dl>
+                      <div>
+                        <dt>{t("Source rank", "Rango fuente")}</dt>
+                        <dd>{placement.sourceRank}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("Evidence", "Evidencia")}</dt>
+                        <dd>{placement.samples ?? t("Not published", "No publicada")}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("Evaluated", "Evaluado")}</dt>
+                        <dd>{scoresEvaluated}</dd>
+                      </div>
+                    </dl>
+                    {placement.tieNote ? (
+                      <p className="models-tie">{t(placement.tieNote.en, placement.tieNote.es)}</p>
+                    ) : null}
+                    <PlacementContextDetails entry={entry} />
+                    <a href={placement.sourceUrl} target="_blank" rel="noreferrer">
+                      {placement.sourceLabel} <ArrowUpRight aria-hidden="true" />
+                    </a>
+                  </article>
+                );
+              },
+            )}
+          </div>
+        )}
       </section>
+
+      {model.file ? <ReviewedFacts facts={model.file} /> : null}
 
       <section className="model-verdicts" aria-labelledby="model-verdicts-title">
         <div className="model-profile-section-title">
@@ -165,19 +290,21 @@ export function AiModelProfile({ model }: { model: RankedModel }) {
         </div>
       </section>
 
-      <aside className="model-coming-next">
-        <BookOpenCheck aria-hidden="true" />
-        <div>
-          <p className="eyebrow">{t("NEXT EDITION", "PRÓXIMA EDICIÓN")}</p>
-          <h2>{t("Full analysis coming next.", "Análisis completo próximamente.")}</h2>
-          <p>
-            {t(
-              "This first profile preserves the ranking evidence, access routes, and decision context. Examples, deeper comparisons, workflow tests, and limitations will follow in the planned profile design.",
-              "Esta primera ficha conserva evidencia, acceso y contexto de decisión. Los ejemplos, comparaciones, pruebas de flujo y limitaciones llegarán con el diseño completo de perfiles.",
-            )}
-          </p>
-        </div>
-      </aside>
+      {model.file ? null : (
+        <aside className="model-coming-next">
+          <BookOpenCheck aria-hidden="true" />
+          <div>
+            <p className="eyebrow">{t("NEXT EDITION", "PRÓXIMA EDICIÓN")}</p>
+            <h2>{t("Full analysis coming next.", "Análisis completo próximamente.")}</h2>
+            <p>
+              {t(
+                "This first profile preserves the ranking evidence, access routes, and decision context. Examples, deeper comparisons, workflow tests, and limitations will follow in the planned profile design.",
+                "Esta primera ficha conserva evidencia, acceso y contexto de decisión. Los ejemplos, comparaciones, pruebas de flujo y limitaciones llegarán con el diseño completo de perfiles.",
+              )}
+            </p>
+          </div>
+        </aside>
+      )}
     </article>
   );
 }

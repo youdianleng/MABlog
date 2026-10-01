@@ -277,3 +277,44 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - **Areas:** `backend/app/services/ai_news/instructions/` (master Markdown, loader), new `backend/app/api/ai_news_instructions.py`, `api/router.py`, `tests/test_ai_news.py`, `requirements-dev.in/.txt` (PyYAML 6.0.3 for tests only); frontend `lib/api/client.ts` (`apiText`, shared error builder), new `lib/api/ai-news-instructions.ts`, `lib/markdown-directory.ts` (`writeMarkdownFile`, safe-name check, atomic write), `features/profile/use-markdown-directory.ts` and `markdown-folder-settings.tsx`, `styles/forms.css`, `src/lib/api/client.test.ts`, `tests/profile.spec.ts`; docs `ai-news-instructions.md` (pointer) and `architecture.md`.
   - **Verification:** two new backend tests check the 401/200 behaviour, the Markdown content type, and the file's required sections and parseable YAML. The full backend suite passes 55/55 with ruff check and format clean. 23/23 unit tests pass, plus TypeScript, ESLint, Prettier, and the comment audit. The rebuilt stack serves the endpoint (401 when anonymous). The full Playwright suite passes 30/30, including saving the instructions and reading the written file back from the test folder in installed Chrome. Screenshots at 1280 and 390 px show the saved state without overflow.
   - **Not done:** stages 2 and 3, and the newsletter cover; the newsroom does not read the instructions yet. The source URLs are a 2026-10-01 snapshot.
+
+- [x] **I102 - Stage 2: model files, rankings.yaml, file-driven /ai-models, and the newsletter cover.** User decisions on 2026-10-02:
+  - Carried-over values keep their source link with an `evidence` label instead of a quote (migration rule).
+  - Missing facts were researched from official pages with exact quotes.
+  - All 20 files start as drafts, so the page is unchanged until a person reviews them.
+  - The cover uses OpenAI's cheapest image model.
+
+  **Instructions (v1.1):**
+  - Migration rule (section 5.4); fields that may be `null` (section 5.0).
+  - A `ranking:` key replaces `primary`; optional `review_notes`.
+  - Fixed "**Users:** / **Developers:**" lines; `rankings.yaml` format (section 4.1).
+  - An `undated_` file prefix when no official date exists; StepFun added to the source list.
+
+  **Content:** 20 files (music models appear on two leaderboards, so there are 20 files rather than 25) and `rankings.yaml`, written by a one-time generator kept outside the repository.
+  - Each file combines the reviewed snapshot (names, access, verdicts, scores), the 2026-10-01 prices, and facts read from the raw text of official pages.
+  - Every quote was checked word for word against the saved raw text. The exception is one Muse Image quote read through a web reader because Meta blocks scripts; it is flagged.
+  - Summaries are 100–200 words in both languages.
+  - Prose was revised to remove claims that only aggregators support ("Hailuo 3", "Kunlun Tech", popularity claims) and to stop implying Codex is part of ChatGPT Plus.
+  - Raw-text reading caught a summarizer error: GLM-5.3 costs $1.40 / $4.40, while the summarizer reported the Flash row.
+  - Version drift is recorded in `review_notes` for your decision: Gemini Omni Flash 1.1, MiniMax Music 2.6 versus 3.0, Suno v6, Seedance 2.5, and Lyria 3.5.
+
+  **Code:**
+  - `ai-model-files.ts` parses and validates files (schema, quotes or migration evidence, unique ranking keys, slug matching the file name).
+  - `ai-models-data.ts` merges files, snapshot, and rankings. Prices are compared only within one unit; per-song and per-1k-character units were added; each price carries its check date.
+  - `ai-models-content.server.ts` reads the folder per request and skips invalid files with a logged error.
+  - The page, section, row, and profile components now take data as props. Profiles show reviewed facts (what's new, capabilities, plans and API prices, limitations, official sources) and "Not ranked in this edition" for unranked reviewed files.
+  - The hero counts 20 distinct models instead of 25 placements.
+  - Order, tie notes, and dates were removed from the code snapshot, and rank reasons from the price module, so `rankings.yaml` is the single source.
+  - The Dockerfile copies `content/` into the runtime image; `content/` is excluded from Prettier because the newsroom will write it.
+  - `python -m app.generate_newsletter_cover` reads the prompt from instructions section 10.1, calls `gpt-image-1-mini` (medium quality, 1536×1024, $0.015 per OpenAI's guide), and refuses to overwrite without `--force`. It was run once. The model added the title "MABLOG AI NEWSLETTER" although the prompt asked for no text; the image was kept and the user is informed.
+
+  **Areas:** `backend/app/services/ai_news/instructions/ai-news-instructions.md`, `backend/app/generate_newsletter_cover.py`, `backend/app/services/ai_news/assets/mablog-ai-newsletter-cover.png`, `backend/tests/test_ai_news.py`; `frontend/content/ai-models/` (20 files plus `rankings.yaml`), `frontend/src/features/site-info/` (new `ai-model-files.ts`, `ai-models-data.ts`, `ai-models-content.server.ts`, and tests; updated metrics, context, rankings, page, section, row, profile), `frontend/src/app/ai-models/` routes, `styles/site-info.css`, `Dockerfile`, `.prettierignore`, `package.json` (`yaml` 2.9.1); docs `ai-models-review-checklist.md`, `ai-news-instructions.md`, `ai-model-rankings.md`, `architecture.md`.
+
+  **Verification:**
+  - Unit tests 37/37: every committed file and `rankings.yaml` parse; rejection rules; merge rules (drafts ignored, reviewed overrides, newly quoted per-song price, unranked profile); unit conversions and unit-aware price bars.
+  - Backend 57/57 with ruff clean, including cover-prompt extraction, the request payload, and the overwrite refusal.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - After a rebuild, the container holds the 21 content files, `/ai-models` and a profile return 200, and the full Playwright suite passes 30/30.
+  - Live check without a rebuild: copying a reviewed GLM-5.3 file into the running container switched its profile to the reviewed-facts view, and restoring the draft switched it back. The reviewed section had no overflow at 1280 and 390 px.
+
+  **Not done:** the files are not reviewed yet (`docs/ai-models-review-checklist.md`), and stage 3 (newsroom) is pending.

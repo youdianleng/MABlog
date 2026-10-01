@@ -1,18 +1,24 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   blendTokenPrice,
-  getPlacementContext,
-  placementContext,
+  getPlacementPrice,
+  type PublishedPrice,
 } from "./ai-model-benchmark-context";
 import {
+  computeBars,
   eloWinRate,
-  getBenchmarkEntries,
   priceLevel,
   recommendationLevel,
 } from "./ai-model-benchmark-metrics";
-import { type RankingCategory, type RankingPlacement, rankingOrder } from "./ai-model-rankings";
+import { LEADERBOARDS, parseRankings } from "./ai-model-files";
+import type { RankingPlacement } from "./ai-model-rankings";
+import { buildAiModelsData } from "./ai-models-data";
 
-const categories = Object.keys(rankingOrder) as RankingCategory[];
+// The committed rankings file that `/ai-models` renders.
+const rankings = parseRankings(
+  readFileSync(new URL("../../../content/ai-models/rankings.yaml", import.meta.url), "utf8"),
+);
 
 /** Build a minimal placement for arithmetic tests. */
 function placement(metric: string, score: string): RankingPlacement {
@@ -25,6 +31,11 @@ function placement(metric: string, score: string): RankingPlacement {
     sourceLabel: "Test",
     sourceUrl: "https://example.test",
   };
+}
+
+/** Build a minimal price in one unit. */
+function price(amount: number, unit: PublishedPrice["unit"] = "usd-per-minute"): PublishedPrice {
+  return { amount, unit, display: "", sourceLabel: "", sourceUrl: "" };
 }
 
 /** Recommendation and price bar arithmetic for the benchmark cards. */
@@ -50,18 +61,19 @@ describe("benchmark metrics", () => {
   });
 
   // Prices scale to the most expensive entry, keep a visible minimum, and flag the extremes.
-  it("scales prices within a category", () => {
-    const make = /** Build a minimal per-minute price. */ (amount: number) => ({
-      amount,
-      unit: "usd-per-minute" as const,
-      display: "",
-      sourceLabel: "",
-      sourceUrl: "",
-    });
-    const all = [make(1), make(10), make(100)];
+  it("scales prices within a leaderboard", () => {
+    const all = [price(1), price(10), price(100)];
     expect(priceLevel(all[2], all)).toEqual({ share: 1, cheapest: false, mostExpensive: true });
     expect(priceLevel(all[0], all)).toEqual({ share: 0.04, cheapest: true, mostExpensive: false });
     expect(priceLevel(undefined, all)).toBeNull();
+  });
+
+  // Prices in different units are never compared with each other.
+  it("compares only prices that share a unit", () => {
+    const song = price(0.08, "usd-per-song");
+    const all = [price(12), price(4.8), song];
+    expect(priceLevel(song, all)).toEqual({ share: 1, cheapest: false, mostExpensive: false });
+    expect(priceLevel(all[0], all)).toEqual({ share: 1, cheapest: false, mostExpensive: true });
   });
 
   // Coding prices use the 3:1 input:output blend.
@@ -71,37 +83,33 @@ describe("benchmark metrics", () => {
   });
 });
 
-/** Coverage of the benchmark context for every ranked placement. */
-describe("benchmark context", () => {
-  // Every ranked model needs a reason in both languages and a price or explained absence.
-  it("covers every ranked placement", () => {
-    for (const category of categories) {
-      expect(Object.keys(placementContext[category]).sort()).toEqual(
-        [...rankingOrder[category]].sort(),
-      );
-      for (const slug of rankingOrder[category]) {
-        const context = getPlacementContext(category, slug);
-        expect(context.rankReason.en.length).toBeGreaterThan(20);
-        expect(context.rankReason.es.length).toBeGreaterThan(20);
-        const price = context.price;
-        if ("amount" in price) expect(price.amount).toBeGreaterThan(0);
-        else expect(price.missing.en.length).toBeGreaterThan(20);
+/** Bars and prices for the committed rankings with no reviewed files (the current page). */
+describe("current leaderboards", () => {
+  const data = buildAiModelsData([], rankings);
+
+  // Every ranked placement has a price or an explained absence from the 2026-10-01 check.
+  it("has a price or a missing-price reason for every placement", () => {
+    for (const leaderboard of LEADERBOARDS)
+      for (const entry of rankings.leaderboards[leaderboard]) {
+        const value = getPlacementPrice(leaderboard, entry.slug);
+        if ("amount" in value) expect(value.amount).toBeGreaterThan(0);
+        else expect(value.missing.en.length).toBeGreaterThan(20);
       }
-    }
   });
 
   // Bars stay within 0–1, the leader is full, and recommendation never rises down the ranking.
   it("produces bounded bars in rank order", () => {
-    for (const category of categories) {
-      const entries = getBenchmarkEntries(category);
-      expect(entries[0].recommendation.share).toBe(1);
-      for (let index = 0; index < entries.length; index += 1) {
-        const { recommendation, price } = entries[index];
-        expect(recommendation.share).toBeGreaterThan(0);
-        expect(recommendation.share).toBeLessThanOrEqual(1);
-        if (price) expect(price.share).toBeLessThanOrEqual(1);
+    for (const leaderboard of LEADERBOARDS) {
+      const bars = computeBars(data.leaderboards[leaderboard]);
+      expect(bars[0].recommendation.share).toBe(1);
+      for (let index = 0; index < bars.length; index += 1) {
+        expect(bars[index].recommendation.share).toBeGreaterThan(0);
+        expect(bars[index].recommendation.share).toBeLessThanOrEqual(1);
+        if (bars[index].price) expect(bars[index].price!.share).toBeLessThanOrEqual(1);
         if (index > 0)
-          expect(recommendation.share).toBeLessThanOrEqual(entries[index - 1].recommendation.share);
+          expect(bars[index].recommendation.share).toBeLessThanOrEqual(
+            bars[index - 1].recommendation.share,
+          );
       }
     }
   });

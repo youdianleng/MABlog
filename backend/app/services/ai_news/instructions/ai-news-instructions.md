@@ -1,8 +1,9 @@
 # MAblog AI news: research and model-file instructions
 
-- **Instruction version:** 1.0
-- **Last reviewed:** 2026-10-01
-- **Status:** confirmed design, stage 1 (instructions only). The newsroom does not follow this file yet. Stage 3 connects it.
+- **Instruction version:** 1.1
+- **Last reviewed:** 2026-10-02
+- **Status:** stage 2. The `/ai-models` page reads reviewed model files and `rankings.yaml`; the newsroom does not follow this file yet (stage 3).
+- **Changes in 1.1:** migration rule (section 5.4), `ranking` key replaces `primary`, optional `review_notes`, fixed format for the users/developers section, `rankings.yaml` format (section 4.1).
 - **Master copy:** `backend/app/services/ai_news/instructions/ai-news-instructions.md`. Edit only this file. Copies saved through the profile page are snapshots.
 
 This file tells an AI agent (the MABlog_IA newsroom, or any agent you run by hand) how to:
@@ -208,6 +209,11 @@ sources:
       - { name: Blog, url: "https://pika.art/blog", kind: news }
 
   # Music
+  - provider: StepFun (StepAudio)
+    provider_key: stepfun
+    categories: [music, voice-sound]
+    pages:
+      - { name: StepAudio 3 Music page, url: "https://static.stepfun.com/blog/stepaudio3/music/assets/video/promo.html", kind: product, note: "added 2026-10-02 because StepAudio 3 Music is ranked; no dated news page found" }
   - provider: Suno
     provider_key: suno
     categories: [music]
@@ -280,12 +286,31 @@ Never edit `rankings.yaml`. The Top 5 order on `/ai-models` is chosen by a perso
 ## 4. Files and folders
 
 - **Folder:** `frontend/content/ai-models/` (in the browser profile panel, select this folder).
-- **One file per release.** Name: `YYYY-MM-DD_<provider_key>_<model-slug>.md`, using the official announcement date.
+- **One file per release.** Name: `YYYY-MM-DD_<provider_key>_<model-slug>.md`, using the official announcement date. When no official source states the date, use `undated_<provider_key>_<model-slug>.md` and rename the file once a date is confirmed.
   - Example: `2026-09-28_examplelab_nova-2-1.md`
   - `model-slug`: lowercase, ASCII, words joined by `-`, dots become `-` (`Nova 2.1` becomes `nova-2-1`).
 - A new version (6.1 to 6.2) always gets a **new file**. Link versions with the same `family` value.
 - Changes to an existing release update **the same file**. Change the value, set `checked_at`, and add a dated "Update history" line with the old and new values.
 - `rankings.yaml` in the same folder holds the reviewed Top 5 order. Agents do not edit it.
+
+### 4.1 `rankings.yaml`
+
+The reviewed ranking editorial for `/ai-models`. A person edits it; agents only suggest changes in the run report. Leaderboard keys are the page's rankings (the coding leaderboard belongs to the `llm-agents` category, and music has separate vocal and instrumental leaderboards):
+
+```yaml
+schema: mablog-ai-rankings/1
+scores_evaluated: 2026-09-22      # date the shown scores were reviewed
+review_after_days: 45
+leaderboards:
+  coding:                         # coding | image | video | music-vocal | music-instrumental
+    - slug: claude-fable-5-1      # must match a model file slug (or the built-in snapshot until files are reviewed)
+      rank_reason:                # the "Why #N" text, both languages
+        en: "..."
+        es: "..."
+      tie_note: null              # or { en: "...", es: "..." } when source ranges overlap
+```
+
+The list order is the displayed rank. Each leaderboard lists exactly five entries.
 
 ---
 
@@ -328,6 +353,7 @@ pricing:                        # API list prices; empty list if not published
     variant: null               # tier, resolution, or mode the price applies to
     source_url: https://example.com/...
     quote: "Exact sentence copied from the pricing page."
+    evidence: null              # only for migrated values without a quote (section 5.4)
 
 plans:                          # consumer or team plans that include the model
   - name: ExampleLab Plus
@@ -351,9 +377,17 @@ benchmarks:
     source_url: https://example.com/...
     measured_at: 2026-09-28
     quote: "Exact sentence or table cell containing the score."
-    primary: false              # true only for the category's primary ranking benchmark (section 5.2)
+    evidence: null              # only for migrated values without a quote (section 5.4)
+    ranking: null               # coding | image | video | music-vocal | music-instrumental when this
+                                # entry is the score shown on that /ai-models leaderboard, else null
+
+review_notes: []                # optional: points the reviewer must check; empty the list when reviewed
 ---
 ```
+
+### 5.0 Values that may be null
+
+`release_date`, `version`, `context_window`, `regions`, and plan prices may be `null` when the official source does not state them; the body then says "Not published". Never fill them from memory or from an aggregator alone.
 
 ### 5.1 Price units
 
@@ -376,8 +410,16 @@ Copy the price exactly as published. Do not convert currencies or units. If the 
   - `video`: Artificial Analysis Text-to-Video Arena (note whether the leaderboard is with or without audio)
   - `music`: Artificial Analysis Music Arena (Vocals and Instrumental separately)
   - `voice-sound`: Artificial Analysis Speech Arena
-- Mark the category's main independent leaderboard entry `primary: true`. The `/ai-models` page uses it for the score shown on ranking cards. At most one `primary: true` per file. (A music file may have two: one each for Vocals and Instrumental.)
+- Set `ranking:` on the independent leaderboard entry that `/ai-models` shows for that leaderboard (for example `ranking: coding`). Each leaderboard key appears at most once per file; a music file usually has two (`music-vocal` and `music-instrumental`).
 - A benchmark with no published score is left out of `benchmarks` and shown as "Not published" in the body table. Never estimate, average, or round a score.
+
+### 5.4 Migration rule (one time, 2026-10-02)
+
+The first 20 files were migrated from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check, which stored values and source links but not quotes. For those carried-over values only:
+
+- `quote: null` is allowed when the entry has `evidence: snapshot-2026-09-22` (benchmark scores) or `evidence: price-check-2026-10-01` (prices). The `source_url` still points to where the value was read.
+- The next time such a value is refreshed, replace it with a quoted value and remove `evidence`.
+- Every new value, in these files or any other, needs a quote. `evidence` is never used for new values.
 
 ---
 
@@ -427,7 +469,14 @@ What each section contains:
    Add a row reading "Not published" for any preferred benchmark (section 5.2) with no score.
 6. **Pricing and availability.** API prices (matching `pricing`), plans (matching `plans`), access routes, regions, and status. Missing values say "Not published".
 7. **Limitations and caveats.** Only limitations stated by the provider or shown by cited evidence: preview status, regional limits, known weaknesses, safety restrictions, deprecations.
-8. **Best for users / best for developers.** One short paragraph each. Users: interface, learning curve, plans. Developers: API, integration, control, licence.
+8. **Best for users / best for developers.** Exactly two bullet points in this format, one sentence or short paragraph each:
+
+   ```markdown
+   - **Users:** interface, learning curve, plans.
+   - **Developers:** API, integration, control, licence.
+   ```
+
+   In Spanish use `- **Usuarios:**` and `- **Desarrolladores:**`. `/ai-models` reads these two lines.
 9. **Sources.** A numbered list of every URL used, each with its label and publication date.
 10. **Update history.** One dated line per change, for example `2026-10-12 — API output price changed from $X to $Y per 1M tokens (source: …)`. On a new file write `2026-10-05 — File created.`
 
