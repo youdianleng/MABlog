@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: claude-opus-5-5
 title_en: "Claude Opus 5.5: Anthropic's cheaper Opus at Fable 5.1 level"
 title_es: "Claude Opus 5.5: el Opus más barato de Anthropic al nivel de Fable 5.1"
@@ -69,10 +69,7 @@ benchmarks:
     measured_at: 2026-09-22
     quote: "Terminal-Bench 4.0¹ 66.4% 55.8% 52.3% 57.9% 37.3%"
     ranking: null
-review_notes:
-  - "Context window is not stated in the announcement; check the Claude model overview before review."
-  - "Claude plan prices are not in the announcement; the plan entry records the higher usage limits only."
-  - "Not ranked: rankings.yaml is human-curated. Consider it for the coding leaderboard once an independent Coding Agent Index score exists."
+review_notes: []
 ---
 
 # English
@@ -137,6 +134,7 @@ Opus 5.5 replaces Opus 5 as Anthropic's flagship for long, complex work such as 
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -200,3 +198,4 @@ Opus 5.5 sustituye a Opus 5 como modelo principal de Anthropic para trabajos lar
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: recraft-v4-1-flash
 title_en: "Recraft V4.1 Flash: a 1.3-second image model for fast iteration"
 title_es: "Recraft V4.1 Flash: un modelo de imagen de 1,3 segundos para iterar rápido"
@@ -27,10 +27,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "The 1.3-second figure is Recraft's own median measurement: \"Recraft V4.1 Flash is the fastest model on the market at 1.3 seconds from prompt to image.\""
-  - "Access and prices for Flash specifically were not stated in the post; the site navigation says Recraft's models are available in Recraft Studio and via API. Check the API pricing page before review."
-  - "Recraft V4.1 (the full model, 2026-05-14) has its own file (recraft-v4-1)."
+review_notes: []
 ---
 
 # English
@@ -85,6 +82,7 @@ Recraft is a design-focused image platform used for illustrations, brand assets 
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
 - 2026-10-02 — Review note updated: Recraft V4.1 now has its own file.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -138,3 +136,4 @@ Recraft es una plataforma de imagen orientada al diseño, usada para ilustracion
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
 - 2026-10-02 — Nota de revisión actualizada: Recraft V4.1 ya tiene su propia ficha.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

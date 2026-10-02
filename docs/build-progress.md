@@ -413,3 +413,24 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Prices are missing where the official pages did not publish them: Eleven v4 Turbo, Sonic-3.6, MiniMax, and Recraft V4.1.
   - Some facts rely on list or pricing pages only: the Alibaba models have no announcement post, and MiniMax M3 has no release date.
   - The 14 `not verified` providers remain.
+
+- [x] **I106 - Mark the 25 freshness-sweep files as reviewed (follows I104 and I105).** At the site owner's request, the 25 files created by the 2026-10-02 sweep now have `review_status: reviewed` and empty `review_notes`.
+
+  **Decisions:**
+  - Scope: only the sweep files. The 20 migrated files stay drafts, so the leaderboards still use the built-in snapshot.
+  - Open notes: the instruction file says to empty `review_notes` on review. The open points remain in `docs/ai-models-review-checklist.md`, where each file's review item records the decision and the remaining checks are left unticked as accepted caveats.
+
+  **Effect on `/ai-models`:** none of these files is ranked, so the leaderboards are unchanged. Each file now has a public profile ("Not ranked in this edition") showing its reviewed facts. GPT-6 Sol's profile shows the "newer release" notice linking to GPT-6.1 Sol. Each file has a dated history line in both languages.
+
+  **Code:** the file test no longer expects every file to be a draft; reviewed files must have empty review notes. A new data test checks the committed files: 25 are reviewed, every one gets a profile, and the leaderboards match the snapshot-only result.
+
+  **Areas:** `frontend/content/ai-models/` (25 files), `frontend/src/features/site-info/ai-model-files.test.ts`, `ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - Unit tests: 41/41.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - The frontend was rebuilt; six sample profiles return 200 with no loader errors. The GPT-6 Sol and Claude Opus 5.5 profiles were checked in the browser (superseded notice, facts, prices, and verdicts shown).
+  - Full Playwright suite: 30/30.
+  - Backend tests were not rerun because no backend file changed.
+
+  **Limitations:** the accepted caveats are still open; for example, several files have no published prices, MiniMax M3 has no release date, and some access details are unconfirmed (see the checklist).

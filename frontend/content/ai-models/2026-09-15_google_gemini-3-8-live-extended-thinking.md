@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gemini-3-8-live-extended-thinking
 title_en: "Gemini 3.8 Live Extended Thinking: voice agents that reason in the background"
 title_es: "Gemini 3.8 Live Extended Thinking: agentes de voz que razonan en segundo plano"
@@ -39,10 +39,7 @@ pricing:
     quote: "Output price (including thinking tokens) Free of charge $4.50 (text) $12.00 or $0.018/min (audio)"
 plans: []
 benchmarks: []
-review_notes:
-  - "The pricing entry quotes the output row of the shared Live pricing table; the $3.00 audio input price is in the input row: \"Input price Free of charge $0.75 (text) $3.00 or $0.005/min (audio) $1.00 or $0.002/min (image/video)\"."
-  - "Google lists this model in the same pricing row as Gemini 3.8 Live, so the prices are shared."
-  - "First release of this line; no earlier Extended Thinking Live model was found."
+review_notes: []
 ---
 
 # English
@@ -99,6 +96,7 @@ Extended Thinking is the reasoning-heavy option in Google's new Live pair. It su
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -154,3 +152,4 @@ Extended Thinking es la opción con más razonamiento de la nueva pareja Live de
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

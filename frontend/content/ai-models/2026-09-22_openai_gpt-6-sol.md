@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-6-sol
 title_en: "GPT-6 Sol: OpenAI's coding and agent model for everyday work"
 title_es: "GPT-6 Sol: el modelo de OpenAI para código y agentes en el trabajo diario"
@@ -60,9 +60,7 @@ plans:
     source_url: "https://chatgpt.com/pricing"
     quote: "Plan: Pro, Feature: GPT-6 Sol, Expanded"
 benchmarks: []
-review_notes:
-  - "Release date from the OpenAI news RSS item \"Introducing GPT-6 Sol and Luna\" (2026-09-22); the announcement page blocks scripts and was not read."
-  - "Superseded by GPT-6.1 Sol (2026-09-29); the model page says: \"See GPT-6.1 Sol for the newer Sol model.\""
+review_notes: []
 ---
 
 # English
@@ -126,6 +124,7 @@ Sol sits between OpenAI's top GPT-6 Astra model and the low-cost GPT-6 Luna. The
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -188,3 +187,4 @@ Sol se sitúa entre GPT-6 Astra, el modelo principal de OpenAI, y el económico 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

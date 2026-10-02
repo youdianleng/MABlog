@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: qwen-audio-3-1-realtime-plus
 title_en: "Qwen-Audio-3.1-Realtime-Plus: Alibaba's duplex voice chat model"
 title_es: "Qwen-Audio-3.1-Realtime-Plus: el modelo de voz dúplex de Alibaba"
@@ -38,10 +38,7 @@ pricing:
     quote: "qwen-audio-3.1-realtime-plus International $0.8 $6.4 $6.4 $24 1,000,000 tokens"
 plans: []
 benchmarks: []
-review_notes:
-  - "Price columns: input text 0.8, input audio 6.4, output text 6.4, output audio 24 USD per 1M tokens; the comparable entry uses the audio columns."
-  - "The 262,144-token context window is from the release list; context_window stays null because the field is for llm-agents files only."
-  - "Only the Model Studio release list and pricing page were read; no announcement post was found."
+review_notes: []
 ---
 
 # English
@@ -97,6 +94,7 @@ The Qwen-Audio realtime line focuses on spoken conversation rather than video. T
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -151,3 +149,4 @@ La línea Qwen-Audio en tiempo real se centra en la conversación hablada y no e
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

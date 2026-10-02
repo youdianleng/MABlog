@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: lyria-3-5
 title_en: "Lyria 3.5: Google's full-song music model is generally available"
 title_es: "Lyria 3.5: el modelo de canciones completas de Google, disponible de forma general"
@@ -38,9 +38,7 @@ pricing:
     quote: "Lyria 3.5 (Full Song) Not available $0.08 per song"
 plans: []
 benchmarks: []
-review_notes:
-  - "Family kept as lyria-pro: Google names 3.5 without \"Pro\", but it is the full-song successor of the Lyria 3 Pro preview, which the pricing page now lists among \"Google's family of legacy music generation models.\""
-  - Gemini app availability was not checked.
+review_notes: []
 ---
 
 # English
@@ -100,6 +98,7 @@ Lyria is Google DeepMind's music model family. Lyria 3.5 is the first generally 
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -158,3 +157,4 @@ Lyria es la familia de modelos musicales de Google DeepMind. Lyria 3.5 es la pri
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: qwen3-8-omni-flash-realtime
 title_en: "Qwen3.8-Omni-Flash-Realtime: real-time audio and video conversations"
 title_es: "Qwen3.8-Omni-Flash-Realtime: conversaciones de audio y vídeo en tiempo real"
@@ -38,9 +38,7 @@ pricing:
     quote: qwen3.8-omni-flash-realtime 0.23 0.93 0.70 1.87 1 million tokens
 plans: []
 benchmarks: []
-review_notes:
-  - "Price columns (Singapore table): input text/images/video 0.23, input audio 0.93, output text 0.70, output audio 1.87 USD per 1M tokens; the comparable entry uses the audio columns."
-  - "Only the Model Studio release list and pricing page were read; no announcement post was found."
+review_notes: []
 ---
 
 # English
@@ -97,6 +95,7 @@ This model turns Alibaba's omni-modal understanding into a live conversation par
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -152,3 +151,4 @@ Este modelo convierte la comprensión omnimodal de Alibaba en un interlocutor en
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

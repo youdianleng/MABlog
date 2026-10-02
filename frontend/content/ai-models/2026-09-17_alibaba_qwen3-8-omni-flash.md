@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: qwen3-8-omni-flash
 title_en: "Qwen3.8-Omni-Flash: Alibaba's low-cost omni-modal understanding model"
 title_es: "Qwen3.8-Omni-Flash: el modelo omnimodal económico de Alibaba"
@@ -38,9 +38,7 @@ pricing:
     quote: qwen3.8-omni-flash International USD 0.15 USD 0.016 USD 0.47
 plans: []
 benchmarks: []
-review_notes:
-  - "The International price row has three values; by the column order of the other regional tables they are input, cache-hit input and output per 1M tokens. Confirm the column headers in a browser."
-  - "Only the Model Studio release list and pricing page were read; no announcement post or context window was found."
+review_notes: []
 ---
 
 # English
@@ -99,6 +97,7 @@ The Omni line is Alibaba's family of models that understand every common media t
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -156,3 +155,4 @@ La línea Omni es la familia de Alibaba que entiende todos los tipos de medios h
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

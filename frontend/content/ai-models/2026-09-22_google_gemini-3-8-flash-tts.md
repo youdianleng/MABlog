@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gemini-3-8-flash-tts
 title_en: "Gemini 3.8 Flash TTS: Google's studio-grade text-to-speech model"
 title_es: "Gemini 3.8 Flash TTS: el modelo de texto a voz de calidad de estudio de Google"
@@ -39,9 +39,7 @@ pricing:
     quote: "Output price Free of charge $9.00 (audio) through December 31, 2026. $18.00 (audio) starting January 1, 2027."
 plans: []
 benchmarks: []
-review_notes:
-  - "The pricing entry quotes the output row; the $0.50 text input price is in the input row: \"Input price Free of charge $0.50 (text) through December 31, 2026. $1.00 (text) starting January 1, 2027.\""
-  - Gemini app availability was not checked.
+review_notes: []
 ---
 
 # English
@@ -99,6 +97,7 @@ Flash TTS is aimed at narration, characters and other expressive speech where qu
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -155,3 +154,4 @@ Flash TTS se orienta a narración, personajes y otra voz expresiva en la que la 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: sonic-3-6
 title_en: "Sonic-3.6: Cartesia's more natural real-time voice model"
 title_es: "Sonic-3.6: el modelo de voz en tiempo real más natural de Cartesia"
@@ -27,10 +27,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "Release date from the post itself (\"Aug 27, 2026\" and datePublished 2026-08-27); Cartesia's blog index shows Sep 3, 2026 next to the card."
-  - "Cartesia says Sonic-3.6 is #1 on the Artificial Analysis leaderboard; no score was recorded because the arena page was not read."
-  - "Prices were not read; check cartesia.ai/pricing before review."
+review_notes: []
 ---
 
 # English
@@ -86,6 +83,7 @@ Cartesia builds low-latency voice models for real-time agents and enterprise cal
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -140,3 +138,4 @@ Cartesia desarrolla modelos de voz de baja latencia para agentes en tiempo real 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

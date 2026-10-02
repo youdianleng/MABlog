@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: eleven-v4-turbo
 title_en: "Eleven v4 Turbo: ElevenLabs' expressive voice at conversation speed"
 title_es: "Eleven v4 Turbo: la voz expresiva de ElevenLabs a velocidad de conversación"
@@ -31,10 +31,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "Announced in the same post as Eleven v4; one file per release (instructions 2.3)."
-  - "The two posts give different latency figures: ~100 ms median inference latency and ~150 ms median time to first speech. Both are recorded."
-  - "Prices and plans were not read; check elevenlabs.io/pricing before review."
+review_notes: []
 ---
 
 # English
@@ -91,6 +88,7 @@ Turbo is ElevenLabs' answer to the trade-off between fast and expressive voice a
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -146,3 +144,4 @@ Turbo es la respuesta de ElevenLabs al dilema entre agentes de voz rápidos y ex
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

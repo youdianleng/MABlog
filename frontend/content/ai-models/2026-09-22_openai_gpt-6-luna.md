@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-6-luna
 title_en: "GPT-6 Luna: OpenAI's most efficient GPT-6 model"
 title_es: "GPT-6 Luna: el modelo GPT-6 más eficiente de OpenAI"
@@ -60,8 +60,7 @@ plans:
     source_url: "https://chatgpt.com/pricing"
     quote: "Plan: Pro, Feature: GPT-6 Luna, Expanded"
 benchmarks: []
-review_notes:
-  - "Release date from the OpenAI news RSS item \"Introducing GPT-6 Sol and Luna\" (2026-09-22); the announcement page blocks scripts and was not read."
+review_notes: []
 ---
 
 # English
@@ -124,6 +123,7 @@ Luna is the low-cost member of the GPT-6 lineup, below Sol and Astra. It suits c
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -185,3 +185,4 @@ Luna es el miembro económico de la gama GPT-6, por debajo de Sol y Astra. Encaj
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

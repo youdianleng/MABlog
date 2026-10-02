@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-live-1
 title_en: "GPT-Live-1: OpenAI's full-duplex voice model in the API"
 title_es: "GPT-Live-1: el modelo de voz full-duplex de OpenAI en la API"
@@ -41,9 +41,7 @@ pricing:
     quote: "Voice sessions cost $0.05 per minute, billed per second."
 plans: []
 benchmarks: []
-review_notes:
-  - "Release date from the OpenAI news RSS item \"Build more natural voice experiences with GPT‑Live‑1 in the API\" (2026-09-10). The two announcement URLs were taken from the RSS feed; the pages block scripts and were not read."
-  - "Category: voice-sound (real-time speech to speech). It is not a text-to-speech model, so Speech Arena results may never apply."
+review_notes: []
 ---
 
 # English
@@ -103,6 +101,7 @@ GPT-Live-1 is a speech-to-speech model rather than a text-to-speech voice. It ac
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -161,3 +160,4 @@ GPT-Live-1 es un modelo de voz a voz, no una voz de texto a voz. Acepta y produc
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

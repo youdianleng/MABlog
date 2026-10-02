@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: minimax-speech-2-8
 title_en: "MiniMax Speech 2.8: more human AI voices with native sound tags"
 title_es: "MiniMax Speech 2.8: voces de IA más humanas con etiquetas de sonido nativas"
@@ -28,10 +28,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "Release date from the page's datePublished metadata (2026-01-23). This is outside the sweep window but is still MiniMax's newest speech model in its site menu, so the line gets a file."
-  - "Access: the page links to \"Access API\" and \"Try Audio Now\"; confirm whether MiniMax Audio is free before review."
-  - Prices were not read.
+review_notes: []
 ---
 
 # English
@@ -87,6 +84,7 @@ MiniMax Speech powers narration, characters and voice agents in MiniMax's own ap
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -141,3 +139,4 @@ MiniMax Speech impulsa narración, personajes y agentes de voz en las apps de Mi
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

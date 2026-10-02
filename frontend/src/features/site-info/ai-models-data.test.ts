@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseModelFile, parseRankings } from "./ai-model-files";
+import { isModelFileName, parseModelFile, parseRankings } from "./ai-model-files";
 import { buildAiModelsData, comparablePrice } from "./ai-models-data";
 
 const CONTENT = new URL("../../../content/ai-models/", import.meta.url);
@@ -71,6 +71,20 @@ describe("buildAiModelsData", () => {
     const data = buildAiModelsData([unranked], rankings);
     expect(data.profiles["glm-5-9"].placements).toEqual([]);
     expect(data.profiles["glm-5-9"].model.file).not.toBeNull();
+  });
+
+  // The committed reviewed files (the 2026-10-02 sweep) add profiles but leave the rankings alone.
+  it("adds profiles for the committed reviewed files without changing the leaderboards", () => {
+    const files = readdirSync(CONTENT)
+      .filter(isModelFileName)
+      .map(
+        /** Parse each committed file as written. */ (name) => parseModelFile(content(name), name),
+      );
+    const reviewed = files.filter(/** Reviewed files only. */ (entry) => entry.reviewed);
+    expect(reviewed.length).toBe(25);
+    const data = buildAiModelsData(files, rankings);
+    expect(data.leaderboards).toEqual(buildAiModelsData([], rankings).leaderboards);
+    for (const entry of reviewed) expect(data.profiles[entry.slug].model.file).not.toBeNull();
   });
 });
 
