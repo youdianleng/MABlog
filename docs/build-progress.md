@@ -479,3 +479,11 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - The profile URL of a draft or unknown model renders the not-found page with `noindex`, but returns HTTP 200 rather than 404, because the root loading boundary starts streaming first.
   - The shared step-up panel's text still describes newsroom actions.
   - The page does not edit facts; corrections are still made in the file, and the page shows them after **Reload**.
+
+- [x] **I108 - Fix the approval checkbox spacing on the review page (follows I107).** The user reported that the "I checked the prices…" checkbox sat far from its text. The global `input` rule (`width: 100%` plus text-field padding) stretched the checkbox across half the row. `.model-review-confirm input` now keeps the checkbox's natural size (`flex: none; width: auto; padding: 0`).
+
+  **Areas:** `frontend/src/styles/model-review.css`.
+
+  **Verification:**
+  - In the in-app browser after rebuilding, the checkbox measures 13 px wide with an 8 px gap to its label (it was about 59 px wide, with the text pushed to the far side).
+  - Prettier passes, and the review-page Playwright tests pass (2/2).

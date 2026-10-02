@@ -261,8 +261,13 @@
   align-items: flex-start;
   font-size: 14px;
 }
+/* The global `input` rule gives every input width: 100% and text-field padding; a checkbox must
+   keep its natural size so the label sits right next to it. */
 .model-review-confirm input {
+  flex: none;
+  width: auto;
   margin-top: 3px;
+  padding: 0;
 }
 .model-review-buttons {
   display: flex;
