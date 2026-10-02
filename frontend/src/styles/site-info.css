@@ -1279,6 +1279,7 @@
   height: 15px;
 }
 .model-profile-scores,
+.model-reviewed-facts,
 .model-verdicts {
   max-width: 1400px;
   margin: 0 auto;
@@ -1498,4 +1499,67 @@
 .model-score-context a {
   color: inherit;
   text-underline-offset: 2px;
+}
+
+/* Profile sections shown only when a reviewed model file backs the profile. */
+.model-not-ranked {
+  margin: 0;
+  padding: 28px;
+  border: 1px dashed #bfae97;
+  color: #6f655c;
+  font-size: 16px;
+}
+.model-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid #bfae97;
+  border-left: 1px solid #bfae97;
+}
+.model-facts-grid article {
+  padding: clamp(24px, 3.5vw, 44px);
+  border-right: 1px solid #bfae97;
+  border-bottom: 1px solid #bfae97;
+  background: #fffbf3;
+}
+.model-facts-grid h3 {
+  margin: 0 0 14px;
+  font-size: 22px;
+}
+.model-facts-grid ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  color: #463f39;
+  line-height: 1.6;
+}
+.model-facts-grid li + li {
+  margin-top: 6px;
+}
+.model-facts-sources {
+  margin: 18px 0 0;
+  color: #6f655c;
+  font-size: 13px;
+}
+.model-facts-sources a {
+  color: #5f3a34;
+}
+@media (max-width: 760px) {
+  .model-facts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Notice on a reviewed profile whose line has a newer release (superseded_by). */
+.model-superseded {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid #dfc3a4;
+  border-radius: 4px;
+  background: #faf0e2;
+  color: #6b4a2b;
+  font-size: 14px;
+}
+.model-superseded a {
+  color: #8f3739;
+  font-weight: 700;
 }

@@ -14,5 +14,7 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+# The /ai-models page reads model files and rankings.yaml from this folder at request time.
+COPY --from=build /app/content ./content
 USER node
 CMD ["node", "server.js"]

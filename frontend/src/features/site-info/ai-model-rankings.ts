@@ -19,10 +19,15 @@ export type RankingPlacement = {
   sourceRank: string;
   sourceLabel: string;
   sourceUrl: string;
+  /** Filled from `rankings.yaml` when source ranges overlap. */
   tieNote?: LocalizedText;
 };
 
-/** Versioned editorial record shared by ranking cards and the permanent family profile. */
+/**
+ * Built-in 2026-09-22 snapshot record: the fallback for a model until its file in
+ * `frontend/content/ai-models/` is marked reviewed. Ranking order, tie notes, and dates live in
+ * `rankings.yaml`.
+ */
 export type RankedModel = {
   slug: string;
   name: string;
@@ -35,9 +40,6 @@ export type RankedModel = {
   developerVerdict: LocalizedText;
   placements: RankingPlacement[];
 };
-
-export const RANKING_SNAPSHOT_DATE = "2026-09-22";
-export const RANKING_REVIEW_AFTER_DAYS = 45;
 
 const CODING_SOURCE = "https://artificialanalysis.ai/agents/coding-agents";
 const IMAGE_SOURCE = "https://artificialanalysis.ai/image/leaderboard/text-to-image";
@@ -75,10 +77,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–2",
         sourceLabel: "Artificial Analysis",
         sourceUrl: CODING_SOURCE,
-        tieNote: {
-          en: "Statistical tie at the published score.",
-          es: "Empate estadístico en la puntuación publicada.",
-        },
       },
     ],
   },
@@ -111,10 +109,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–2",
         sourceLabel: "Artificial Analysis",
         sourceUrl: CODING_SOURCE,
-        tieNote: {
-          en: "Statistical tie at the published score.",
-          es: "Empate estadístico en la puntuación publicada.",
-        },
       },
     ],
   },
@@ -179,10 +173,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "4–5",
         sourceLabel: "Artificial Analysis",
         sourceUrl: CODING_SOURCE,
-        tieNote: {
-          en: "Shares the published score with GLM-5.3.",
-          es: "Comparte la puntuación publicada con GLM-5.3.",
-        },
       },
     ],
   },
@@ -215,10 +205,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "4–5",
         sourceLabel: "Artificial Analysis",
         sourceUrl: CODING_SOURCE,
-        tieNote: {
-          en: "Shares the published score with Muse Spark 1.3.",
-          es: "Comparte la puntuación publicada con Muse Spark 1.3.",
-        },
       },
     ],
   },
@@ -252,10 +238,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–2",
         sourceLabel: "Artificial Analysis Image Arena",
         sourceUrl: IMAGE_SOURCE,
-        tieNote: {
-          en: "Its published rank range overlaps the next family.",
-          es: "Su intervalo de rango publicado se solapa con la siguiente familia.",
-        },
       },
     ],
   },
@@ -421,10 +403,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–3",
         sourceLabel: "Artificial Analysis Video Arena",
         sourceUrl: VIDEO_SOURCE,
-        tieNote: {
-          en: "The top three published rank ranges overlap.",
-          es: "Los intervalos de rango publicados de los tres primeros se solapan.",
-        },
       },
     ],
   },
@@ -458,10 +436,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–3",
         sourceLabel: "Artificial Analysis Video Arena",
         sourceUrl: VIDEO_SOURCE,
-        tieNote: {
-          en: "The top three published rank ranges overlap.",
-          es: "Los intervalos de rango publicados de los tres primeros se solapan.",
-        },
       },
     ],
   },
@@ -561,10 +535,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "10–13",
         sourceLabel: "Artificial Analysis Video Arena",
         sourceUrl: VIDEO_SOURCE,
-        tieNote: {
-          en: "Tied on Elo with SkyReels V4; reliability evidence breaks the editorial tie.",
-          es: "Empata en Elo con SkyReels V4; la evidencia de fiabilidad deshace el empate editorial.",
-        },
       },
     ],
   },
@@ -609,10 +579,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–2",
         sourceLabel: "Artificial Analysis Music Arena",
         sourceUrl: INSTRUMENTAL_SOURCE,
-        tieNote: {
-          en: "Its rank range overlaps Mureka V9.",
-          es: "Su intervalo de rango se solapa con Mureka V9.",
-        },
       },
     ],
   },
@@ -657,10 +623,6 @@ export const rankedModels: RankedModel[] = [
         sourceRank: "1–2",
         sourceLabel: "Artificial Analysis Music Arena",
         sourceUrl: INSTRUMENTAL_SOURCE,
-        tieNote: {
-          en: "Its rank range overlaps Suno V5.5.",
-          es: "Su intervalo de rango se solapa con Suno V5.5.",
-        },
       },
     ],
   },
@@ -797,46 +759,3 @@ export const rankedModels: RankedModel[] = [
     ],
   },
 ];
-
-export const rankingOrder: Record<RankingCategory, string[]> = {
-  coding: ["claude-fable-5-1", "gpt-6-astra", "grok-4-7", "muse-spark-1-3", "glm-5-3"],
-  image: [
-    "gpt-image-2-5-sunburst",
-    "grok-imagine-image-2",
-    "mai-image-2-6",
-    "nano-banana-2",
-    "muse-image",
-  ],
-  video: ["gemini-omni-flash", "wan-3", "minimax-h3", "seedance-2", "kling-3"],
-  "music-vocal": ["suno-v5-5", "mureka-v9", "stepaudio-3-music", "minimax-music", "lyria-3-pro"],
-  "music-instrumental": [
-    "mureka-v9",
-    "suno-v5-5",
-    "stepaudio-3-music",
-    "lyria-3-pro",
-    "minimax-music",
-  ],
-};
-
-/** Resolve a permanent family profile from its URL slug. */
-export function getRankedModel(slug: string): RankedModel | undefined {
-  return rankedModels.find(
-    /** Match one stable public model slug. */ (model) => model.slug === slug,
-  );
-}
-
-/** Return category cards in the reviewed editorial order stored by the snapshot. */
-export function getModelsForCategory(category: RankingCategory): RankedModel[] {
-  return rankingOrder[category].map(
-    /** Resolve every reviewed slug; the snapshot guarantees each one exists. */ (slug) =>
-      getRankedModel(slug) as RankedModel,
-  );
-}
-
-/** Find the single placement that belongs to a card's category. */
-export function getPlacement(model: RankedModel, category: RankingCategory): RankingPlacement {
-  return model.placements.find(
-    /** Match one category measurement on the family profile. */ (placement) =>
-      placement.category === category,
-  ) as RankingPlacement;
-}

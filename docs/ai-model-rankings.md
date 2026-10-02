@@ -19,6 +19,8 @@ This document records the decisions behind MAblog's public AI model ranking so f
   - Prices were checked on 2026-10-01 and live in `frontend/src/features/site-info/ai-model-benchmark-context.ts`.
 - **Rank explanations:** restate only the evidence already stored in the snapshot (score, interval, source rank, tie notes, filters, and the price comparison).
 
+**Stage 2 (2026-10-02):** the order, "Why #N" reasons, and tie notes moved to `frontend/content/ai-models/rankings.yaml`. Model facts move to reviewed model files as they are approved (see `docs/ai-models-review-checklist.md`). Until then, the code snapshot is used.
+
 **Known limitation:** the live Artificial Analysis leaderboards viewed on 2026-10-01 already differ from the 2026-09-22 score snapshot for some video and music entries. Refreshing the ranking itself is a separate review task.
 
 ## 1. Audience and purpose
