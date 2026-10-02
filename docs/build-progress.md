@@ -380,3 +380,36 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Files for Gemini 3.8 Live and Live Extended Thinking, Gemini 3.8 Flash TTS and Flash-Lite TTS, Eleven v4 Turbo, Sonic-3.6, three Qwen 3.8 / Qwen Audio realtime models, Recraft V4.1, and MiniMax M3 / Speech 2.8 / Music 3.0 (undated).
   - Fourteen providers are marked `not verified`: their sources were blocked or script-rendered, or were not read far enough this run.
   - The new files still need human review before they appear on `/ai-models`.
+
+- [x] **I105 - File the remaining releases from the freshness sweep (follows I104).** The user asked for files for the releases that I104 had found but not filed. All 13 now have draft files, so the first sweep has no open "found but not filed" items.
+
+  **Created (13 draft files, none ranked):**
+  - Google: Gemini 3.8 Live and Gemini 3.8 Live Extended Thinking (2026-09-15); Gemini 3.8 Flash TTS and Gemini 3.8 Flash-Lite TTS (2026-09-22).
+  - ElevenLabs: Eleven v4 Turbo (2026-09-28). Cartesia: Sonic-3.6 (2026-08-27; the post's own date, while the blog index shows Sep 3).
+  - Alibaba: Qwen3.8-Omni-Flash (2026-09-17), Qwen3.8-Omni-Flash-Realtime (2026-09-21), and Qwen-Audio-3.1-Realtime-Plus (2026-09-20), from the Model Studio release list and pricing page.
+  - MiniMax: M3 (`undated_`, because no release date is published), Speech 2.8 (2026-01-23), and Music 3.0 (2026-08-13).
+  - Recraft V4.1 (2026-05-14), found through a web search after the guessed announcement URLs returned 404.
+
+  Speech 2.8 and Recraft V4.1 are older than the sweep window, but they are the newest releases of their lines, so section 3.0 still requires files for them.
+
+  **Updated:**
+  - MiniMax Music → `superseded_by: minimax-music-3`.
+  - The review notes of Eleven v4 and Recraft V4.1 Flash now point to the new sibling files.
+  - The run report's freshness table, created-files list, and ranking suggestions now reflect both batches.
+
+  **Code:** the file-count test now expects 45 model files. The existing `superseded_by` test also covers MiniMax Music → Music 3.0, which shares the `minimax-music` family.
+
+  **Areas:** `frontend/content/ai-models/` (13 new files, 3 updated, run report), `frontend/src/features/site-info/ai-model-files.test.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - The generator script checked every price, plan, and benchmark quote verbatim against the saved page text, and every summary is 100–200 words in both languages.
+  - Unit tests: 40/40, with all 45 model files parsing.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - The frontend was rebuilt; `/ai-models` returns 200 with no skipped-file errors.
+  - Full Playwright suite: 30/30.
+  - Backend tests were not rerun because no backend file changed in this step; they passed 57/57 in I104.
+
+  **Not done:**
+  - Prices are missing where the official pages did not publish them: Eleven v4 Turbo, Sonic-3.6, MiniMax, and Recraft V4.1.
+  - Some facts rely on list or pricing pages only: the Alibaba models have no announcement post, and MiniMax M3 has no release date.
+  - The 14 `not verified` providers remain.

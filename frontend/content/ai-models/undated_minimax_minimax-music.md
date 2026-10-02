@@ -9,7 +9,7 @@ provider_key: minimax
 model: MiniMax Music
 version: null
 family: minimax-music
-superseded_by: null
+superseded_by: minimax-music-3
 category: music
 release_date: null
 status: generally_available
@@ -56,7 +56,7 @@ benchmarks:
     evidence: snapshot-2026-09-22
     ranking: music-instrumental
 review_notes:
-  - The snapshot's official link is the MiniMax Music 2.6 post (2026-04-10), but MiniMax now lists MiniMax Music 3.0 as its current music model. Confirm which version the 2026-09-22 ranking scored before setting version and release_date.
+  - The snapshot's official link is the MiniMax Music 2.6 post (2026-04-10). MiniMax Music 3.0 (2026-08-13, file minimax-music-3) is now the newest release, so this file is superseded. Confirm which version the 2026-09-22 ranking scored before moving the ranking.
 ---
 
 # English
@@ -112,6 +112,7 @@ MiniMax Music is part of MiniMax's broad media model lineup, which also includes
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
 - 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
+- 2026-10-02 — `superseded_by` set to `minimax-music-3` (MiniMax Music 3.0 announced 2026-08-13; freshness sweep).
 
 # Español
 
@@ -166,3 +167,4 @@ MiniMax Music forma parte de la amplia gama de modelos multimedia de MiniMax, qu
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
 - 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
+- 2026-10-02 — `superseded_by` pasa a `minimax-music-3` (MiniMax Music 3.0 anunciado el 2026-08-13; revisión de actualidad).

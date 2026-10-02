@@ -6,7 +6,7 @@ The 20 files in `frontend/content/ai-models/` start as `review_status: draft`, s
 - Anthropic announced Claude Opus 5.5 (2026-09-22) and Claude Mythos 5.1 (2026-09-01).
 - OpenAI announced GPT-6 Sol and Luna (2026-09-22) and GPT-6.1 Sol (2026-09-29).
 
-**Freshness sweep run on 2026-10-02:** 12 new draft files were added; they are listed at the end of this checklist. Suno V5.5, Lyria 3 Pro, and Gemini Omni Flash are now `superseded_by` newer files. Claude Mythos 5.1 was excluded (trusted access only). Releases found but not filed yet, and sources that could not be read, are in `frontend/content/ai-models/_run-report_2026-10-02.md`.
+**Freshness sweep run on 2026-10-02:** 25 new draft files were added in two batches; they are listed at the end of this checklist. Suno V5.5, Lyria 3 Pro, Gemini Omni Flash, and MiniMax Music are now `superseded_by` newer files. Claude Mythos 5.1 was excluded (trusted access only). Sources that could not be read are in `frontend/content/ai-models/_run-report_2026-10-02.md`.
 
 How the values were gathered:
 
@@ -123,7 +123,7 @@ How the values were gathered:
 ### MiniMax Music — `undated_minimax_minimax-music.md`
 
 - [ ] Check new facts against the linked official sources: none beyond the snapshot.
-- [ ] The snapshot's official link is the MiniMax Music 2.6 post (2026-04-10), but MiniMax now lists MiniMax Music 3.0 as its current music model. Confirm which version the 2026-09-22 ranking scored before setting version and release_date.
+- [ ] The snapshot's official link is the MiniMax Music 2.6 post (2026-04-10). MiniMax Music 3.0 (2026-08-13, file minimax-music-3) is now the newest release, so this file is superseded. Confirm which version the 2026-09-22 ranking scored before moving the ranking.
 - [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
 
 ### Mureka V9 — `undated_mureka_mureka-v9.md`
@@ -210,7 +210,7 @@ These files were written from official sources only. Every quote was checked ver
 ### Eleven v4 — `2026-09-28_elevenlabs_eleven-v4.md`
 
 - [ ] ElevenLabs says the model is ranked #1 by Artificial Analysis; no score was recorded because the arena page was not read. Read it before review.
-- [ ] Eleven v4 Turbo was announced in the same post; it has no file of its own yet (listed in the run report).
+- [ ] Eleven v4 Turbo was announced in the same post and has its own file (eleven-v4-turbo).
 - [ ] Prices and plans were not read; check elevenlabs.io/pricing before review.
 - [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
 
@@ -218,11 +218,101 @@ These files were written from official sources only. Every quote was checked ver
 
 - [ ] The 1.3-second figure is Recraft's own median measurement: "Recraft V4.1 Flash is the fastest model on the market at 1.3 seconds from prompt to image."
 - [ ] Access and prices for Flash specifically were not stated in the post; the site navigation says Recraft's models are available in Recraft Studio and via API. Check the API pricing page before review.
-- [ ] Recraft V4.1 (the full model) has no file yet; add it with the next run.
+- [ ] Recraft V4.1 (the full model, 2026-05-14) has its own file (recraft-v4-1).
 - [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
 
 ### DeepSeek-V4.1-Flash — `2026-09-10_deepseek_deepseek-v4-1-flash.md`
 
 - [ ] The price quote is part of the pricing table: the first value after each PEAK label is the V4.1 Flash column ($0.3 input on cache miss, $1.2 output).
 - [ ] Open-weights availability and the DeepSeek chat app were not checked.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+## Freshness sweep files, second batch (added 2026-10-02)
+
+Same checks as the first batch: quotes verified verbatim against saved page text, none ranked.
+
+### Gemini 3.8 Live — `2026-09-15_google_gemini-3-8-live.md`
+
+- [ ] The pricing entry quotes the output row of the shared Live pricing table; the $3.00 audio input price is in the input row: "Input price Free of charge $0.75 (text) $3.00 or $0.005/min (audio) $1.00 or $0.002/min (image/video)".
+- [ ] Gemini app availability was not checked.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Gemini 3.8 Live Extended Thinking — `2026-09-15_google_gemini-3-8-live-extended-thinking.md`
+
+- [ ] The pricing entry quotes the output row of the shared Live pricing table; the $3.00 audio input price is in the input row: "Input price Free of charge $0.75 (text) $3.00 or $0.005/min (audio) $1.00 or $0.002/min (image/video)".
+- [ ] Google lists this model in the same pricing row as Gemini 3.8 Live, so the prices are shared.
+- [ ] First release of this line; no earlier Extended Thinking Live model was found.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Gemini 3.8 Flash TTS — `2026-09-22_google_gemini-3-8-flash-tts.md`
+
+- [ ] The pricing entry quotes the output row; the $0.50 text input price is in the input row: "Input price Free of charge $0.50 (text) through December 31, 2026. $1.00 (text) starting January 1, 2027."
+- [ ] Gemini app availability was not checked.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Gemini 3.8 Flash-Lite TTS — `2026-09-22_google_gemini-3-8-flash-lite-tts.md`
+
+- [ ] The pricing entry quotes the output row; the $0.50 text input price is in the input row, which is the same as for Gemini 3.8 Flash TTS.
+- [ ] Gemini app availability was not checked.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Eleven v4 Turbo — `2026-09-28_elevenlabs_eleven-v4-turbo.md`
+
+- [ ] Announced in the same post as Eleven v4; one file per release (instructions 2.3).
+- [ ] The two posts give different latency figures: ~100 ms median inference latency and ~150 ms median time to first speech. Both are recorded.
+- [ ] Prices and plans were not read; check elevenlabs.io/pricing before review.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Sonic-3.6 — `2026-08-27_cartesia_sonic-3-6.md`
+
+- [ ] Release date from the post itself ("Aug 27, 2026" and datePublished 2026-08-27); Cartesia's blog index shows Sep 3, 2026 next to the card.
+- [ ] Cartesia says Sonic-3.6 is #1 on the Artificial Analysis leaderboard; no score was recorded because the arena page was not read.
+- [ ] Prices were not read; check cartesia.ai/pricing before review.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Qwen3.8-Omni-Flash — `2026-09-17_alibaba_qwen3-8-omni-flash.md`
+
+- [ ] The International price row has three values; by the column order of the other regional tables they are input, cache-hit input and output per 1M tokens. Confirm the column headers in a browser.
+- [ ] Only the Model Studio release list and pricing page were read; no announcement post or context window was found.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Qwen3.8-Omni-Flash-Realtime — `2026-09-21_alibaba_qwen3-8-omni-flash-realtime.md`
+
+- [ ] Price columns (Singapore table): input text/images/video 0.23, input audio 0.93, output text 0.70, output audio 1.87 USD per 1M tokens; the comparable entry uses the audio columns.
+- [ ] Only the Model Studio release list and pricing page were read; no announcement post was found.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Qwen-Audio-3.1-Realtime-Plus — `2026-09-20_alibaba_qwen-audio-3-1-realtime-plus.md`
+
+- [ ] Price columns: input text 0.8, input audio 6.4, output text 6.4, output audio 24 USD per 1M tokens; the comparable entry uses the audio columns.
+- [ ] The 262,144-token context window is from the release list; context_window stays null because the field is for llm-agents files only.
+- [ ] Only the Model Studio release list and pricing page were read; no announcement post was found.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### MiniMax M3 — `undated_minimax_minimax-m3.md`
+
+- [ ] Release date not published on the model page; find the dated announcement before review.
+- [ ] The BrowseComp measured_at is the date the page was read (2026-10-02), because the page has no date.
+- [ ] The page compares M3 with Opus 4.7 and GPT-5.5, which suggests it predates the September 2026 frontier releases.
+- [ ] The page says M3 "will soon be fully open-sourced on HuggingFace and GitHub", so access does not list Open weights yet.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### MiniMax Speech 2.8 — `2026-01-23_minimax_minimax-speech-2-8.md`
+
+- [ ] Release date from the page's datePublished metadata (2026-01-23). This is outside the sweep window but is still MiniMax's newest speech model in its site menu, so the line gets a file.
+- [ ] Access: the page links to "Access API" and "Try Audio Now"; confirm whether MiniMax Audio is free before review.
+- [ ] Prices were not read.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### MiniMax Music 3.0 — `2026-08-13_minimax_minimax-music-3.md`
+
+- [ ] Access is based on the post's title and "Open Weights" tag; the post text read did not include a weights link, licence, API or app availability. Check before review.
+- [ ] The ranked file minimax-music.md links the Music 2.6 post; it is now superseded by this file. Check which version the 2026-09-22 arena entry scored before moving the ranking.
+- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+
+### Recraft V4.1 — `2026-05-14_recraft_recraft-v4-1.md`
+
+- [ ] Release date 2026-05-14 is outside the sweep window; the file was added because Recraft V4.1 Flash (2026-09-23) is a variant of this line.
+- [ ] A Recraft press release says V4.1 Utility Pro became the highest-ranked text-to-image model outside Google and OpenAI; it was found by search and not read.
+- [ ] Access: the post says "Start creating via our API or in Recraft Studio" and "get started for free". Prices were not read.
 - [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.

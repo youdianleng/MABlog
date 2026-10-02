@@ -16,8 +16,8 @@ describe("model files", () => {
   // Every committed file must parse; a broken edit fails here before reaching the page.
   it("parses every committed model file", () => {
     const names = readdirSync(CONTENT).filter(isModelFileName);
-    // 20 migrated files plus 12 from the 2026-10-02 freshness sweep.
-    expect(names.length).toBe(32);
+    // 20 migrated files plus 25 from the 2026-10-02 freshness sweep (two batches).
+    expect(names.length).toBe(45);
     for (const name of names) {
       const file = parseModelFile(content(name), name);
       expect(file.reviewed).toBe(false);

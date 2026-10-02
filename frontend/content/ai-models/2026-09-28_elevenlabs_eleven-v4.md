@@ -30,7 +30,7 @@ plans: []
 benchmarks: []
 review_notes:
   - "ElevenLabs says the model is ranked #1 by Artificial Analysis; no score was recorded because the arena page was not read. Read it before review."
-  - "Eleven v4 Turbo was announced in the same post; it has no file of its own yet (listed in the run report)."
+  - "Eleven v4 Turbo was announced in the same post and has its own file (eleven-v4-turbo)."
   - "Prices and plans were not read; check elevenlabs.io/pricing before review."
 ---
 
@@ -88,6 +88,7 @@ ElevenLabs is a voice AI company whose models power narration, dubbing, games an
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Review note updated: Eleven v4 Turbo now has its own file.
 
 # Español
 
@@ -143,3 +144,4 @@ ElevenLabs es una empresa de IA de voz cuyos modelos se usan en narración, dobl
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Nota de revisión actualizada: Eleven v4 Turbo ya tiene su propia ficha.

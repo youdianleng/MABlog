@@ -30,7 +30,7 @@ benchmarks: []
 review_notes:
   - "The 1.3-second figure is Recraft's own median measurement: \"Recraft V4.1 Flash is the fastest model on the market at 1.3 seconds from prompt to image.\""
   - "Access and prices for Flash specifically were not stated in the post; the site navigation says Recraft's models are available in Recraft Studio and via API. Check the API pricing page before review."
-  - "Recraft V4.1 (the full model) has no file yet; add it with the next run."
+  - "Recraft V4.1 (the full model, 2026-05-14) has its own file (recraft-v4-1)."
 ---
 
 # English
@@ -84,6 +84,7 @@ Recraft is a design-focused image platform used for illustrations, brand assets 
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Review note updated: Recraft V4.1 now has its own file.
 
 # Español
 
@@ -136,3 +137,4 @@ Recraft es una plataforma de imagen orientada al diseño, usada para ilustracion
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Nota de revisión actualizada: Recraft V4.1 ya tiene su propia ficha.
