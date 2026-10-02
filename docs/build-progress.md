@@ -487,3 +487,17 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   **Verification:**
   - In the in-app browser after rebuilding, the checkbox measures 13 px wide with an 8 px gap to its label (it was about 59 px wide, with the text pushed to the far side).
   - Prettier passes, and the review-page Playwright tests pass (2/2).
+
+- [x] **I109 - Record the site owner's first approvals from the review page.** On 2026-10-03 the site owner approved GPT-6 Astra (`2026-09-03_openai_gpt-6-astra.md`) and GPT Image 2.5 Sunburst (`2026-09-08_openai_gpt-image-2-5-sunburst.md`) on `/admin/ai-models`.
+
+  **What the approvals changed:**
+  - Each file now has `review_status: reviewed` and empty `review_notes`, and its accepted notes are in the update history.
+  - Both models are ranked (coding and image), so their leaderboard entries now use the files' facts and prices instead of the built-in snapshot. The ranking order is unchanged.
+
+  **Related changes:**
+  - The data test that assumed exactly 25 reviewed files is now independent of the count. It checks that every reviewed file has a profile, that each leaderboard still follows `rankings.yaml`, and that a ranked model uses its file exactly when the file is reviewed.
+  - The checklist entries for the two files record the approval.
+
+  **Areas:** the two content files, `frontend/src/features/site-info/ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:** unit tests pass (41/41). The page-level effect was not re-checked by hand, because the files changed only through the tested approval path.

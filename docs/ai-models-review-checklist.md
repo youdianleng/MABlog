@@ -70,7 +70,7 @@ How the values were gathered:
 
 - [ ] Check new facts against the linked official sources: release date 2026-09-08; price "Price $5 • $30 Input • Output".
 - [ ] Release date is the dated snapshot ID (gpt-image-2.5-sunburst-2026-09-08), not an announcement post.
-- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+- [x] Approved on the admin review page by mablog_admin on 2026-10-03; the open points above were accepted and copied into the file's update history.
 
 ### Grok 4.7 — `2026-09-21_xai_grok-4-7.md`
 
@@ -140,7 +140,7 @@ How the values were gathered:
 - [ ] Check new facts against the linked official sources: context window 1,050,000; plan ChatGPT Plus (price not in page text); plan ChatGPT Pro (price not in page text).
 - [ ] Release date from the OpenAI news RSS item "GPT-6 Astra: A new generation of intelligence" (2026-09-03); the announcement page blocks scripts and was not read.
 - [ ] ChatGPT plan prices are rendered per region by script and are not in the page text; check them in a browser before marking reviewed.
-- [ ] Read the English and Spanish summaries, then set `review_status: reviewed` and empty `review_notes`.
+- [x] Approved on the admin review page by mablog_admin on 2026-10-03; the open points above were accepted and copied into the file's update history.
 
 ### StepAudio 3 Music — `undated_stepfun_stepaudio-3-music.md`
 

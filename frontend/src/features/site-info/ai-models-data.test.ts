@@ -74,17 +74,30 @@ describe("buildAiModelsData", () => {
   });
 
   // The committed reviewed files (the 2026-10-02 sweep) add profiles but leave the rankings alone.
-  it("adds profiles for the committed reviewed files without changing the leaderboards", () => {
+  it("builds the page from the committed files as reviewed by the site owner", () => {
     const files = readdirSync(CONTENT)
       .filter(isModelFileName)
       .map(
         /** Parse each committed file as written. */ (name) => parseModelFile(content(name), name),
       );
-    const reviewed = files.filter(/** Reviewed files only. */ (entry) => entry.reviewed);
-    expect(reviewed.length).toBe(25);
+    const reviewed = new Set(
+      files
+        .filter(/** Reviewed files only. */ (entry) => entry.reviewed)
+        .map(/** Their slugs. */ (entry) => entry.slug),
+    );
     const data = buildAiModelsData(files, rankings);
-    expect(data.leaderboards).toEqual(buildAiModelsData([], rankings).leaderboards);
-    for (const entry of reviewed) expect(data.profiles[entry.slug].model.file).not.toBeNull();
+    // Every reviewed file has a profile backed by its file, whether or not it is ranked.
+    for (const slug of reviewed) expect(data.profiles[slug].model.file).not.toBeNull();
+    // Approvals change facts, never the order: each leaderboard still follows rankings.yaml, and
+    // a ranked model uses its file exactly when that file is reviewed.
+    for (const [key, entries] of Object.entries(data.leaderboards)) {
+      const order = rankings.leaderboards[key as keyof typeof rankings.leaderboards];
+      expect(entries.map(/** Shown slug. */ (entry) => entry.model.slug)).toEqual(
+        order.map(/** Ranked slug. */ (entry) => entry.slug),
+      );
+      for (const entry of entries)
+        expect(entry.model.file !== null).toBe(reviewed.has(entry.model.slug));
+    }
   });
 });
 

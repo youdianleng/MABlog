@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-image-2-5-sunburst
 title_en: "GPT Image 2.5 Sunburst: OpenAI's top-rated image model"
 title_es: "GPT Image 2.5 Sunburst: el modelo de imagen mejor valorado de OpenAI"
@@ -58,8 +58,7 @@ benchmarks:
     quote: null
     evidence: snapshot-2026-09-22
     ranking: image
-review_notes:
-  - Release date is the dated snapshot ID (gpt-image-2.5-sunburst-2026-09-08), not an announcement post.
+review_notes: []
 ---
 
 # English
@@ -115,6 +114,7 @@ Sunburst sits at the top of OpenAI's GPT Image line, above GPT Image 2.5 Flare, 
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
 - 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
+- 2026-10-03 — Marked reviewed by mablog_admin on the admin review page. Accepted open review notes: Release date is the dated snapshot ID (gpt-image-2.5-sunburst-2026-09-08), not an announcement post.
 
 # Español
 
@@ -169,3 +169,4 @@ Sunburst encabeza la línea GPT Image de OpenAI, por encima de GPT Image 2.5 Fla
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
 - 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
+- 2026-10-03 — Marcada como revisada por mablog_admin en la página de revisión. Notas de revisión aceptadas: 1 (detalle en el historial en inglés).
