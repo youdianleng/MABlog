@@ -2,5 +2,3 @@
 pytest
 ruff
 mypy
-# Tests parse the YAML blocks in the AI-news instruction file.
-pyyaml

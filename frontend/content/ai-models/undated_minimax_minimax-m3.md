@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: minimax-m3
 title_en: "MiniMax M3: an open-weight coding model with a 1M-token context"
 title_es: "MiniMax M3: un modelo de código de pesos abiertos con 1M de contexto"
@@ -40,11 +40,7 @@ benchmarks:
     measured_at: 2026-10-02
     quote: "On BrowseComp, M3 scores 83.5, surpassing Opus 4.7 (79.3), demonstrating strong autonomous browsing and information retrieval capabilities."
     ranking: null
-review_notes:
-  - "Release date not published on the model page; find the dated announcement before review."
-  - "The BrowseComp measured_at is the date the page was read (2026-10-02), because the page has no date."
-  - "The page compares M3 with Opus 4.7 and GPT-5.5, which suggests it predates the September 2026 frontier releases."
-  - "The page says M3 \"will soon be fully open-sourced on HuggingFace and GitHub\", so access does not list Open weights yet."
+review_notes: []
 ---
 
 # English
@@ -106,6 +102,7 @@ M3 succeeds the MiniMax M2.x models as the company's main language model. It com
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -166,3 +163,4 @@ M3 sucede a los modelos MiniMax M2.x como principal modelo de lenguaje de la emp
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

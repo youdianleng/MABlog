@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-6-astra
 title_en: "GPT-6 Astra: OpenAI's reasoning and coding model with a 1M-token context"
 title_es: "GPT-6 Astra: el modelo de razonamiento y código de OpenAI con 1M de contexto"
@@ -75,9 +75,7 @@ benchmarks:
     quote: null
     evidence: snapshot-2026-09-22
     ranking: coding
-review_notes:
-  - "Release date from the OpenAI news RSS item \"GPT-6 Astra: A new generation of intelligence\" (2026-09-03); the announcement page blocks scripts and was not read."
-  - ChatGPT plan prices are rendered per region by script and are not in the page text; check them in a browser before marking reviewed.
+review_notes: []
 ---
 
 # English
@@ -139,6 +137,7 @@ Astra is the reasoning-focused member of OpenAI's GPT-6 family. The API model pa
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
 - 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 - 2026-10-02 — `release_date` set to 2026-09-03 from OpenAI's announcement (news RSS feed); file renamed from `undated_` (freshness sweep).
+- 2026-10-03 — Marked reviewed by mablog_admin on the admin review page. Accepted open review notes: Release date from the OpenAI news RSS item "GPT-6 Astra: A new generation of intelligence" (2026-09-03); the announcement page blocks scripts and was not read. | ChatGPT plan prices are rendered per region by script and are not in the page text; check them in a browser before marking reviewed.
 
 # Español
 
@@ -199,3 +198,4 @@ Astra es el miembro centrado en el razonamiento de la familia GPT-6 de OpenAI. L
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
 - 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
 - 2026-10-02 — `release_date` pasa a 2026-09-03 según el anuncio de OpenAI (feed RSS de noticias); archivo renombrado desde `undated_` (revisión de actualidad).
+- 2026-10-03 — Marcada como revisada por mablog_admin en la página de revisión. Notas de revisión aceptadas: 2 (detalle en el historial en inglés).

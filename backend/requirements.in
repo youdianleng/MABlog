@@ -14,3 +14,5 @@ httpx
 pypdf
 pydantic-settings
 cryptography
+# Reads model-file front matter for the administrator review page.
+pyyaml

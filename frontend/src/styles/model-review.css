@@ -1,0 +1,292 @@
+/* Administrator review page for AI model files (/admin/ai-models). */
+.model-review-page {
+  /* Same palette as the newsroom, so the shared step-up panel renders identically here. */
+  --news-ink: #24211f;
+  --news-muted: #6f675e;
+  --news-line: #d7cbbb;
+  --news-paper: #fffaf1;
+  --news-red: #8e3035;
+  --news-green: #376653;
+  display: grid;
+  gap: 20px;
+  color: var(--news-ink);
+}
+.model-review-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 28px 32px;
+  background: var(--news-paper);
+  border: 1px solid var(--news-line);
+}
+.model-review-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.05;
+}
+.model-review-hero p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--news-muted);
+  line-height: 1.6;
+}
+.model-review-filters {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--news-line);
+}
+.model-review-filters button {
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  color: var(--news-muted);
+}
+.model-review-filters button[aria-pressed="true"] {
+  border-bottom-color: var(--news-red);
+  color: var(--news-red);
+}
+
+/* List and detail side by side; the list scrolls on its own so the decision stays reachable. */
+.model-review-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.model-review-list {
+  display: grid;
+  gap: 4px;
+  max-height: 75vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.model-review-list button {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--news-paper);
+  border: 1px solid var(--news-line);
+}
+.model-review-list button[aria-current="true"] {
+  border-color: var(--news-red);
+  box-shadow: inset 3px 0 0 var(--news-red);
+}
+.model-review-list svg {
+  width: 18px;
+  height: 18px;
+}
+.model-review-list strong,
+.model-review-list small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.model-review-list small {
+  color: var(--news-muted);
+  font-size: 12px;
+}
+.model-review-list em {
+  min-width: 22px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-style: normal;
+  text-align: center;
+  color: #fff8e9;
+  background: var(--news-red);
+  border-radius: 999px;
+}
+.model-review-list .is-draft,
+.model-review-meta .is-draft {
+  color: #9a6a1d;
+}
+.model-review-list .is-reviewed,
+.model-review-meta .is-reviewed {
+  color: var(--news-green);
+}
+.model-review-list .is-invalid {
+  color: var(--news-red);
+}
+.model-review-empty,
+.model-review-muted {
+  color: var(--news-muted);
+}
+
+.model-review-detail {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 24px;
+  background: var(--news-paper);
+  border: 1px solid var(--news-line);
+}
+.model-review-detail header {
+  display: grid;
+  gap: 6px;
+}
+.model-review-detail h2 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+}
+.model-review-detail h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.model-review-meta {
+  margin: 0;
+  color: var(--news-muted);
+  font-size: 13px;
+}
+.model-review-meta span {
+  margin-right: 8px;
+  font-weight: 600;
+}
+.model-review-public {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  color: var(--news-red);
+  font-size: 13px;
+}
+.model-review-public svg {
+  width: 14px;
+  height: 14px;
+}
+.model-review-notes {
+  padding: 14px 16px;
+  background: #fbefd9;
+  border-left: 3px solid #c58a2c;
+}
+.model-review-notes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.model-review-context p {
+  margin: 0 0 4px;
+  color: var(--news-muted);
+  font-size: 14px;
+}
+
+.model-review-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.model-review-facts section {
+  min-width: 0;
+}
+.model-review-facts ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.model-review-fact {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid var(--news-line);
+  overflow-wrap: anywhere;
+}
+.model-review-fact small {
+  color: var(--news-muted);
+}
+.model-review-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 13px;
+}
+.model-review-evidence q {
+  font-style: italic;
+}
+.model-review-evidence a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--news-red);
+}
+.model-review-evidence svg {
+  width: 12px;
+  height: 12px;
+}
+
+.model-review-text {
+  padding-top: 8px;
+  border-top: 1px solid var(--news-line);
+}
+.model-review-text p,
+.model-review-text ul {
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+.model-review-languages {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.model-review-languages button {
+  padding: 4px 12px;
+  border: 1px solid var(--news-line);
+}
+.model-review-languages button[aria-pressed="true"] {
+  color: #fff8e9;
+  background: var(--news-ink);
+  border-color: var(--news-ink);
+}
+
+.model-review-actions {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--news-line);
+}
+.model-review-actions p {
+  margin: 0;
+  color: var(--news-muted);
+  font-size: 14px;
+}
+.model-review-confirm {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+}
+/* The global `input` rule gives every input width: 100% and text-field padding; a checkbox must
+   keep its natural size so the label sits right next to it. */
+.model-review-confirm input {
+  flex: none;
+  width: auto;
+  margin-top: 3px;
+  padding: 0;
+}
+.model-review-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 850px) {
+  .model-review-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px 18px;
+  }
+  .model-review-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .model-review-list {
+    max-height: 40vh;
+  }
+  .model-review-detail {
+    padding: 18px 14px;
+  }
+}

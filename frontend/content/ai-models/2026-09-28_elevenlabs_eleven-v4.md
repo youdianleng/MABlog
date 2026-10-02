@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: eleven-v4
 title_en: "Eleven v4: ElevenLabs' most emotive text-to-speech model"
 title_es: "Eleven v4: el modelo de texto a voz más expresivo de ElevenLabs"
@@ -28,10 +28,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "ElevenLabs says the model is ranked #1 by Artificial Analysis; no score was recorded because the arena page was not read. Read it before review."
-  - "Eleven v4 Turbo was announced in the same post and has its own file (eleven-v4-turbo)."
-  - "Prices and plans were not read; check elevenlabs.io/pricing before review."
+review_notes: []
 ---
 
 # English
@@ -89,6 +86,7 @@ ElevenLabs is a voice AI company whose models power narration, dubbing, games an
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
 - 2026-10-02 — Review note updated: Eleven v4 Turbo now has its own file.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -145,3 +143,4 @@ ElevenLabs es una empresa de IA de voz cuyos modelos se usan en narración, dobl
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
 - 2026-10-02 — Nota de revisión actualizada: Eleven v4 Turbo ya tiene su propia ficha.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

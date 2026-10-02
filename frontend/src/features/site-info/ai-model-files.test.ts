@@ -20,7 +20,8 @@ describe("model files", () => {
     expect(names.length).toBe(45);
     for (const name of names) {
       const file = parseModelFile(content(name), name);
-      expect(file.reviewed).toBe(false);
+      // A reviewed file has no open review notes (instructions section 5); drafts may have some.
+      if (file.reviewed) expect(file.reviewNotes).toEqual([]);
       expect(file.sections.en.summary.split(/\s+/).length).toBeGreaterThanOrEqual(100);
       expect(file.sections.es.summary.split(/\s+/).length).toBeLessThanOrEqual(200);
     }

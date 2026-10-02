@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gpt-6-1-sol
 title_en: "GPT-6.1 Sol: near-Astra performance at one-fifth of the price"
 title_es: "GPT-6.1 Sol: rendimiento cercano a Astra por una quinta parte del precio"
@@ -60,10 +60,7 @@ plans:
     source_url: "https://chatgpt.com/pricing"
     quote: "Plan: Pro, Feature: GPT-6.1 Sol, Expanded"
 benchmarks: []
-review_notes:
-  - "Release date from the OpenAI news RSS item \"Introducing GPT-6.1 Sol\" (2026-09-29), not 2026-09-23 as first reported; the announcement page blocks scripts and was not read."
-  - "The one-fifth claim comes from the RSS description: \"Meet GPT-6.1 Sol: near-Astra intelligence for coding, computer use, and professional work at one-fifth of Astra’s standard API input and output token prices.\""
-  - "Not ranked: consider it for the coding leaderboard once an independent Coding Agent Index score exists."
+review_notes: []
 ---
 
 # English
@@ -130,6 +127,7 @@ GPT-6.1 Sol replaces GPT-6 Sol as the middle model of OpenAI's lineup, between G
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -195,3 +193,4 @@ GPT-6.1 Sol sustituye a GPT-6 Sol como modelo intermedio de la gama de OpenAI, e
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

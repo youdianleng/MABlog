@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: recraft-v4-1
 title_en: "Recraft V4.1: more natural photos and illustration from short prompts"
 title_es: "Recraft V4.1: fotos más naturales e ilustración a partir de prompts cortos"
@@ -28,10 +28,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "Release date 2026-05-14 is outside the sweep window; the file was added because Recraft V4.1 Flash (2026-09-23) is a variant of this line."
-  - "A Recraft press release says V4.1 Utility Pro became the highest-ranked text-to-image model outside Google and OpenAI; it was found by search and not read."
-  - "Access: the post says \"Start creating via our API or in Recraft Studio\" and \"get started for free\". Prices were not read."
+review_notes: []
 ---
 
 # English
@@ -87,6 +84,7 @@ Recraft is a design-focused image platform used for illustration, branding, vect
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -141,3 +139,4 @@ Recraft es una plataforma de imagen orientada al diseño que se usa para ilustra
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

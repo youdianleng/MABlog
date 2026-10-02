@@ -413,3 +413,91 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Prices are missing where the official pages did not publish them: Eleven v4 Turbo, Sonic-3.6, MiniMax, and Recraft V4.1.
   - Some facts rely on list or pricing pages only: the Alibaba models have no announcement post, and MiniMax M3 has no release date.
   - The 14 `not verified` providers remain.
+
+- [x] **I106 - Mark the 25 freshness-sweep files as reviewed (follows I104 and I105).** At the site owner's request, the 25 files created by the 2026-10-02 sweep now have `review_status: reviewed` and empty `review_notes`.
+
+  **Decisions:**
+  - Scope: only the sweep files. The 20 migrated files stay drafts, so the leaderboards still use the built-in snapshot.
+  - Open notes: the instruction file says to empty `review_notes` on review. The open points remain in `docs/ai-models-review-checklist.md`, where each file's review item records the decision and the remaining checks are left unticked as accepted caveats.
+
+  **Effect on `/ai-models`:** none of these files is ranked, so the leaderboards are unchanged. Each file now has a public profile ("Not ranked in this edition") showing its reviewed facts. GPT-6 Sol's profile shows the "newer release" notice linking to GPT-6.1 Sol. Each file has a dated history line in both languages.
+
+  **Code:** the file test no longer expects every file to be a draft; reviewed files must have empty review notes. A new data test checks the committed files: 25 are reviewed, every one gets a profile, and the leaderboards match the snapshot-only result.
+
+  **Areas:** `frontend/content/ai-models/` (25 files), `frontend/src/features/site-info/ai-model-files.test.ts`, `ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - Unit tests: 41/41.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - The frontend was rebuilt; six sample profiles return 200 with no loader errors. The GPT-6 Sol and Claude Opus 5.5 profiles were checked in the browser (superseded notice, facts, prices, and verdicts shown).
+  - Full Playwright suite: 30/30.
+  - Backend tests were not rerun because no backend file changed.
+
+  **Limitations:** the accepted caveats are still open; for example, several files have no published prices, MiniMax M3 has no release date, and some access details are unconfirmed (see the checklist).
+
+- [x] **I107 - Admin-only review page with Approve for AI model files.** The user asked for a full review page with an Approve button that only administrators can see. Until now, files could only be reviewed by editing them by hand.
+
+  **Page (`/admin/ai-models`, side-menu link "Model review", shown only to administrators):**
+  - Lists every model file with a Drafts / Reviewed / All filter and an open-note count.
+  - The detail panel shows the status, release and check dates, open review notes, any ranking places or `superseded_by`, and every price, plan, and benchmark with its exact quote and an "Open source" link.
+  - It also shows the public text with an English / Español switch, and links to the public profile once the file is reviewed.
+  - **Approve** needs a confirmation tick and accepts an optional note. **Return to draft** needs a reason of at least 10 characters.
+  - Non-administrators see an access notice, and the API refuses them.
+
+  **Backend:**
+  - `GET /api/admin/ai-models` (administrator role) returns each file's text and SHA-256 plus `rankings.yaml`, because drafts are unpublished.
+  - `POST /api/admin/ai-models/{name}/approve` and `/return-to-draft` require recent step-up verification (the same policy as newsroom publication) and the SHA-256 the reviewer loaded. An edited file is refused with 409 and never overwritten.
+  - `services/ai_model_review.py` edits `review_status`, `review_notes`, and both update histories as text, validates the result with PyYAML, and replaces the file atomically under a process lock (one uvicorn process).
+  - On approval, the accepted notes are copied into the English history line, so clearing `review_notes` loses nothing.
+  - Returning a file to draft stores the reason as a review note.
+  - Every action writes an administrator audit event. It is staged before the file write and committed after it.
+  - File names must match the model-file pattern, so `_` reports, `rankings.yaml`, and path tricks return 404.
+  - PyYAML is now a runtime dependency (it was dev-only).
+
+  **Infrastructure:**
+  - Compose bind-mounts `frontend/content/ai-models` into the backend at `/data/ai-models` (read-write, `AI_MODELS_DIR`) and into the frontend over its image copy (read-only).
+  - Approvals change the repository files, so they appear as Git changes to commit. On Linux hosts the folder must be writable by UID 10001.
+  - `/ai-models` and `/ai-models/[slug]` now use `dynamic = "force-dynamic"`. Without it, Next.js prerendered them at build time, so approvals would not have appeared until a rebuild.
+
+  **Areas:**
+  - Backend: `backend/app/api/ai_model_review.py`, `services/ai_model_review.py`, `schemas/ai_models.py`, `config.py`, `api/router.py`, `requirements*`, `tests/test_ai_model_review.py`.
+  - Compose: `compose.yaml`.
+  - Frontend: `frontend/src/features/model-review/` (page, list, detail, facts, text, actions, hook), `lib/api/model-review.ts`, `app/admin/ai-models/page.tsx`, `app/ai-models/**/page.tsx`, `app-shell/side-menu.tsx`, `styles/model-review.css`, `tests/model-review.spec.ts`.
+  - Docs: `docs/architecture.md`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - Backend: 62/62 with ruff clean. The new tests cover 401/403/200 access, step-up, the confirmation flag, history and audit content, stale-version 409, double approval, unsafe names, return-to-draft reasons, and a missing folder (503).
+  - Frontend: unit tests 41/41; TypeScript, ESLint, Prettier, and the comment audit pass.
+  - Full Playwright suite: 32/32, including two new tests. A regular account is refused. An administrator opens the page from the side menu, approves a temporary copy of a draft, sees its public profile, and returns it to draft; the copy is deleted afterwards.
+  - Manually in the in-app browser with the local administrator:
+    - The anonymous notice and the API's 401.
+    - Approve and return on a temporary file; the file changed on disk and the profile appeared at once.
+    - Phone width (375 px) has no horizontal scroll.
+  - The real content folder was left unchanged.
+
+  **Limitations:**
+  - The profile URL of a draft or unknown model renders the not-found page with `noindex`, but returns HTTP 200 rather than 404, because the root loading boundary starts streaming first.
+  - The shared step-up panel's text still describes newsroom actions.
+  - The page does not edit facts; corrections are still made in the file, and the page shows them after **Reload**.
+
+- [x] **I108 - Fix the approval checkbox spacing on the review page (follows I107).** The user reported that the "I checked the prices…" checkbox sat far from its text. The global `input` rule (`width: 100%` plus text-field padding) stretched the checkbox across half the row. `.model-review-confirm input` now keeps the checkbox's natural size (`flex: none; width: auto; padding: 0`).
+
+  **Areas:** `frontend/src/styles/model-review.css`.
+
+  **Verification:**
+  - In the in-app browser after rebuilding, the checkbox measures 13 px wide with an 8 px gap to its label (it was about 59 px wide, with the text pushed to the far side).
+  - Prettier passes, and the review-page Playwright tests pass (2/2).
+
+- [x] **I109 - Record the site owner's first approvals from the review page.** On 2026-10-03 the site owner approved GPT-6 Astra (`2026-09-03_openai_gpt-6-astra.md`) and GPT Image 2.5 Sunburst (`2026-09-08_openai_gpt-image-2-5-sunburst.md`) on `/admin/ai-models`.
+
+  **What the approvals changed:**
+  - Each file now has `review_status: reviewed` and empty `review_notes`, and its accepted notes are in the update history.
+  - Both models are ranked (coding and image), so their leaderboard entries now use the files' facts and prices instead of the built-in snapshot. The ranking order is unchanged.
+
+  **Related changes:**
+  - The data test that assumed exactly 25 reviewed files is now independent of the count. It checks that every reviewed file has a profile, that each leaderboard still follows `rankings.yaml`, and that a ranked model uses its file exactly when the file is reviewed.
+  - The checklist entries for the two files record the approval.
+
+  **Areas:** the two content files, `frontend/src/features/site-info/ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:** unit tests pass (41/41). The page-level effect was not re-checked by hand, because the files changed only through the tested approval path.

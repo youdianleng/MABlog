@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: deepseek-v4-1-flash
 title_en: "DeepSeek-V4.1-Flash: the first model of DeepSeek's new architecture"
 title_es: "DeepSeek-V4.1-Flash: el primer modelo de la nueva arquitectura de DeepSeek"
@@ -62,9 +62,7 @@ benchmarks:
     measured_at: 2026-09-10
     quote: "DeepSWE v1.1: 74.2"
     ranking: null
-review_notes:
-  - "The price quote is part of the pricing table: the first value after each PEAK label is the V4.1 Flash column ($0.3 input on cache miss, $1.2 output)."
-  - Open-weights availability and the DeepSeek chat app were not checked.
+review_notes: []
 ---
 
 # English
@@ -127,6 +125,7 @@ DeepSeek is a Chinese AI lab known for low API prices and open releases. V4.1 Fl
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -188,3 +187,4 @@ DeepSeek es un laboratorio chino de IA conocido por sus precios de API bajos y s
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

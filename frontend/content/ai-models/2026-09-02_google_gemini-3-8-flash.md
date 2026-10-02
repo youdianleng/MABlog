@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gemini-3-8-flash
 title_en: "Gemini 3.8 Flash: Google's most intelligent Flash model"
 title_es: "Gemini 3.8 Flash: el modelo Flash más inteligente de Google"
@@ -47,10 +47,7 @@ pricing:
     quote: "Output price (including thinking tokens) Free of charge $3.75 through December 31, 2026. $7.50 starting January 1, 2027."
 plans: []
 benchmarks: []
-review_notes:
-  - "Each pricing entry quotes one row of the pricing table: the first quotes the input row, the second the output row; both rows were read together."
-  - "Context window and Gemini app availability were not checked; read the Gemini 3.8 Flash model page before review."
-  - "Previous release of the line: Gemini 3.7 Flash (2026-08-13), which has no file."
+review_notes: []
 ---
 
 # English
@@ -112,6 +109,7 @@ Flash is Google's fast, lower-cost Gemini line, used for agents, coding assistan
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -172,3 +170,4 @@ Flash es la línea rápida y más económica de Gemini, usada para agentes, asis
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

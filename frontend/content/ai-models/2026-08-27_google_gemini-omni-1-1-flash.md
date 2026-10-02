@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gemini-omni-1-1-flash
 title_en: "Gemini Omni Flash 1.1: Google's video model reaches general availability"
 title_es: "Gemini Omni Flash 1.1: el modelo de vídeo de Google ya está disponible de forma general"
@@ -41,10 +41,7 @@ pricing:
     quote: "Input price Not available $1.50 (text / image / video / audio) Output price (including thinking tokens) Not available $9.00 (text) $17.50 (video)"
 plans: []
 benchmarks: []
-review_notes:
-  - "The 2026-09-22 ranking scored the earlier Gemini Omni Flash (gemini-omni-flash.md); it is not clear whether the arena entry already used 1.1. Check the arena before moving the ranking to this file."
-  - "The same price row is published for the 1.1 release and the preview, so the price is unchanged."
-  - Gemini app availability was not checked.
+review_notes: []
 ---
 
 # English
@@ -104,6 +101,7 @@ Gemini Omni is Google's unified model for video creation: it reasons over text, 
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -162,3 +160,4 @@ Gemini Omni es el modelo unificado de Google para crear vídeo: razona a la vez 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

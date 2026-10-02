@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: minimax-music-3
 title_en: "MiniMax Music 3.0: an open-weights model for complete songs"
 title_es: "MiniMax Music 3.0: un modelo de pesos abiertos para canciones completas"
@@ -27,9 +27,7 @@ checked_at: 2026-10-02
 pricing: []
 plans: []
 benchmarks: []
-review_notes:
-  - "Access is based on the post's title and \"Open Weights\" tag; the post text read did not include a weights link, licence, API or app availability. Check before review."
-  - "The ranked file minimax-music.md links the Music 2.6 post; it is now superseded by this file. Check which version the 2026-09-22 arena entry scored before moving the ranking."
+review_notes: []
 ---
 
 # English
@@ -85,6 +83,7 @@ MiniMax Music is the music line of MiniMax's multimodal lineup. Version 3.0 is a
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -139,3 +138,4 @@ MiniMax Music es la línea musical de la gama multimodal de MiniMax. La versión
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.

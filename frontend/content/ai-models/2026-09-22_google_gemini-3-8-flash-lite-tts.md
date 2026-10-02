@@ -1,6 +1,6 @@
 ---
 schema: mablog-ai-model/1
-review_status: draft
+review_status: reviewed
 slug: gemini-3-8-flash-lite-tts
 title_en: "Gemini 3.8 Flash-Lite TTS: fast, low-cost speech for voice agents"
 title_es: "Gemini 3.8 Flash-Lite TTS: voz rápida y económica para agentes"
@@ -39,9 +39,7 @@ pricing:
     quote: "Output price Free of charge $6.00 (audio) through December 31, 2026. $12.00 (audio) starting January 1, 2027."
 plans: []
 benchmarks: []
-review_notes:
-  - "The pricing entry quotes the output row; the $0.50 text input price is in the input row, which is the same as for Gemini 3.8 Flash TTS."
-  - Gemini app availability was not checked.
+review_notes: []
 ---
 
 # English
@@ -99,6 +97,7 @@ Flash-Lite TTS is the volume option of Google's new speech pair: cheaper and fas
 ## Update history
 
 - 2026-10-02 — File created by the freshness sweep (instructions v1.2) from official sources.
+- 2026-10-02 — Marked reviewed by the site owner; open review notes moved to `docs/ai-models-review-checklist.md`.
 
 # Español
 
@@ -155,3 +154,4 @@ Flash-Lite TTS es la opción de volumen de la nueva pareja de voz de Google: má
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada por la revisión de actualidad (instrucciones v1.2) a partir de fuentes oficiales.
+- 2026-10-02 — Marcada como revisada por el responsable del sitio; las notas de revisión pendientes pasan a `docs/ai-models-review-checklist.md`.
