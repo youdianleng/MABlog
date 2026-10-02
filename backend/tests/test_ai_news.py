@@ -936,6 +936,8 @@ def test_instruction_file_keeps_its_required_structure():
     for heading in (
         "## 1. Scope",
         "## 2. Sources",
+        "### 2.3 Reading sources for recency",
+        "### 3.0 Freshness sweep (every run, before the news window)",
         "## 5. Front matter",
         "## 6. Body template",
         "## 8. Self-check before saving a file",
@@ -962,6 +964,8 @@ def test_instruction_file_keeps_its_required_structure():
     front_matter = yaml.safe_load(front_matter_block.strip().strip("-"))
     assert front_matter["schema"] == "mablog-ai-model/1"
     assert front_matter["review_status"] == "draft"
+    assert front_matter["superseded_by"] is None
+    assert "Freshness table" in text
     assert {"pricing", "plans", "benchmarks", "official_sources"} <= front_matter.keys()
 
 

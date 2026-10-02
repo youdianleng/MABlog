@@ -1548,3 +1548,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Notice on a reviewed profile whose line has a newer release (superseded_by). */
+.model-superseded {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid #dfc3a4;
+  border-radius: 4px;
+  background: #faf0e2;
+  color: #6b4a2b;
+  font-size: 14px;
+}
+.model-superseded a {
+  color: #8f3739;
+  font-weight: 700;
+}

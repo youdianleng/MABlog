@@ -8,9 +8,10 @@ provider: OpenAI
 provider_key: openai
 model: GPT-6 Astra
 version: "6"
-family: gpt-6
+family: gpt-astra
+superseded_by: null
 category: llm-agents
-release_date: null
+release_date: 2026-09-03
 status: generally_available
 access:
   - Subscription
@@ -19,6 +20,9 @@ regions: null
 accent: sage
 context_window: 1050000
 official_sources:
+  - url: https://openai.com/index/gpt-6-astra
+    label: "OpenAI: GPT-6 Astra: A new generation of intelligence"
+    published: 2026-09-03
   - url: https://developers.openai.com/api/docs/models/gpt-6-astra
     label: "OpenAI API model page: GPT-6 Astra"
     published: null
@@ -72,7 +76,7 @@ benchmarks:
     evidence: snapshot-2026-09-22
     ranking: coding
 review_notes:
-  - Release date is not stated on the API model page (only the Apr 30, 2026 knowledge cutoff).
+  - "Release date from the OpenAI news RSS item \"GPT-6 Astra: A new generation of intelligence\" (2026-09-03); the announcement page blocks scripts and was not read."
   - ChatGPT plan prices are rendered per region by script and are not in the page text; check them in a browser before marking reviewed.
 ---
 
@@ -117,7 +121,6 @@ Astra is the reasoning-focused member of OpenAI's GPT-6 family. The API model pa
 ## Limitations and caveats
 
 - The API model page lists endpoints it does not support, including Realtime, Assistants, fine-tuning, embeddings and image, video or speech generation.
-- Release date: not published on the API model page.
 
 ## Best for users / best for developers
 
@@ -126,13 +129,16 @@ Astra is the reasoning-focused member of OpenAI's GPT-6 family. The API model pa
 
 ## Sources
 
-1. [OpenAI API model page: GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)
-2. [ChatGPT pricing](https://chatgpt.com/pricing)
-3. [Artificial Analysis (evaluated 2026-09-22)](https://artificialanalysis.ai/agents/coding-agents)
+1. [OpenAI: GPT-6 Astra: A new generation of intelligence](https://openai.com/index/gpt-6-astra) (2026-09-03)
+2. [OpenAI API model page: GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)
+3. [ChatGPT pricing](https://chatgpt.com/pricing)
+4. [Artificial Analysis (evaluated 2026-09-22)](https://artificialanalysis.ai/agents/coding-agents)
 
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
+- 2026-10-02 — `release_date` set to 2026-09-03 from OpenAI's announcement (news RSS feed); file renamed from `undated_` (freshness sweep).
 
 # Español
 
@@ -175,7 +181,6 @@ Astra es el miembro centrado en el razonamiento de la familia GPT-6 de OpenAI. L
 ## Limitaciones y advertencias
 
 - La página del modelo enumera endpoints no compatibles, como Realtime, Assistants, fine-tuning, embeddings y generación de imagen, vídeo o voz.
-- Fecha de lanzamiento: no publicada en la página del modelo.
 
 ## Ideal para usuarios / ideal para desarrolladores
 
@@ -184,10 +189,13 @@ Astra es el miembro centrado en el razonamiento de la familia GPT-6 de OpenAI. L
 
 ## Fuentes
 
-1. [OpenAI API model page: GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)
-2. [ChatGPT pricing](https://chatgpt.com/pricing)
-3. [Artificial Analysis (evaluado 2026-09-22)](https://artificialanalysis.ai/agents/coding-agents)
+1. [OpenAI: GPT-6 Astra: A new generation of intelligence](https://openai.com/index/gpt-6-astra) (2026-09-03)
+2. [OpenAI API model page: GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)
+3. [ChatGPT pricing](https://chatgpt.com/pricing)
+4. [Artificial Analysis (evaluado 2026-09-22)](https://artificialanalysis.ai/agents/coding-agents)
 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
+- 2026-10-02 — `release_date` pasa a 2026-09-03 según el anuncio de OpenAI (feed RSS de noticias); archivo renombrado desde `undated_` (revisión de actualidad).

@@ -8,7 +8,8 @@ provider: Google
 provider_key: google
 model: Gemini Omni Flash
 version: null
-family: gemini-omni
+family: gemini-omni-flash
+superseded_by: gemini-omni-1-1-flash
 category: video
 release_date: null
 status: generally_available
@@ -41,7 +42,7 @@ benchmarks:
     evidence: snapshot-2026-09-22
     ranking: video
 review_notes:
-  - The docs now describe gemini-omni-1.1-flash, while the 2026-09-22 ranking scored the earlier Gemini Omni Flash. Decide whether this file should track 1.1 (new file) or stay on the ranked version.
+  - Superseded by Gemini Omni Flash 1.1 (GA 2026-08-27, file gemini-omni-1-1-flash); the preview endpoint was scheduled for deprecation on 2026-09-30. The 2026-09-22 ranking scored this file; check which version the arena used before moving the ranking.
   - Price is not published for the ranked version; the source lists a price only for the 1.1 release.
 ---
 
@@ -96,6 +97,8 @@ Gemini Omni is Google's unified model for video creation. Instead of separate mo
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
+- 2026-10-02 — `superseded_by` set to `gemini-omni-1-1-flash` (generally available 2026-08-27; freshness sweep).
 
 # Español
 
@@ -148,3 +151,5 @@ Gemini Omni es el modelo unificado de Google para crear vídeo. En lugar de mode
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
+- 2026-10-02 — `superseded_by` pasa a `gemini-omni-1-1-flash` (disponible de forma general el 2026-08-27; revisión de actualidad).

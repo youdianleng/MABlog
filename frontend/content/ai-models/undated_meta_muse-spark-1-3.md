@@ -9,6 +9,7 @@ provider_key: meta
 model: Muse Spark 1.3
 version: "1.3"
 family: muse-spark
+superseded_by: null
 category: llm-agents
 release_date: null
 status: generally_available
@@ -109,6 +110,7 @@ Muse Spark is the agent-oriented model family from Meta Superintelligence Labs. 
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -164,3 +166,4 @@ Muse Spark es la familia de modelos orientada a agentes de Meta Superintelligenc
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

@@ -8,7 +8,8 @@ provider: SpaceXAI
 provider_key: xai
 model: Grok Imagine Image 2.0
 version: "2.0"
-family: grok-imagine
+family: grok-imagine-image
+superseded_by: null
 category: image
 release_date: 2026-08-07
 status: generally_available
@@ -103,6 +104,7 @@ Imagine Image 2.0 adds a higher-quality Quality Mode to Grok's image tools, buil
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -154,3 +156,4 @@ Imagine Image 2.0 añade a las herramientas de imagen de Grok un modo Quality de
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

@@ -318,3 +318,65 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Live check without a rebuild: copying a reviewed GLM-5.3 file into the running container switched its profile to the reviewed-facts view, and restoring the draft switched it back. The reviewed section had no overflow at 1280 and 390 px.
 
   **Not done:** the files are not reviewed yet (`docs/ai-models-review-checklist.md`), and stage 3 (newsroom) is pending.
+
+- [x] **I103 - Make model-file creation follow the newest official releases (instructions v1.2).** After reviewing the generated files, the user reported that they missed recent releases: Claude Opus 5.5 (2026-09-22) and GPT-6.1 (reported as 2026-09-23).
+
+  **Evidence checked on 2026-10-02:**
+  - Anthropic's newsroom lists "Introducing Claude Opus 5.5" on Sep 22, 2026, and "Introducing Claude Fable 5.1 and Claude Mythos 5.1" on Sep 1, 2026.
+  - OpenAI's RSS feed lists "Introducing GPT-6 Sol and Luna" on 2026-09-22 and "Introducing GPT-6.1 Sol" on 2026-09-29, not on 09-23; the 09-23 items are GPT-6 Astra customer stories.
+  - So the user was right that the files were not current, with the GPT-6.1 date corrected to the official one.
+
+  **Root cause:** the 20 files were migrated from the 2026-09-22 ranking snapshot, and the workflow only read posts inside the 7-day news window. Nothing required the newest release of every model line to have a file, and nothing checked for newer versions or verified dates against the official item.
+
+  **Changes:**
+  - Instructions v1.2 separates the news window (the weekly post) from coverage (the files must include the newest release of every model line).
+  - A new freshness sweep (section 3.0) runs first on every run: it lists model lines, finds each line's newest official release newest-first, creates missing files even outside the window, marks older files `superseded_by`, and refreshes prices older than 30 days.
+  - New source-reading rules (section 2.3): newest-first via dated feeds, official dates only (with the GPT-6.1 example), multi-line announcements count as separate releases, and how far each source was read is recorded.
+  - `family` is now the version-free line (section 5.0.1), with a new `superseded_by` field.
+  - The self-check adds newest-release and official-date checks; the run report adds a per-provider freshness table with a `not verified` status for unreadable sources.
+  - OpenAI's RSS feed is now the preferred, dated source.
+  - Code: the parser validates an optional `superseded_by` (null or another slug); reviewed profiles of superseded releases link to the newer one.
+  - The 20 files now use version-free `family` values (for example `gpt-6` → `gpt-astra`, `glm-5` → `glm`) and have `superseded_by: null` with a dated history line in both languages.
+  - Editing scripts had saved some files with Windows line endings; they were converted back to LF (the Git index was already LF).
+
+  **Areas:** `backend/app/services/ai_news/instructions/ai-news-instructions.md`, `backend/tests/test_ai_news.py`, `frontend/content/ai-models/*.md`, `frontend/src/features/site-info/ai-model-files.ts` (+ test), `ai-models-data.ts`, `ai-model-profile.tsx`, `styles/site-info.css`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:** unit tests 38/38 (new superseded_by checks); backend 57/57 with ruff clean (the structure test now requires sections 2.3 and 3.0, the freshness table, and `superseded_by`); TypeScript, ESLint, Prettier, and the comment audit pass; the full Playwright suite passes 30/30 after rebuilding the frontend and backend.
+
+  **Not done:** no files were created yet for the newer releases (Claude Opus 5.5, Claude Mythos 5.1, GPT-6 Sol, GPT-6 Luna, GPT-6.1 Sol) or the drift noted earlier (Gemini Omni Flash 1.1, Suno v6, Seedance 2.5, Lyria 3.5, MiniMax Music 3.0). Running the new freshness sweep is the next step and awaits the user's go-ahead.
+
+- [x] **I104 - Run the first freshness sweep and add files for the newest releases (follows I103).** The user approved running the v1.2 freshness sweep added in I103. It checked every provider in section 2.2 for model releases since 2026-08-27, and checked that every existing model line points to its newest release.
+
+  **Created (12 draft files, none ranked):**
+  - Claude Opus 5.5 (2026-09-22).
+  - GPT-6 Sol and GPT-6 Luna (2026-09-22), and GPT-6.1 Sol (2026-09-29). GPT-6 Sol was created already `superseded_by: gpt-6-1-sol`, so the Sol line keeps its history.
+  - GPT-Live-1 (2026-09-10).
+  - Gemini 3.8 Flash (2026-09-02), Gemini Omni Flash 1.1 (2026-08-27), and Lyria 3.5 (2026-09-03).
+  - Suno v6 (2026-09-09), Eleven v4 (2026-09-28), Recraft V4.1 Flash (2026-09-23), and DeepSeek-V4.1-Flash (2026-09-10).
+
+  Every price, plan, and benchmark quote was checked verbatim against the saved official page text by a script, and every summary is 100–200 words in both languages. The quoted benchmark scores are self-reported and labelled as such.
+
+  **Updated:**
+  - Suno V5.5 → `superseded_by: suno-v6`; Lyria 3 Pro → `lyria-3-5`; Gemini Omni Flash → `gemini-omni-1-1-flash`. Each has a dated history line.
+  - GPT-6 Astra got `release_date: 2026-09-03` from OpenAI's RSS item "GPT-6 Astra: A new generation of intelligence", and was renamed from `undated_`. The 2026-09-09 item is a follow-up business post.
+
+  **Code:**
+  - New `isModelFileName` helper: the `/ai-models` loader skips `_`-prefixed notes, so the run report can sit in the content folder.
+  - New tests: underscore notes are skipped, and every `superseded_by` points to a committed file of the same `family`.
+
+  **Run report:** `frontend/content/ai-models/_run-report_2026-10-02.md` has the freshness table for all 30 providers, the created and updated files, unconfirmed leads, exclusions, and suggested ranking changes.
+
+  **Areas:** `frontend/content/ai-models/` (12 new files, 4 updated, run report), `frontend/src/features/site-info/ai-model-files.ts` (+ test), `ai-models-content.server.ts`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - Unit tests: 40/40.
+  - Backend: 57/57 with ruff clean.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - Frontend and backend were rebuilt; `/ai-models` returns 200 with no skipped-file errors in the log.
+  - Full Playwright suite: 30/30.
+  - The page content is unchanged, because all new files are drafts and the rankings are human-curated.
+
+  **Not done (left for the next run, listed in the run report):**
+  - Files for Gemini 3.8 Live and Live Extended Thinking, Gemini 3.8 Flash TTS and Flash-Lite TTS, Eleven v4 Turbo, Sonic-3.6, three Qwen 3.8 / Qwen Audio realtime models, Recraft V4.1, and MiniMax M3 / Speech 2.8 / Music 3.0 (undated).
+  - Fourteen providers are marked `not verified`: their sources were blocked or script-rendered, or were not read far enough this run.
+  - The new files still need human review before they appear on `/ai-models`.

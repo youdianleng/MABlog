@@ -9,6 +9,7 @@ provider_key: anthropic
 model: Claude Fable 5.1
 version: "5.1"
 family: claude-fable
+superseded_by: null
 category: llm-agents
 release_date: 2026-09-01
 status: generally_available
@@ -157,6 +158,7 @@ Fable 5.1 is the current top model in Anthropic's Fable line, aimed at difficult
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -219,3 +221,4 @@ Fable 5.1 es el modelo principal actual de la línea Fable de Anthropic, pensado
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

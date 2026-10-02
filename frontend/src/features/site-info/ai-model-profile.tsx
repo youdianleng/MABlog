@@ -195,6 +195,15 @@ export function AiModelProfile({
           <p className="eyebrow">{t("MODEL FAMILY PROFILE", "FICHA DE FAMILIA")}</p>
           <h1>{model.name}</h1>
           <p className="model-profile-provider">{model.provider}</p>
+          {model.file?.supersededBy ? (
+            <p className="model-superseded" role="note">
+              {t(
+                "A newer release of this model is available:",
+                "Hay una versión más reciente de este modelo:",
+              )}{" "}
+              <Link href={`/ai-models/${model.file.supersededBy}`}>{model.file.supersededBy}</Link>
+            </p>
+          ) : null}
           <p>{t(intro.en, intro.es)}</p>
           <div className="models-access-list">
             {model.access.map(

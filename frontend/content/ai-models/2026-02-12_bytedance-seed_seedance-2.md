@@ -9,6 +9,7 @@ provider_key: bytedance-seed
 model: Seedance 2.0
 version: "2.0"
 family: seedance
+superseded_by: null
 category: video
 release_date: 2026-02-12
 status: generally_available
@@ -105,6 +106,7 @@ Seedance is ByteDance's video model line, used in its creative products and offe
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -157,3 +159,4 @@ Seedance es la línea de modelos de vídeo de ByteDance, usada en sus productos 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

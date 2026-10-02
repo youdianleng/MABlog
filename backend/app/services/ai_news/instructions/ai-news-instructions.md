@@ -1,9 +1,10 @@
 # MAblog AI news: research and model-file instructions
 
-- **Instruction version:** 1.1
+- **Instruction version:** 1.2
 - **Last reviewed:** 2026-10-02
 - **Status:** stage 2. The `/ai-models` page reads reviewed model files and `rankings.yaml`; the newsroom does not follow this file yet (stage 3).
 - **Changes in 1.1:** migration rule (section 5.4), `ranking` key replaces `primary`, optional `review_notes`, fixed format for the users/developers section, `rankings.yaml` format (section 4.1).
+- **Changes in 1.2:** recency rules. Every run starts with a freshness sweep (section 3.0) so the newest release of every model line has a file, even outside the 7-day news window. Sources are read newest-first and dates come only from the official item (section 2.3). `family` is the version-free model line, older releases get `superseded_by`, and the run report includes a freshness table. Added after a review on 2026-10-02 found Claude Opus 5.5 (2026-09-22), GPT-6 Sol and Luna (2026-09-22), and GPT-6.1 Sol (2026-09-29) missing from the files.
 - **Master copy:** `backend/app/services/ai_news/instructions/ai-news-instructions.md`. Edit only this file. Copies saved through the profile page are snapshots.
 
 This file tells an AI agent (the MABlog_IA newsroom, or any agent you run by hand) how to:
@@ -53,9 +54,11 @@ Exclude: funding, partnerships, hiring, policy statements, events, benchmark-onl
 
 ### 1.3 Time window and schedule
 
-- Weekly run, aligned with the newsroom schedule: **Monday 09:00, Europe/Madrid**.
-- Cover releases announced in the **previous 7 days**. If a run was missed, cover everything since the last successful run (catch-up).
-- A release's date is the date the **official source** announced it, not the date it was first rumoured or reported.
+Two different windows apply. Do not confuse them:
+
+- **News window (the weekly post):** the post covers releases announced in the **previous 7 days**, run every **Monday 09:00, Europe/Madrid**. If a run was missed, the post covers everything since the last successful run (catch-up).
+- **Coverage (the model files):** the folder must always contain a file for the **newest release of every model line** from every provider in section 2.2, whatever its date. The freshness sweep (section 3.0) enforces this on every run. A release older than 7 days that has no file still gets one; it just does not appear in this week's post unless it was announced inside the news window.
+- A release's date is the date the **official source** announced it (section 2.3), not the date it was first rumoured, reported by an aggregator, or remembered by a person.
 
 ### 1.4 Languages
 
@@ -84,14 +87,14 @@ sources:
     provider_key: openai
     categories: [llm-agents, image, video, voice-sound]
     pages:
-      - { name: Product releases, url: "https://openai.com/news/product-releases/", kind: news, note: "blocks scripts; use the RSS feed below as fallback" }
-      - { name: News RSS feed, url: "https://openai.com/news/rss.xml", kind: rss }
+      - { name: News RSS feed, url: "https://openai.com/news/rss.xml", kind: rss, note: "preferred: dated, newest first, readable by scripts" }
+      - { name: Product releases, url: "https://openai.com/news/product-releases/", kind: news, note: "blocks scripts; use the RSS feed" }
       - { name: ChatGPT release notes, url: "https://help.openai.com/en/articles/6825453-chatgpt-release-notes", kind: release_notes, note: "blocks scripts" }
   - provider: Anthropic
     provider_key: anthropic
     categories: [llm-agents]
     pages:
-      - { name: News, url: "https://www.anthropic.com/news", kind: news }
+      - { name: News, url: "https://www.anthropic.com/news", kind: news, note: "dated cards; read newest first" }
       - { name: Claude Platform release notes, url: "https://platform.claude.com/docs/en/release-notes/overview", kind: release_notes }
   - provider: Google (Gemini / DeepMind)
     provider_key: google
@@ -262,16 +265,38 @@ discovery_only:
 
 OpenAI audio, Google voice, Google Veo/Lyria, and OpenAI Sora have no separate entries; they are covered by those companies' main pages above.
 
+### 2.3 Reading sources for recency
+
+- **Read newest-first.** Use a dated feed where one exists (RSS or Atom, a changelog, a dated release-notes list), otherwise the news page itself. Sort items by their official publication date, newest first, and keep reading until items are older than the period you need: the news window for the post, or the newest existing file of each model line for the sweep. Do not stop at the first screen of a page that paginates.
+- **Take dates only from the official item:** the feed's `pubDate`, the page's visible date, or its `datePublished` metadata. If a date reached you any other way (an aggregator, a social post, a reviewer's note, your own memory), confirm it on the official item and record the official date. If they differ, the official date wins; mention the difference in `review_notes`. Example: GPT-6.1 Sol was reported as 2026-09-23, but OpenAI's feed dates "Introducing GPT-6.1 Sol" 2026-09-29.
+- **Check the provider's whole lineup, not one page.** A provider can announce several lines at once ("Introducing GPT-6 Sol and Luna"; "Introducing Claude Fable 5.1 and Claude Mythos 5.1"). Every line named in an announcement is a separate release that needs its own file.
+- **Record how far you read.** For every provider, note the newest official item you saw and its date; the run report needs it (section 9).
+
 ---
 
 ## 3. Weekly research workflow
 
 Follow these steps in order on every run.
 
+### 3.0 Freshness sweep (every run, before the news window)
+
+The weekly post can only be as current as the files, so first make sure the files are current.
+
+1. **List the model lines.** From the existing files, list every `family` (model line) per provider. Then add any line the provider currently offers that has no file. The provider's model list, changelog, or newest announcements show its current lineup.
+2. **Find the newest release of each line.** Read the provider's sources newest-first (section 2.3) and identify the newest officially announced release of each line, with its official date.
+3. **Compare with the files.** For each line:
+   - If the newest release has no file, create one (steps 5–7 below), **even if it was announced before the news window**.
+   - If a newer release exists than the newest file, create the new file and set `superseded_by: <new slug>` on the older file, with a dated "Update history" line. Never delete the older file.
+   - If a file says a model is current but the provider has retired or replaced it, update `status` and `superseded_by` accordingly.
+4. **Prices and plans.** For every file that is not superseded, re-read its pricing and plan sources when `checked_at` is older than 30 days, and update values that changed (with quotes and an "Update history" line).
+5. **Report.** Fill the freshness table in the run report (section 9). A provider whose newest official item you could not read (blocked or failing source) is listed as **not verified**, never as up to date.
+
+### 3.1 News window
+
 1. **Discover.** Read every official page in section 2.2 for posts dated inside the window. Then scan the discovery-only sites for releases you missed.
 2. **Qualify.** Keep only items that meet section 1.2. Assign each one category (section 1.1).
 3. **Confirm.** Open the official announcement. Record its URL and publication date. If you cannot confirm it officially, add it to "Unconfirmed leads" and stop for that item.
-4. **Match existing files.** Look in the model-file folder for a file with the same `provider_key` and model `slug`.
+4. **Match existing files.** Look in the model-file folder for a file with the same `provider_key` and model `slug`. Most releases in the window should already have a file from the freshness sweep.
    - **New version:** create a new file (section 4).
    - **Price, plan, availability, or status change to an existing release:** update that file in place and add a dated entry to "Update history" (section 6, item 10).
 5. **Extract facts with quotes.** For every price, plan, benchmark, context window, and availability claim, copy the exact sentence from the official page into the structured block (section 5).
@@ -329,7 +354,8 @@ provider: ExampleLab
 provider_key: examplelab        # from the source list in section 2.2
 model: Nova 2.1                 # official model name, exact spelling
 version: "2.1"
-family: nova                    # same value across versions of one family
+family: examplelab-nova         # model line without version numbers; the same for Nova 2.0, 2.1, 3 …
+superseded_by: null             # slug of the newer release of this line once one exists, else null
 category: llm-agents            # llm-agents | image | video | music | voice-sound
 release_date: 2026-09-28        # official announcement date (ISO)
 status: generally_available     # generally_available | preview | beta | deprecated | retired
@@ -388,6 +414,12 @@ review_notes: []                # optional: points the reviewer must check; empt
 ### 5.0 Values that may be null
 
 `release_date`, `version`, `context_window`, `regions`, and plan prices may be `null` when the official source does not state them; the body then says "Not published". Never fill them from memory or from an aggregator alone.
+
+### 5.0.1 Model lines (`family`) and supersession
+
+- `family` names the model **line**, without version numbers, prefixed with the provider when the name alone is ambiguous: `claude-opus`, `claude-fable`, `gpt-astra`, `gpt-sol`, `gpt-luna`, `grok`, `glm`, `gemini-omni-flash`, `suno`. Releases of the same line share it (GPT-6 Sol and GPT-6.1 Sol are both `gpt-sol`). Different lines from one provider never share it (Claude Opus and Claude Fable are separate lines).
+- A variant sold as its own model (for example GLM-5.3-Flash next to GLM-5.3) is its own line when the provider lists it as a separate model with its own price.
+- When a newer release of a line gets a file, set `superseded_by` on the previous newest file of that line to the new slug. Superseded files stay in the folder for history and keep their profile, but the weekly post and any ranking suggestion must use the newest release.
 
 ### 5.1 Price units
 
@@ -500,6 +532,8 @@ What each section contains:
 
 - [ ] File name matches `YYYY-MM-DD_<provider_key>_<model-slug>.md` and `slug`.
 - [ ] `review_status` is `draft` (agents never set `reviewed`).
+- [ ] **Newest release:** reading the provider's sources newest-first found no newer release of this `family`. If one exists, write that file instead and mark this one `superseded_by`.
+- [ ] `release_date` was read from the official item itself, not from an aggregator, a reviewer's note, or memory.
 - [ ] `category`, `status`, `access`, `accent`, and price `unit` use only the allowed values.
 - [ ] Every `pricing`, `plans`, and `benchmarks` entry has `source_url` and an exact `quote`.
 - [ ] The Benchmarks table and the Pricing section match the front matter exactly.
@@ -516,6 +550,7 @@ What each section contains:
 End every run with a report (in the newsroom run detail, or as `_run-report_YYYY-MM-DD.md` in the folder when run by hand):
 
 - **Window:** start and end dates, and whether this was a catch-up run.
+- **Freshness table:** one row per provider, with the newest official item read (title, date, link), the newest release per model line, the newest file per line, and a status: `up to date`, `file created`, `superseded`, or `not verified` (source blocked or failing). Every provider in section 2.2 appears, including those with nothing new.
 - **Created files:** file names.
 - **Updated files:** file names with a one-line change summary.
 - **Unconfirmed leads:** releases seen only on aggregators, with the link where they were seen.

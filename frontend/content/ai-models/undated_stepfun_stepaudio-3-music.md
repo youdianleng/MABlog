@@ -8,7 +8,8 @@ provider: StepFun
 provider_key: stepfun
 model: StepAudio 3 Music
 version: "3"
-family: stepaudio
+family: stepaudio-music
+superseded_by: null
 category: music
 release_date: null
 status: generally_available
@@ -109,6 +110,7 @@ StepAudio 3 Music comes from StepFun's StepAudio speech and audio family. Beyond
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -162,3 +164,4 @@ StepAudio 3 Music procede de la familia StepAudio de voz y audio de StepFun. Ade
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

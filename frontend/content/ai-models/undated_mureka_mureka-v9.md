@@ -9,6 +9,7 @@ provider_key: mureka
 model: Mureka V9
 version: "9"
 family: mureka
+superseded_by: null
 category: music
 release_date: null
 status: generally_available
@@ -110,6 +111,7 @@ Mureka is a music creation platform that generates complete songs and instrument
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -162,3 +164,4 @@ Mureka es una plataforma de creación musical que genera canciones completas y p
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

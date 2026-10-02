@@ -32,6 +32,7 @@ import {
 /** Extra facts shown only when a reviewed file backs the model. */
 export type FileFacts = {
   category: ModelFile["category"];
+  supersededBy: string | null;
   title: LocalizedText;
   summary: LocalizedText;
   whatsNew: { en: string[]; es: string[] };
@@ -100,6 +101,7 @@ function modelFromFile(file: ModelFile): ModelView {
     developerVerdict: { en: en.developers, es: es.developers },
     file: {
       category: file.category,
+      supersededBy: file.supersededBy,
       title: file.title,
       summary: { en: en.summary, es: es.summary },
       whatsNew: { en: en.whatsNew, es: es.whatsNew },

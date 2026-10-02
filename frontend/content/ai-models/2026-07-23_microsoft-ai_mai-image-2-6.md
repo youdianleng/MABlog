@@ -9,6 +9,7 @@ provider_key: microsoft-ai
 model: MAI-Image-2.6
 version: "2.6"
 family: mai-image
+superseded_by: null
 category: image
 release_date: 2026-07-23
 status: generally_available
@@ -103,6 +104,7 @@ MAI-Image-2.6 is part of Microsoft's in-house MAI model family. It focuses on co
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
 
 # Español
 
@@ -154,3 +156,4 @@ MAI-Image-2.6 forma parte de la familia de modelos propios MAI de Microsoft. Se 
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).

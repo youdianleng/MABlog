@@ -8,7 +8,8 @@ provider: Google
 provider_key: google
 model: Lyria 3 Pro
 version: "3"
-family: lyria
+family: lyria-pro
+superseded_by: lyria-3-5
 category: music
 release_date: null
 status: preview
@@ -68,7 +69,7 @@ benchmarks:
 review_notes:
   - The docs give only 'Latest update March 2026', not a release day.
   - Google now publishes $0.08 per song; music had no comparable prices when the 2026-10-01 price check ran.
-  - The Gemini API navigation also lists a newer Lyria 3.5; consider a ranking review.
+  - Superseded by Lyria 3.5 (GA 2026-09-03, file lyria-3-5); the pricing page now lists Lyria 3 previews as legacy models. Consider a ranking review.
 ---
 
 # English
@@ -125,6 +126,8 @@ Lyria is Google DeepMind's music model family. Lyria 3 Pro focuses on song struc
 ## Update history
 
 - 2026-10-02 — File created from the reviewed 2026-09-22 ranking snapshot and the 2026-10-01 price check; new facts researched from official pages.
+- 2026-10-02 — `family` set to the version-free model line and `superseded_by` added (instructions v1.2).
+- 2026-10-02 — `superseded_by` set to `lyria-3-5` (Lyria 3.5 generally available 2026-09-03; freshness sweep).
 
 # Español
 
@@ -180,3 +183,5 @@ Lyria es la familia de modelos musicales de Google DeepMind. Lyria 3 Pro se cent
 ## Historial de actualizaciones
 
 - 2026-10-02 — Ficha creada a partir de la clasificación revisada del 2026-09-22 y la comprobación de precios del 2026-10-01; datos nuevos investigados en páginas oficiales.
+- 2026-10-02 — `family` pasa a ser la línea de modelo sin versión y se añade `superseded_by` (instrucciones v1.2).
+- 2026-10-02 — `superseded_by` pasa a `lyria-3-5` (Lyria 3.5 disponible de forma general el 2026-09-03; revisión de actualidad).

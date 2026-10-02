@@ -40,6 +40,13 @@ const PRICE_UNITS = [
 // Migrated values may omit a quote only with one of these evidence labels (instructions 5.4).
 const MIGRATION_EVIDENCE = ["snapshot-2026-09-22", "price-check-2026-10-01"] as const;
 
+/**
+ * Whether a folder entry is a model file. Names starting with `_` (run reports and other notes the
+ * newsroom writes next to the files, instructions section 9) are Markdown but not model files.
+ */
+export const isModelFileName = (name: string): boolean =>
+  name.endsWith(".md") && !name.startsWith("_");
+
 /** A file or rankings document that does not follow the agreed format. */
 export class ModelFileError extends Error {
   /** Name the offending file so a reviewer can find it quickly. */
@@ -111,6 +118,8 @@ export type ModelFile = {
   model: string;
   version: string | null;
   family: string;
+  /** Slug of the newer release of this line, or null while this release is the newest. */
+  supersededBy: string | null;
   category: (typeof CATEGORIES)[number];
   releaseDate: string | null;
   status: (typeof STATUSES)[number];
@@ -294,6 +303,15 @@ export function parseModelFile(text: string, fileName: string): ModelFile {
   for (const key of ["provider", "provider_key", "model", "family"])
     check(isText(data[key]), `${key} is required`);
   check(isNullableText(data.version), "version must be text or null");
+  // Optional so older files stay valid; when set it must name another kebab-case slug.
+  check(
+    data.superseded_by === undefined ||
+      data.superseded_by === null ||
+      (isText(data.superseded_by) &&
+        /^[a-z0-9]+(-[a-z0-9]+)*$/.test(data.superseded_by) &&
+        data.superseded_by !== data.slug),
+    "superseded_by must be null or another model slug",
+  );
   check((CATEGORIES as readonly unknown[]).includes(data.category), "unknown category");
   check(
     data.release_date === null || isDate(data.release_date),
@@ -395,6 +413,7 @@ export function parseModelFile(text: string, fileName: string): ModelFile {
     model: data.model as string,
     version: data.version as string | null,
     family: data.family as string,
+    supersededBy: (data.superseded_by as string | null | undefined) ?? null,
     category: data.category as ModelFile["category"],
     releaseDate: data.release_date as string | null,
     status: data.status as ModelFile["status"],

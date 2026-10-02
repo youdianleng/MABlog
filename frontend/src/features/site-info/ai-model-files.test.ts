@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ModelFileError, parseModelFile, parseRankings } from "./ai-model-files";
+import { isModelFileName, ModelFileError, parseModelFile, parseRankings } from "./ai-model-files";
 
 const CONTENT = new URL("../../../content/ai-models/", import.meta.url);
 
@@ -15,10 +15,9 @@ const glmName = "2026-08-18_zai_glm-5-3.md";
 describe("model files", () => {
   // Every committed file must parse; a broken edit fails here before reaching the page.
   it("parses every committed model file", () => {
-    const names = readdirSync(CONTENT).filter(
-      /** Model files only. */ (name) => name.endsWith(".md"),
-    );
-    expect(names.length).toBe(20);
+    const names = readdirSync(CONTENT).filter(isModelFileName);
+    // 20 migrated files plus 12 from the 2026-10-02 freshness sweep.
+    expect(names.length).toBe(32);
     for (const name of names) {
       const file = parseModelFile(content(name), name);
       expect(file.reviewed).toBe(false);
@@ -27,10 +26,32 @@ describe("model files", () => {
     }
   });
 
+  // Run reports share the folder but must never be parsed as model files.
+  it("skips underscore-prefixed notes such as run reports", () => {
+    expect(isModelFileName("_run-report_2026-10-02.md")).toBe(false);
+    expect(isModelFileName("rankings.yaml")).toBe(false);
+    expect(isModelFileName(glmName)).toBe(true);
+  });
+
+  // A superseded release must point to a committed newer file of the same model line.
+  it("links every superseded file to an existing newer release", () => {
+    const files = readdirSync(CONTENT)
+      .filter(isModelFileName)
+      .map(/** Parse each committed file. */ (name) => parseModelFile(content(name), name));
+    const bySlug = new Map(files.map(/** Index by slug. */ (file) => [file.slug, file]));
+    for (const file of files) {
+      if (file.supersededBy === null) continue;
+      const newer = bySlug.get(file.supersededBy);
+      expect(newer, `${file.slug} -> ${file.supersededBy}`).toBeDefined();
+      expect(newer?.family).toBe(file.family);
+    }
+  });
+
   // Structured data and body sections come through intact.
   it("reads front matter and body sections", () => {
     const file = parseModelFile(content(glmName), glmName);
     expect(file.slug).toBe("glm-5-3");
+    expect(file.family).toBe("glm");
     expect(file.contextWindow).toBe(1000000);
     expect(file.pricing[0]).toMatchObject({ unit: "per-1m-tokens", input: 1.4, output: 4.4 });
     expect(file.plans[0]).toMatchObject({ name: "GLM Coding Plan", price_monthly: 18 });
@@ -56,6 +77,17 @@ describe("model files", () => {
       /** Parse the altered input. */ () =>
         parseModelFile(content(glmName), "2026-08-18_zai_other.md"),
     ).toThrow(ModelFileError);
+  });
+
+  // superseded_by is null while a release is the newest of its line, else another slug.
+  it("reads and validates superseded_by", () => {
+    expect(parseModelFile(content(glmName), glmName).supersededBy).toBeNull();
+    const newer = content(glmName).replace("superseded_by: null", "superseded_by: glm-5-4");
+    expect(parseModelFile(newer, glmName).supersededBy).toBe("glm-5-4");
+    const self = content(glmName).replace("superseded_by: null", "superseded_by: glm-5-3");
+    expect(/** Parse the altered input. */ () => parseModelFile(self, glmName)).toThrow(
+      /superseded_by/,
+    );
   });
 
   // Each leaderboard key may appear on only one benchmark entry per file.
