@@ -7,12 +7,8 @@ interface AiModelProfileRouteProps {
   params: Promise<{ slug: string }>;
 }
 
-/** Prebuild a profile for every ranked model and every reviewed model file. */
-export function generateStaticParams() {
-  return Object.keys(loadAiModelsData().profiles).map(
-    /** Convert one profile slug into a dynamic-route parameter. */ (slug) => ({ slug }),
-  );
-}
+// Profiles appear and disappear as files are approved or returned to draft, so render per request.
+export const dynamic = "force-dynamic";
 
 /** Build model-specific title and description metadata when the profile exists. */
 export async function generateMetadata({ params }: AiModelProfileRouteProps): Promise<Metadata> {

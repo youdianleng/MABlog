@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from . import administrators, ai_news, ai_news_instructions, auth, collaboration, health, media, posts, profiles, search
+from . import administrators, ai_model_review, ai_news, ai_news_instructions, auth, collaboration, health, media, posts, profiles, search
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)
@@ -15,3 +15,4 @@ api_router.include_router(search.router)
 api_router.include_router(administrators.router)
 api_router.include_router(ai_news.router)
 api_router.include_router(ai_news_instructions.router)
+api_router.include_router(ai_model_review.router)

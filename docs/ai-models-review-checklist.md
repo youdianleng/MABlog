@@ -2,6 +2,8 @@
 
 The 20 files in `frontend/content/ai-models/` start as `review_status: draft`, so `/ai-models` still shows the built-in 2026-09-22 snapshot. Review a file, set `review_status: reviewed`, and empty its `review_notes` to switch that model's facts, score, and price to the file. The change appears on the next page request; a frontend rebuild is needed only for the Docker image copy.
 
+**Reviewing in the browser:** administrators can open **Model review** in the side menu (`/admin/ai-models`) to read each file's facts, sources, and both languages, then approve it or return it to draft. Approval clears `review_notes` and keeps the accepted notes in the file's update history; commit the changed files afterwards.
+
 **Newer releases found on 2026-10-02:** the first 20 files describe the models ranked in the 2026-09-22 snapshot, not the newest releases.
 - Anthropic announced Claude Opus 5.5 (2026-09-22) and Claude Mythos 5.1 (2026-09-01).
 - OpenAI announced GPT-6 Sol and Luna (2026-09-22) and GPT-6.1 Sol (2026-09-29).

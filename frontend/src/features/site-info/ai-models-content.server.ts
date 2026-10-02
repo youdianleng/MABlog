@@ -22,8 +22,9 @@ const CONTENT_DIRECTORY = join(process.cwd(), "content", "ai-models");
  *
  * A malformed model file is logged and skipped so one bad draft cannot take the page down; drafts
  * are ignored by the merge anyway. A malformed `rankings.yaml` throws, because the page cannot
- * choose an order without it. The files are small (about 30), so they are read per request; this
- * also lets the newsroom's writable mount (stage 3) show reviewed changes without a rebuild.
+ * choose an order without it. The files are small (about 45), so they are read per request; this
+ * also lets approvals from the admin review page (Compose bind-mounts this folder) show without a
+ * rebuild.
  */
 export function loadAiModelsData(): AiModelsData {
   const files: ModelFile[] = [];

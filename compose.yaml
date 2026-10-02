@@ -100,9 +100,14 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
-    environment: *backend-environment
+    environment:
+      <<: *backend-environment
+      AI_MODELS_DIR: /data/ai-models
     volumes:
       - uploads:/data/uploads
+      # The admin review page approves model files in place, so approvals show up as Git changes
+      # in the repository. On Linux hosts this folder must be writable by UID 10001.
+      - ./frontend/content/ai-models:/data/ai-models
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -170,6 +175,9 @@ services:
     restart: unless-stopped
     environment:
       BACKEND_URL: http://backend:8000
+    volumes:
+      # Read the live model files (approved by the backend) instead of the copy baked into the image.
+      - ./frontend/content/ai-models:/app/content/ai-models:ro
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://mablog:mablog-local-development@localhost:5432/mablog"
     redis_url: str = "redis://localhost:6379/0"
     upload_dir: Path = Path("./uploads")
+    # Folder of AI model Markdown files shared with the frontend (Compose bind-mounts the repo's
+    # frontend/content/ai-models). Unset means the admin review page reports it as unavailable.
+    ai_models_dir: Path | None = None
     app_origin: str = "http://localhost:3000"
     app_secret: str = "local-development-change-before-production-at-least-32-characters"
     app_env: str = "local"
@@ -173,6 +176,7 @@ settings = load_settings()
 DATABASE_URL = settings.database_url
 REDIS_URL = settings.redis_url
 UPLOAD_DIR = settings.upload_dir
+AI_MODELS_DIR = settings.ai_models_dir
 APP_ORIGIN = settings.app_origin
 APP_SECRET = settings.app_secret
 APP_ENV = settings.app_env

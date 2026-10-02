@@ -1,6 +1,7 @@
 """Stable schema imports for API routes and domain services."""
 
 from .accounts import AdminRolePayload, Credentials, RecoveryPayload, Registration, StepUpRequest, StepUpVerification, Verification
+from .ai_models import ModelApprovalPayload, ModelReturnPayload
 from .ai_news import (
     ActionReasonPayload,
     NewsCorrectionAcceptance,
@@ -32,6 +33,8 @@ from .posts import (
 from .search import ExplanationPayload, SearchCursorPayload, SearchPayload, SearchScope
 
 __all__ = [
+    "ModelApprovalPayload",
+    "ModelReturnPayload",
     "ActionReasonPayload",
     "AdminRolePayload",
     "Block",

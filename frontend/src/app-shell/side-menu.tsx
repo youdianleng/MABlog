@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog } from "radix-ui";
-import { LogIn, LogOut, Menu, Newspaper, Plus, X } from "lucide-react";
+import { ClipboardCheck, LogIn, LogOut, Menu, Newspaper, Plus, X } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/features/posts";
@@ -80,14 +80,24 @@ export function SideMenu() {
               },
             )}
             {user?.is_admin ? (
-              <Link
-                href="/admin/ai-news"
-                className={isActiveLink(path, "/admin/ai-news") ? "active" : undefined}
-                onClick={close}
-              >
-                <Newspaper aria-hidden="true" />
-                {t("AI newsroom", "Sala IA")}
-              </Link>
+              <>
+                <Link
+                  href="/admin/ai-news"
+                  className={isActiveLink(path, "/admin/ai-news") ? "active" : undefined}
+                  onClick={close}
+                >
+                  <Newspaper aria-hidden="true" />
+                  {t("AI newsroom", "Sala IA")}
+                </Link>
+                <Link
+                  href="/admin/ai-models"
+                  className={isActiveLink(path, "/admin/ai-models") ? "active" : undefined}
+                  onClick={close}
+                >
+                  <ClipboardCheck aria-hidden="true" />
+                  {t("Model review", "Revisión de modelos")}
+                </Link>
+              </>
             ) : null}
           </nav>
 

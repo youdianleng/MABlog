@@ -434,3 +434,48 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Backend tests were not rerun because no backend file changed.
 
   **Limitations:** the accepted caveats are still open; for example, several files have no published prices, MiniMax M3 has no release date, and some access details are unconfirmed (see the checklist).
+
+- [x] **I107 - Admin-only review page with Approve for AI model files.** The user asked for a full review page with an Approve button that only administrators can see. Until now, files could only be reviewed by editing them by hand.
+
+  **Page (`/admin/ai-models`, side-menu link "Model review", shown only to administrators):**
+  - Lists every model file with a Drafts / Reviewed / All filter and an open-note count.
+  - The detail panel shows the status, release and check dates, open review notes, any ranking places or `superseded_by`, and every price, plan, and benchmark with its exact quote and an "Open source" link.
+  - It also shows the public text with an English / Español switch, and links to the public profile once the file is reviewed.
+  - **Approve** needs a confirmation tick and accepts an optional note. **Return to draft** needs a reason of at least 10 characters.
+  - Non-administrators see an access notice, and the API refuses them.
+
+  **Backend:**
+  - `GET /api/admin/ai-models` (administrator role) returns each file's text and SHA-256 plus `rankings.yaml`, because drafts are unpublished.
+  - `POST /api/admin/ai-models/{name}/approve` and `/return-to-draft` require recent step-up verification (the same policy as newsroom publication) and the SHA-256 the reviewer loaded. An edited file is refused with 409 and never overwritten.
+  - `services/ai_model_review.py` edits `review_status`, `review_notes`, and both update histories as text, validates the result with PyYAML, and replaces the file atomically under a process lock (one uvicorn process).
+  - On approval, the accepted notes are copied into the English history line, so clearing `review_notes` loses nothing.
+  - Returning a file to draft stores the reason as a review note.
+  - Every action writes an administrator audit event. It is staged before the file write and committed after it.
+  - File names must match the model-file pattern, so `_` reports, `rankings.yaml`, and path tricks return 404.
+  - PyYAML is now a runtime dependency (it was dev-only).
+
+  **Infrastructure:**
+  - Compose bind-mounts `frontend/content/ai-models` into the backend at `/data/ai-models` (read-write, `AI_MODELS_DIR`) and into the frontend over its image copy (read-only).
+  - Approvals change the repository files, so they appear as Git changes to commit. On Linux hosts the folder must be writable by UID 10001.
+  - `/ai-models` and `/ai-models/[slug]` now use `dynamic = "force-dynamic"`. Without it, Next.js prerendered them at build time, so approvals would not have appeared until a rebuild.
+
+  **Areas:**
+  - Backend: `backend/app/api/ai_model_review.py`, `services/ai_model_review.py`, `schemas/ai_models.py`, `config.py`, `api/router.py`, `requirements*`, `tests/test_ai_model_review.py`.
+  - Compose: `compose.yaml`.
+  - Frontend: `frontend/src/features/model-review/` (page, list, detail, facts, text, actions, hook), `lib/api/model-review.ts`, `app/admin/ai-models/page.tsx`, `app/ai-models/**/page.tsx`, `app-shell/side-menu.tsx`, `styles/model-review.css`, `tests/model-review.spec.ts`.
+  - Docs: `docs/architecture.md`, `docs/ai-models-review-checklist.md`.
+
+  **Verification:**
+  - Backend: 62/62 with ruff clean. The new tests cover 401/403/200 access, step-up, the confirmation flag, history and audit content, stale-version 409, double approval, unsafe names, return-to-draft reasons, and a missing folder (503).
+  - Frontend: unit tests 41/41; TypeScript, ESLint, Prettier, and the comment audit pass.
+  - Full Playwright suite: 32/32, including two new tests. A regular account is refused. An administrator opens the page from the side menu, approves a temporary copy of a draft, sees its public profile, and returns it to draft; the copy is deleted afterwards.
+  - Manually in the in-app browser with the local administrator:
+    - The anonymous notice and the API's 401.
+    - Approve and return on a temporary file; the file changed on disk and the profile appeared at once.
+    - Phone width (375 px) has no horizontal scroll.
+  - The real content folder was left unchanged.
+
+  **Limitations:**
+  - The profile URL of a draft or unknown model renders the not-found page with `noindex`, but returns HTTP 200 rather than 404, because the root loading boundary starts streaming first.
+  - The shared step-up panel's text still describes newsroom actions.
+  - The page does not edit facts; corrections are still made in the file, and the page shows them after **Reload**.
