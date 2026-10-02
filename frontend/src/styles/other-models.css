@@ -1,0 +1,245 @@
+/* "Other models" page (/ai-models/other-models): reviewed models outside the ranked Top 5.
+   Shares the benchmark palette (.bench-page variables), stats strip, and sticky category nav. */
+
+.other-models-page {
+  margin: 0 auto;
+}
+.other-models-hero {
+  padding: clamp(36px, 5vw, 64px) clamp(20px, 4vw, 56px);
+  border: 1px solid var(--bench-line-strong);
+  background:
+    radial-gradient(circle, rgba(153, 60, 61, 0.1) 0 1.5px, transparent 2.5px) 0 0 / 22px 22px,
+    #f8f3ea;
+}
+.other-models-hero h1 {
+  max-width: 760px;
+  margin: 14px 0 0;
+  font-size: clamp(36px, 5vw, 62px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.other-models-hero > p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 20px 0 0;
+  color: #554c45;
+  font-size: 17px;
+  line-height: 1.65;
+}
+/* Three facts instead of the rankings page's four. */
+.other-models-hero .bench-hero-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 640px;
+}
+
+.other-models-section {
+  padding: clamp(40px, 5vw, 64px) clamp(16px, 3vw, 40px) 0;
+  scroll-margin-top: 72px;
+}
+.other-models-section h2 {
+  margin: 0 0 20px;
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: -0.02em;
+}
+.other-models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.other-model-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--bench-line);
+  background: var(--bench-paper);
+}
+.other-model-card[data-accent="crimson"] {
+  --swatch: #993c3d;
+}
+.other-model-card[data-accent="gold"] {
+  --swatch: #b07c2a;
+}
+.other-model-card[data-accent="blue"] {
+  --swatch: #397ba2;
+}
+.other-model-card[data-accent="sage"] {
+  --swatch: #4f7662;
+}
+.other-model-card[data-accent="violet"] {
+  --swatch: #795d91;
+}
+.other-model-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.other-model-swatch {
+  display: grid;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.45), transparent 45%), var(--swatch);
+  color: #fffaf0;
+}
+.other-model-swatch svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.6;
+}
+.other-model-provider {
+  margin: 0;
+  color: var(--bench-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.other-model-card h3 {
+  margin: 2px 0 0;
+  font-size: 21px;
+  line-height: 1.2;
+}
+.other-model-card h3 a {
+  color: var(--bench-ink);
+  text-decoration: none;
+}
+.other-model-card h3 a:hover {
+  text-decoration: underline;
+}
+.other-model-tagline {
+  margin: 0;
+  color: #4d453f;
+  line-height: 1.55;
+}
+.other-model-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--bench-line);
+}
+.other-model-facts div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px;
+}
+.other-model-facts dt {
+  color: #8a7a6b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-top: 2px;
+}
+.other-model-facts dd {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.other-model-access {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.other-model-access span {
+  padding: 3px 9px;
+  border: 1px solid var(--bench-line-strong);
+  border-radius: 99px;
+  color: #554c45;
+  font-size: 12px;
+}
+.other-model-superseded {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid #c58a2c;
+  background: #fbefd9;
+  font-size: 13px;
+}
+.other-model-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  color: var(--bench-crimson);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.other-model-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.other-models-empty,
+.other-models-note {
+  max-width: 760px;
+  margin: 48px auto 0;
+  padding: 0 16px;
+  color: var(--bench-muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Entry point on /ai-models, below the leaderboards. */
+.bench-other-models {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px 32px;
+  align-items: center;
+  margin: clamp(48px, 6vw, 80px) clamp(16px, 3vw, 40px) 0;
+  padding: 28px 32px;
+  border: 1px solid var(--bench-line-strong);
+  background: var(--bench-paper);
+}
+.bench-other-models h2 {
+  margin: 8px 0 0;
+  font-size: clamp(24px, 3vw, 32px);
+}
+.bench-other-models p:not(.eyebrow) {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: var(--bench-muted);
+  line-height: 1.6;
+}
+.bench-other-models a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: var(--bench-crimson);
+  color: #fffaf0;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.bench-other-models a svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 680px) {
+  .other-models-hero {
+    padding: 32px 16px;
+  }
+  .other-models-hero .bench-hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .other-models-section {
+    padding-inline: 12px;
+  }
+  .other-models-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bench-other-models {
+    margin-inline: 12px;
+    padding: 22px 18px;
+  }
+}

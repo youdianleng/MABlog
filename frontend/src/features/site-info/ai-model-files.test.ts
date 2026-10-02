@@ -91,6 +91,14 @@ describe("model files", () => {
     );
   });
 
+  // A slug cannot take the path of a static page under /ai-models/.
+  it("rejects slugs reserved for pages", () => {
+    const text = content(glmName).replaceAll("glm-5-3", "other-models");
+    expect(
+      /** Parse the altered input. */ () => parseModelFile(text, "2026-08-18_zai_other-models.md"),
+    ).toThrow(/reserved/);
+  });
+
   // Each leaderboard key may appear on only one benchmark entry per file.
   it("rejects a duplicated ranking key", () => {
     const text = content(glmName);

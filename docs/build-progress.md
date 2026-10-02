@@ -501,3 +501,35 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   **Areas:** the two content files, `frontend/src/features/site-info/ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
 
   **Verification:** unit tests pass (41/41). The page-level effect was not re-checked by hand, because the files changed only through the tested approval path.
+
+- [x] **I110 - "Other models" page for reviewed models outside the Top 5.** The user asked for the page offered earlier as "a link to unranked models". Reviewed models that are not ranked had profiles, but nothing linked to them.
+
+  **Page (`/ai-models/other-models`, bilingual):**
+  - A hero with the model count, category count, and newest release date.
+  - A sticky category bar with counts: LLMs & agents, Image, Video, Music, Voice & sound.
+  - Card grids per category. Each card shows the provider, name (linking to the profile), the descriptive part of the file title, release date, first published price in its own unit, access routes, and "Newer release: …" for files with `superseded_by`.
+  - A closing note that being unranked is not a quality verdict.
+  - Current releases come first and superseded ones last, each newest first. Categories with no models are hidden, and an empty state covers no models at all.
+
+  **Links:**
+  - `/ai-models` has an "Other models" item in its category bar and a "Beyond the Top 5" section with the count and a button.
+  - Profiles of unranked reviewed models now link back to "Other models" instead of "All AI rankings".
+
+  **Code:**
+  - `otherModels()` (pure, unit-tested) in `ai-models-data.ts`.
+  - Shared `ai-model-file-labels.ts`: the five file categories, `filePriceText` (moved from the profile), and `titleTagline`.
+  - The parser reserves the slug `other-models`, because a model with that slug would collide with the page.
+
+  **Fixes found on the way:**
+  - Non-whole prices were rounded to two decimals on profiles; for example, Qwen's $0.113 showed as $0.11. Prices now keep their published precision.
+  - Spanish price units read "por song" and similar; they are now translated ("por canción", "por minuto", and so on).
+
+  **Areas:** `frontend/src/app/ai-models/other-models/page.tsx`, `features/site-info/other-models-page.tsx`, `other-model-card.tsx`, `ai-model-file-labels.ts` (+ test), `ai-models-data.ts` (+ test), `ai-model-files.ts` (+ test), `ai-model-profile.tsx`, `ai-models-ranking-page.tsx`, `styles/other-models.css`, `app/globals.css`, `tests/other-models.spec.ts`, `docs/architecture.md`.
+
+  **Verification:**
+  - Unit tests: 46/46. The new tests cover selection and ordering, the empty case, the reserved slug, taglines, price precision, and Spanish units.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - Full Playwright suite: 33/33. The new test follows the link from `/ai-models`, checks that Claude Opus 5.5 is listed while ranked GPT Image 2.5 Sunburst is not, checks GPT-6 Sol's link to its newer release, goes to a profile and back, and checks that there is no horizontal overflow at 390 px.
+  - Checked in the in-app browser after rebuilding: 25 models in 5 categories on desktop, at phone width (375 px, no horizontal scroll), and in Spanish.
+
+  **Noted, not changed:** every route keeps a hidden second copy of its page content in the DOM after streaming (for example on `/about`). This existed before this change; a separate investigation task was suggested.

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { isModelFileName, parseModelFile, parseRankings } from "./ai-model-files";
-import { buildAiModelsData, comparablePrice } from "./ai-models-data";
+import { buildAiModelsData, comparablePrice, otherModels } from "./ai-models-data";
 
 const CONTENT = new URL("../../../content/ai-models/", import.meta.url);
 /** Read one committed content file. */
@@ -98,6 +98,47 @@ describe("buildAiModelsData", () => {
       for (const entry of entries)
         expect(entry.model.file !== null).toBe(reviewed.has(entry.model.slug));
     }
+  });
+});
+
+/** The "Other models" page selection. */
+describe("otherModels", () => {
+  /** Parse a reviewed copy of GLM-5.3 with a new slug, release date, and optional newer version. */
+  function unranked(slug: string, date: string | null, supersededBy: string | null = null) {
+    const text = content(glmName)
+      .replaceAll("glm-5-3", slug)
+      .replace("ranking: coding", "ranking: null")
+      .replace("release_date: 2026-08-18", `release_date: ${date ?? "null"}`)
+      .replace("superseded_by: null", `superseded_by: ${supersededBy ?? "null"}`)
+      .replace("review_status: draft", "review_status: reviewed");
+    return parseModelFile(text, `x_zai_${slug}.md`);
+  }
+
+  // Ranked models stay on the leaderboards; only reviewed, unranked files are listed.
+  it("lists reviewed unranked models only, current first and newest first", () => {
+    const data = buildAiModelsData(
+      [
+        file(glmName, true),
+        unranked("glm-old", "2026-09-01", "glm-new"),
+        unranked("glm-new", "2026-09-20"),
+        unranked("glm-undated", null),
+        unranked("glm-mid", "2026-09-10"),
+      ],
+      rankings,
+    );
+    const groups = otherModels(data);
+    expect(groups.map(/** Section ids. */ (group) => group.category)).toEqual(["llm-agents"]);
+    expect(groups[0].models.map(/** Shown slugs. */ (model) => model.slug)).toEqual([
+      "glm-new",
+      "glm-mid",
+      "glm-undated",
+      "glm-old",
+    ]);
+  });
+
+  // Nothing reviewed outside the rankings means no sections (the page shows its empty state).
+  it("returns no sections without unranked reviewed files", () => {
+    expect(otherModels(buildAiModelsData([file(glmName, true)], rankings))).toEqual([]);
   });
 });
 

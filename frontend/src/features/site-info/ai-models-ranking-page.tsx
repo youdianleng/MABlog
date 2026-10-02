@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   Braces,
+  Layers,
   Image as ImageIcon,
   Medal,
   Music2,
@@ -12,7 +13,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { PRICE_CHECKED_DATE } from "./ai-model-benchmark-context";
-import type { AiModelsData } from "./ai-models-data";
+import { type AiModelsData, otherModels } from "./ai-models-data";
 import { BenchmarkSection } from "./benchmark-section";
 
 /** MAblog editorial picks: [English label, Spanish label, model name, profile slug]. */
@@ -50,6 +51,11 @@ export function AiModelsRankingPageContent({ data }: { data: AiModelsData }) {
         entries.map(/** Read one entry's slug. */ (entry) => entry.model.slug),
     ),
   ).size;
+  // Reviewed models outside every leaderboard get their own page; link it when there are any.
+  const otherCount = otherModels(data).reduce(
+    /** Count models across category sections. */ (sum, group) => sum + group.models.length,
+    0,
+  );
   return (
     <article className="models-page bench-page">
       <header className="bench-hero">
@@ -151,6 +157,10 @@ export function AiModelsRankingPageContent({ data }: { data: AiModelsData }) {
           <Medal aria-hidden="true" />
           {t("Editor's picks", "Selección editorial")}
         </a>
+        <Link href="/ai-models/other-models">
+          <Layers aria-hidden="true" />
+          {t("Other models", "Otros modelos")}
+        </Link>
       </nav>
 
       <BenchmarkSection
@@ -223,6 +233,27 @@ export function AiModelsRankingPageContent({ data }: { data: AiModelsData }) {
           }}
         />
       </section>
+
+      {otherCount > 0 ? (
+        <section className="bench-other-models" aria-labelledby="other-models-title">
+          <div>
+            <p className="eyebrow">{t("BEYOND THE TOP 5", "MÁS ALLÁ DEL TOP 5")}</p>
+            <h2 id="other-models-title">
+              {t(`${otherCount} more reviewed models`, `${otherCount} modelos revisados más`)}
+            </h2>
+            <p>
+              {t(
+                "New releases and specialist models, including voice and sound, that are not ranked yet. Each has a profile built from official sources.",
+                "Lanzamientos recientes y modelos especializados, incluidos voz y sonido, que aún no están clasificados. Cada uno tiene una ficha basada en fuentes oficiales.",
+              )}
+            </p>
+          </div>
+          <Link href="/ai-models/other-models">
+            {t("See other models", "Ver otros modelos")}
+            <ArrowUpRight aria-hidden="true" />
+          </Link>
+        </section>
+      ) : null}
 
       <section
         id="picks"
