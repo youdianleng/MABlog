@@ -82,8 +82,9 @@ Proposed first-version defaults for block operations, post metadata, and draft v
 - It contains the five publicly published posts with the most likes received during the preceding two weeks (a rolling 14-day window). The window applies to when likes were received, not when a post was published. Personal and privately shared posts are not eligible.
 - Posts/cards use fade-in and fade-out effects.
 - In the user's words, only the center post appears complete; neighboring cards are more transparent.
-- The approved first-edition homepage art uses three transparent, half-body anime characters: a white-haired cyberpunk catgirl, a technical robot, and a bespectacled reader holding a book. Their visible heights and baselines remain equal behind the carousel.
-- Two characters appear at once and advance every 3.5 seconds in this loop: catgirl-left/robot-right, robot-left/reader-right, then reader-left/catgirl-right. The left position mirrors its character to face left, while the right position faces right.
+- **Superseded on 2026-10-03:** the site owner asked to remove the homepage characters and their rotation. The hero now shows only the starfield, headline, and carousel. The two original requirements below are kept for history.
+- (Superseded) The approved first-edition homepage art uses three transparent, half-body anime characters: a white-haired cyberpunk catgirl, a technical robot, and a bespectacled reader holding a book. Their visible heights and baselines remain equal behind the carousel.
+- (Superseded) Two characters appear at once and advance every 3.5 seconds in this loop: catgirl-left/robot-right, robot-left/reader-right, then reader-left/catgirl-right. The left position mirrors its character to face left, while the right position faces right.
 - The approved Discover background is a full-width black celestial scene behind the headline, characters, carousel cards, and controls. Three centered gold and crimson elliptical rings move subtly, while scattered stars inside and outside the rings drift independently instead of following the ring paths. The discarded black-hole concept is not part of the site.
 
 Proposed first-version defaults for carousel appearance, timing, controls, ties, empty/fewer-card states, and like semantics are specified in design-review.md sections D6 and D7 and await confirmation.

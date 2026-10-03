@@ -533,3 +533,28 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Checked in the in-app browser after rebuilding: 25 models in 5 categories on desktop, at phone width (375 px, no horizontal scroll), and in Spanish.
 
   **Noted, not changed:** every route keeps a hidden second copy of its page content in the DOM after streaming (for example on `/about`). This existed before this change; a separate investigation task was suggested.
+
+- [x] **I111 - Remove the homepage character art and its rotation.** The site owner asked to remove the catgirl, robot, and reader characters and their animation from the Discover hero, and to leave no related code behind. This supersedes the character requirement in `docs/design-interview.md` and `docs/design-review.md`, now marked "Superseded on 2026-10-03" there; the original wording is kept for history.
+
+  **Removed:**
+  - `features/home/character-cycle.tsx` and `use-character-cycle.ts` (the 3.5-second pair rotation and its visibility observer).
+  - `styles/character-cycle.css`, plus its import in `globals.css`.
+  - The three images in `public/characters/home-cycle/`.
+  - The `<CharacterCycle />` call on the homepage.
+
+  **Kept and renamed:**
+  - The hero wrapper `.character-showcase` is now `.home-showcase` (homepage and `celestial-background.css`), because it no longer has characters.
+  - The two layering rules the deleted stylesheet still provided now live in `celestial-background.css`: the text and carousel stay above the starfield.
+  - `useReducedMotion` stays because the carousel uses it.
+
+  **Tests:**
+  - `hero-performance.spec.ts` keeps the repaint checks (button backdrop, orbit filter, content-visibility) and drops the checks on character filters and offscreen rotation.
+  - The carousel test in `public.spec.ts` keeps its layering check (starfield below carousel), autoplay, pause, navigation, reduced-motion, and phone-overflow checks, and drops the character-pair and height checks.
+
+  **Areas:** `frontend/src/features/home/`, `frontend/src/styles/celestial-background.css`, `frontend/src/app/globals.css`, `frontend/public/characters/` (deleted), `frontend/tests/hero-performance.spec.ts`, `frontend/tests/public.spec.ts`, `README.md`, `docs/design-interview.md`, `docs/design-review.md`.
+
+  **Verification:**
+  - TypeScript, ESLint, Prettier, the comment audit, and unit tests (46/46) pass.
+  - Full Playwright suite: 33/33.
+  - In the in-app browser after rebuilding: the hero shows no character layers, no page image points to `characters/`, `/characters/home-cycle/catgirl.png` returns 404, and the starfield, headline, and carousel render as before.
+  - A repository search finds no remaining code references; only history in this log and the superseded design notes mention the characters.

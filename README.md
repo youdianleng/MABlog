@@ -91,7 +91,7 @@ frontend/          Next.js, React, shadcn/ui, Tailwind CSS, Tiptap, freeform con
 frontend/src/features/ Feature-owned pages, components, and local hooks
 frontend/src/hooks/ Reusable data, browser subscription, measurement, and draft hooks
 frontend/src/lib/api/ API client, media upload client, and transport types
-frontend/src/styles/ Focused base, post, carousel, celestial-background, character-cycle, reader, composer, and responsive styles
+frontend/src/styles/ Focused base, post, carousel, celestial-background, reader, composer, and responsive styles
 backend/app/api/   Focused FastAPI route groups, including the administrator AI newsroom
 backend/app/services/ Permission, post/search, OpenAI, cache, and staged AI-news services
 backend/app/        Application entry point, authentication, models, schemas, and configuration

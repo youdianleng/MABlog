@@ -9,7 +9,6 @@ import { useData } from "@/hooks/use-data";
 import { Loading } from "@/components/feedback/loading";
 import { Carousel, PostGrid, PostPagination } from "@/features/posts";
 import { CelestialBackground } from "./celestial-background";
-import { CharacterCycle } from "./character-cycle";
 
 interface HomeProps {
   publicOnly: boolean;
@@ -72,9 +71,8 @@ export function Home({ publicOnly, initialPage, initialFeatured, category = "" }
     <>
       {!publicOnly ? (
         <>
-          <div className="character-showcase">
+          <div className="home-showcase">
             <CelestialBackground />
-            <CharacterCycle />
             <div className="hero-intro">
               <div className="eyebrow">
                 {t(

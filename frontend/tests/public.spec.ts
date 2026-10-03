@@ -258,70 +258,24 @@ test("five-card carousel advances, pauses, navigates, and respects reduced motio
   await page.goto("/");
   const celestialBackground = page.locator(".home-celestial-background");
   await expect(celestialBackground).toBeVisible();
-  const celestialLayers = await page.locator(".character-showcase").evaluate(
-    /** Confirm the full-bleed dark scene stacks rings, characters, and carousel in the approved order. */ function readCelestialLayers(
+  const celestialLayers = await page.locator(".home-showcase").evaluate(
+    /** Confirm the full-bleed dark scene keeps the starfield behind the carousel. */ function readCelestialLayers(
       showcase,
     ) {
       const background = showcase.querySelector(".home-celestial-background");
-      const characters = showcase.querySelector(".home-character-cycle");
       const carousel = showcase.querySelector(".carousel");
       const bounds = showcase.getBoundingClientRect();
       return {
         backgroundImage: getComputedStyle(showcase).backgroundImage,
         backgroundLayer: Number(getComputedStyle(background!).zIndex),
-        characterLayer: Number(getComputedStyle(characters!).zIndex),
         carouselLayer: Number(getComputedStyle(carousel!).zIndex),
         width: bounds.width,
       };
     },
   );
   expect(celestialLayers.backgroundImage).toContain("linear-gradient");
-  expect(celestialLayers.backgroundLayer).toBeLessThan(celestialLayers.characterLayer);
-  expect(celestialLayers.characterLayer).toBeLessThan(celestialLayers.carouselLayer);
+  expect(celestialLayers.backgroundLayer).toBeLessThan(celestialLayers.carouselLayer);
   expect(celestialLayers.width).toBeGreaterThanOrEqual(1279);
-  const characterCycle = page.locator(".home-character-cycle");
-  await expect(characterCycle).toHaveAttribute("data-left-character", "catgirl");
-  await expect(characterCycle).toHaveAttribute("data-right-character", "robot");
-  const initialCharacterHeights = await characterCycle
-    .locator(".home-character-image.active")
-    .evaluateAll(
-      /** Measure the two visible layers so differing source ratios cannot change their displayed height. */ function measureCharacters(
-        characters,
-      ) {
-        return characters.map(
-          /** Read one active character's rendered height. */ function characterHeight(character) {
-            return character.getBoundingClientRect().height;
-          },
-        );
-      },
-    );
-  expect(initialCharacterHeights).toHaveLength(2);
-  expect(Math.abs(initialCharacterHeights[0] - initialCharacterHeights[1])).toBeLessThan(1);
-  const initialCharacterProximity = await characterCycle.evaluate(
-    /** Measure both carousel-facing image edges to prevent narrow artwork from sitting farther away. */ function measureCharacterProximity(
-      cycle,
-    ) {
-      const left = cycle
-        .querySelector(".home-character-slot-left .home-character-image.active")!
-        .getBoundingClientRect();
-      const right = cycle
-        .querySelector(".home-character-slot-right .home-character-image.active")!
-        .getBoundingClientRect();
-      const center = cycle.getBoundingClientRect().left + cycle.getBoundingClientRect().width / 2;
-      return { leftGap: center - left.right, rightGap: right.left - center };
-    },
-  );
-  expect(
-    Math.abs(initialCharacterProximity.leftGap - initialCharacterProximity.rightGap),
-  ).toBeLessThan(1);
-  await expect
-    .poll(
-      /** Read the pair attributes while waiting for the approved second rotation step. */ async function currentCharacterPair() {
-        return `${await characterCycle.getAttribute("data-left-character")}:${await characterCycle.getAttribute("data-right-character")}`;
-      },
-      { timeout: 5000 },
-    )
-    .toBe("robot:reader");
   await expect(page.locator(".carousel-card")).toHaveCount(5);
   const first = await page.locator(".carousel-card[aria-current=true]").getAttribute("href");
   await expect
@@ -343,12 +297,8 @@ test("five-card carousel advances, pauses, navigates, and respects reduced motio
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
-  await expect(characterCycle).toHaveAttribute("data-left-character", "catgirl");
-  await expect(characterCycle).toHaveAttribute("data-right-character", "robot");
   const reduced = await page.locator(".carousel-card[aria-current=true]").getAttribute("href");
   await page.waitForTimeout(5500);
-  await expect(characterCycle).toHaveAttribute("data-left-character", "catgirl");
-  await expect(characterCycle).toHaveAttribute("data-right-character", "robot");
   await expect(page.locator(".carousel-card[aria-current=true]")).toHaveAttribute("href", reduced!);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
