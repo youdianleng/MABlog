@@ -277,6 +277,8 @@ test("five-card carousel advances, pauses, navigates, and respects reduced motio
   expect(celestialLayers.backgroundLayer).toBeLessThan(celestialLayers.carouselLayer);
   expect(celestialLayers.width).toBeGreaterThanOrEqual(1279);
   await expect(page.locator(".carousel-card")).toHaveCount(5);
+  // Five stories rotate, but only the center card and one neighbor on each side are shown.
+  await expect(page.locator('.carousel-card:not([aria-hidden="true"])')).toHaveCount(3);
   const first = await page.locator(".carousel-card[aria-current=true]").getAttribute("href");
   await expect
     .poll(

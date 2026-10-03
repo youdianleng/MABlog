@@ -558,3 +558,14 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - Full Playwright suite: 33/33.
   - In the in-app browser after rebuilding: the hero shows no character layers, no page image points to `characters/`, `/characters/home-cycle/catgirl.png` returns 404, and the starfield, headline, and carousel render as before.
   - A repository search finds no remaining code references; only history in this log and the superseded design notes mention the characters.
+
+- [x] **I112 - Show three carousel cards instead of five.** The site owner asked the homepage carousel to show three cards rather than five. All five featured stories still rotate and keep their five dots. Only the center card and one neighbor on each side are visible; `VISIBLE_NEIGHBORS = 1` in `carousel.tsx` sets this.
+
+  **Behaviour:** the two outer cards still slide with the rotation, so movement stays smooth, but they have `opacity: 0` and `pointer-events: none`. They are also removed from keyboard focus (`tabIndex=-1`) and from screen readers (`aria-hidden`), so nobody can reach a card they cannot see.
+
+  **Areas:** `frontend/src/features/posts/carousel.tsx`, `frontend/tests/public.spec.ts`.
+
+  **Verification:**
+  - TypeScript, ESLint, Prettier, the comment audit, and unit tests (46/46) pass.
+  - The carousel test now also asserts that exactly three cards are not hidden. Full Playwright suite: 33/33.
+  - In the in-app browser after rebuilding, the computed card opacities were 1, 0.35, 0, 0, 0.35.
