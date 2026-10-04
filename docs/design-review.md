@@ -52,7 +52,7 @@ The canonical project and documentation location is `F:\AI_Roadmap_2026\MAblog`.
 - Cards use user-supplied images and open their corresponding posts.
 - The center card appears complete; neighboring cards are more transparent.
 - The carousel advances automatically with fade-in/fade-out effects.
-- Equal-height half-body character art sits behind the carousel in two outward-facing edge positions. The 3.5-second sequence is catgirl/robot, robot/reader, then reader/catgirl; reduced-motion mode keeps the first pair static.
+- (Superseded on 2026-10-03: the site owner removed the character art and its rotation; the hero keeps the starfield, headline, and carousel.) Equal-height half-body character art sits behind the carousel in two outward-facing edge positions. The 3.5-second sequence is catgirl/robot, robot/reader, then reader/catgirl; reduced-motion mode keeps the first pair static.
 - The Discover hero uses the approved full-width black background with three centered gold/crimson elliptical rings and independently drifting stars distributed inside and outside them. This celestial layer sits behind all hero content and becomes static when reduced motion is requested; no black hole appears in the delivered design.
 
 ### Local delivery and future discovery

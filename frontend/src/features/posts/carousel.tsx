@@ -7,7 +7,13 @@ import { useLanguage } from "@/lib/i18n";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useCarouselAutoplay } from "./use-carousel-autoplay";
 
-/** Rotate five featured posts with center emphasis, pause controls, and reduced-motion support. */
+// Cards shown on each side of the center story (the site owner chose three visible cards).
+const VISIBLE_NEIGHBORS = 1;
+
+/**
+ * Rotate up to five featured posts with center emphasis, pause controls, and reduced-motion support.
+ * Only three cards are visible at once: the center story and one neighbor on each side.
+ */
 export function Carousel({ posts }: { posts: Post[] }) {
   const { t } = useLanguage();
   const [active, setActive] = useState(0),
@@ -80,7 +86,8 @@ export function Carousel({ posts }: { posts: Post[] }) {
         }
       }
     >
-      {/* Signed circular distance centers the active card and places up to two neighbors on each side. */}
+      {/* Signed circular distance centers the active card; cards beyond one step stay in the rotation
+          but are hidden, so only three cards show at once. */}
       {posts.map(
         /** Place a featured card relative to the emphasized center card. */ function renderFeatured(
           post,
@@ -88,6 +95,9 @@ export function Carousel({ posts }: { posts: Post[] }) {
         ) {
           let distance = (index - active + posts.length) % posts.length;
           if (distance > posts.length / 2) distance -= posts.length;
+          // Outer cards keep sliding with the rotation but are invisible, unclickable, and skipped
+          // by keyboard and screen readers.
+          const outside = Math.abs(distance) > VISIBLE_NEIGHBORS;
           return (
             <Link
               key={post.id}
@@ -95,9 +105,12 @@ export function Carousel({ posts }: { posts: Post[] }) {
               className="carousel-card"
               aria-label={post.title}
               aria-current={distance === 0 ? "true" : undefined}
+              aria-hidden={outside ? "true" : undefined}
+              tabIndex={outside ? -1 : undefined}
               style={{
                 transform: `translateX(calc(-50% + ${distance * 66}%)) scale(${distance === 0 ? 1 : 0.83})`,
-                opacity: distance === 0 ? 1 : 0.35,
+                opacity: outside ? 0 : distance === 0 ? 1 : 0.35,
+                pointerEvents: outside ? "none" : undefined,
                 zIndex: 10 - Math.abs(distance),
               }}
             >

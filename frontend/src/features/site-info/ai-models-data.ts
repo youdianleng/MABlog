@@ -298,3 +298,50 @@ export function buildAiModelsData(files: ModelFile[], rankings: Rankings): AiMod
     profiles,
   };
 }
+
+/** One category section of the "Other models" page. */
+export type OtherModelsGroup = { category: ModelFile["category"]; models: ModelView[] };
+
+// Section order on the page, matching the five file categories of the instruction file.
+const CATEGORY_ORDER: ModelFile["category"][] = [
+  "llm-agents",
+  "image",
+  "video",
+  "music",
+  "voice-sound",
+];
+
+/**
+ * Reviewed models that are not on any leaderboard, grouped by file category for the "Other
+ * models" page.
+ *
+ * Ranked models are left out because the leaderboards already present them. Within a category,
+ * current releases come first and releases with a newer version (`superseded_by`) last; each part
+ * is ordered newest release first, with undated files after dated ones. Empty categories are
+ * omitted.
+ */
+export function otherModels(data: AiModelsData): OtherModelsGroup[] {
+  const models = Object.values(data.profiles)
+    .filter(
+      /** Reviewed and unranked only. */ (profile) =>
+        profile.model.file !== null && profile.placements.length === 0,
+    )
+    .map(/** Keep the model view. */ (profile) => profile.model);
+  return CATEGORY_ORDER.map(
+    /** Collect and order one category. */ (category) => ({
+      category,
+      models: models
+        .filter(/** This category only. */ (model) => model.file?.category === category)
+        .sort(
+          /** Current before superseded, then newest release first (undated last). */ (a, b) => {
+            const superseded =
+              Number(Boolean(a.file?.supersededBy)) - Number(Boolean(b.file?.supersededBy));
+            if (superseded !== 0) return superseded;
+            const dateA = a.file?.releaseDate ?? "";
+            const dateB = b.file?.releaseDate ?? "";
+            return dateB.localeCompare(dateA) || a.name.localeCompare(b.name);
+          },
+        ),
+    }),
+  ).filter(/** Drop empty sections. */ (group) => group.models.length > 0);
+}

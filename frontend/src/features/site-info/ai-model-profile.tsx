@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowUpRight, BookOpenCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import type { RankingCategory } from "./ai-model-rankings";
 import { isPublishedPrice } from "./ai-model-benchmark-context";
-import type { FilePrice } from "./ai-model-files";
+import { filePriceText } from "./ai-model-file-labels";
 import type { FileFacts, LeaderboardEntry, ProfileView } from "./ai-models-data";
 import { CategoryIcon } from "./category-icon";
 import { accessTranslations } from "./ranking-labels";
@@ -51,24 +51,6 @@ function PlacementContextDetails({ entry }: { entry: LeaderboardEntry }) {
       )}
     </div>
   );
-}
-
-/** Describe one API price from a reviewed file in plain words. */
-function filePriceText(price: FilePrice, spanish: boolean): string {
-  /** Dollars without a trailing .00 for whole amounts. */
-  const money = (value: number) => `$${Number.isInteger(value) ? value : value.toFixed(2)}`;
-  let text: string;
-  if (price.unit === "per-1m-tokens")
-    text =
-      price.output === null
-        ? `${money(price.input ?? 0)} ${spanish ? "por 1M de tokens" : "per 1M tokens"}`
-        : `${money(price.input ?? 0)} / ${money(price.output)} ${spanish ? "por 1M de tokens (entrada / salida)" : "per 1M tokens (input / output)"}`;
-  else
-    text = `${money(price.amount ?? 0)} ${price.unit
-      .replace("per-", spanish ? "por " : "per ")
-      .replace("1k-", "1k ")
-      .replace("1m-", "1M ")}`;
-  return price.variant ? `${text} (${price.variant})` : text;
 }
 
 /** Reviewed-file facts: what changed, capabilities, plans, prices, and caveats. */
@@ -179,10 +161,18 @@ export function AiModelProfile({
   return (
     <article className="model-profile-page">
       <div className="model-profile-back">
-        <Link href="/ai-models">
-          <ArrowLeft aria-hidden="true" />
-          {t("All AI rankings", "Todas las clasificaciones")}
-        </Link>
+        {/* Unranked reviewed models are listed on the "Other models" page; go back there. */}
+        {placements.length === 0 && model.file ? (
+          <Link href="/ai-models/other-models">
+            <ArrowLeft aria-hidden="true" />
+            {t("Other models", "Otros modelos")}
+          </Link>
+        ) : (
+          <Link href="/ai-models">
+            <ArrowLeft aria-hidden="true" />
+            {t("All AI rankings", "Todas las clasificaciones")}
+          </Link>
+        )}
       </div>
       <header className={`model-profile-hero models-accent-${model.accent}`}>
         <div className="models-cover model-profile-cover" aria-hidden="true">

@@ -37,6 +37,8 @@ const PRICE_UNITS = [
   "per-1k-characters",
   "other",
 ] as const;
+// Static pages under /ai-models/ whose names a model slug must not take.
+const RESERVED_SLUGS = ["other-models"];
 // Migrated values may omit a quote only with one of these evidence labels (instructions 5.4).
 const MIGRATION_EVIDENCE = ["snapshot-2026-09-22", "price-check-2026-10-01"] as const;
 
@@ -298,6 +300,8 @@ export function parseModelFile(text: string, fileName: string): ModelFile {
     "review_status must be draft or reviewed",
   );
   check(isText(data.slug) && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(data.slug), "slug must be kebab-case");
+  // `/ai-models/other-models` is a page, so no model profile may claim that path.
+  check(!RESERVED_SLUGS.includes(data.slug), `slug "${data.slug}" is reserved for a page`);
   check(fileName.endsWith(`_${data.slug}.md`), "file name must end with _<slug>.md");
   check(isText(data.title_en) && isText(data.title_es), "title_en and title_es are required");
   for (const key of ["provider", "provider_key", "model", "family"])

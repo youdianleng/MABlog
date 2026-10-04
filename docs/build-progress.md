@@ -501,3 +501,71 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   **Areas:** the two content files, `frontend/src/features/site-info/ai-models-data.test.ts`, `docs/ai-models-review-checklist.md`.
 
   **Verification:** unit tests pass (41/41). The page-level effect was not re-checked by hand, because the files changed only through the tested approval path.
+
+- [x] **I110 - "Other models" page for reviewed models outside the Top 5.** The user asked for the page offered earlier as "a link to unranked models". Reviewed models that are not ranked had profiles, but nothing linked to them.
+
+  **Page (`/ai-models/other-models`, bilingual):**
+  - A hero with the model count, category count, and newest release date.
+  - A sticky category bar with counts: LLMs & agents, Image, Video, Music, Voice & sound.
+  - Card grids per category. Each card shows the provider, name (linking to the profile), the descriptive part of the file title, release date, first published price in its own unit, access routes, and "Newer release: …" for files with `superseded_by`.
+  - A closing note that being unranked is not a quality verdict.
+  - Current releases come first and superseded ones last, each newest first. Categories with no models are hidden, and an empty state covers no models at all.
+
+  **Links:**
+  - `/ai-models` has an "Other models" item in its category bar and a "Beyond the Top 5" section with the count and a button.
+  - Profiles of unranked reviewed models now link back to "Other models" instead of "All AI rankings".
+
+  **Code:**
+  - `otherModels()` (pure, unit-tested) in `ai-models-data.ts`.
+  - Shared `ai-model-file-labels.ts`: the five file categories, `filePriceText` (moved from the profile), and `titleTagline`.
+  - The parser reserves the slug `other-models`, because a model with that slug would collide with the page.
+
+  **Fixes found on the way:**
+  - Non-whole prices were rounded to two decimals on profiles; for example, Qwen's $0.113 showed as $0.11. Prices now keep their published precision.
+  - Spanish price units read "por song" and similar; they are now translated ("por canción", "por minuto", and so on).
+
+  **Areas:** `frontend/src/app/ai-models/other-models/page.tsx`, `features/site-info/other-models-page.tsx`, `other-model-card.tsx`, `ai-model-file-labels.ts` (+ test), `ai-models-data.ts` (+ test), `ai-model-files.ts` (+ test), `ai-model-profile.tsx`, `ai-models-ranking-page.tsx`, `styles/other-models.css`, `app/globals.css`, `tests/other-models.spec.ts`, `docs/architecture.md`.
+
+  **Verification:**
+  - Unit tests: 46/46. The new tests cover selection and ordering, the empty case, the reserved slug, taglines, price precision, and Spanish units.
+  - TypeScript, ESLint, Prettier, and the comment audit pass.
+  - Full Playwright suite: 33/33. The new test follows the link from `/ai-models`, checks that Claude Opus 5.5 is listed while ranked GPT Image 2.5 Sunburst is not, checks GPT-6 Sol's link to its newer release, goes to a profile and back, and checks that there is no horizontal overflow at 390 px.
+  - Checked in the in-app browser after rebuilding: 25 models in 5 categories on desktop, at phone width (375 px, no horizontal scroll), and in Spanish.
+
+  **Noted, not changed:** every route keeps a hidden second copy of its page content in the DOM after streaming (for example on `/about`). This existed before this change; a separate investigation task was suggested.
+
+- [x] **I111 - Remove the homepage character art and its rotation.** The site owner asked to remove the catgirl, robot, and reader characters and their animation from the Discover hero, and to leave no related code behind. This supersedes the character requirement in `docs/design-interview.md` and `docs/design-review.md`, now marked "Superseded on 2026-10-03" there; the original wording is kept for history.
+
+  **Removed:**
+  - `features/home/character-cycle.tsx` and `use-character-cycle.ts` (the 3.5-second pair rotation and its visibility observer).
+  - `styles/character-cycle.css`, plus its import in `globals.css`.
+  - The three images in `public/characters/home-cycle/`.
+  - The `<CharacterCycle />` call on the homepage.
+
+  **Kept and renamed:**
+  - The hero wrapper `.character-showcase` is now `.home-showcase` (homepage and `celestial-background.css`), because it no longer has characters.
+  - The two layering rules the deleted stylesheet still provided now live in `celestial-background.css`: the text and carousel stay above the starfield.
+  - `useReducedMotion` stays because the carousel uses it.
+
+  **Tests:**
+  - `hero-performance.spec.ts` keeps the repaint checks (button backdrop, orbit filter, content-visibility) and drops the checks on character filters and offscreen rotation.
+  - The carousel test in `public.spec.ts` keeps its layering check (starfield below carousel), autoplay, pause, navigation, reduced-motion, and phone-overflow checks, and drops the character-pair and height checks.
+
+  **Areas:** `frontend/src/features/home/`, `frontend/src/styles/celestial-background.css`, `frontend/src/app/globals.css`, `frontend/public/characters/` (deleted), `frontend/tests/hero-performance.spec.ts`, `frontend/tests/public.spec.ts`, `README.md`, `docs/design-interview.md`, `docs/design-review.md`.
+
+  **Verification:**
+  - TypeScript, ESLint, Prettier, the comment audit, and unit tests (46/46) pass.
+  - Full Playwright suite: 33/33.
+  - In the in-app browser after rebuilding: the hero shows no character layers, no page image points to `characters/`, `/characters/home-cycle/catgirl.png` returns 404, and the starfield, headline, and carousel render as before.
+  - A repository search finds no remaining code references; only history in this log and the superseded design notes mention the characters.
+
+- [x] **I112 - Show three carousel cards instead of five.** The site owner asked the homepage carousel to show three cards rather than five. All five featured stories still rotate and keep their five dots. Only the center card and one neighbor on each side are visible; `VISIBLE_NEIGHBORS = 1` in `carousel.tsx` sets this.
+
+  **Behaviour:** the two outer cards still slide with the rotation, so movement stays smooth, but they have `opacity: 0` and `pointer-events: none`. They are also removed from keyboard focus (`tabIndex=-1`) and from screen readers (`aria-hidden`), so nobody can reach a card they cannot see.
+
+  **Areas:** `frontend/src/features/posts/carousel.tsx`, `frontend/tests/public.spec.ts`.
+
+  **Verification:**
+  - TypeScript, ESLint, Prettier, the comment audit, and unit tests (46/46) pass.
+  - The carousel test now also asserts that exactly three cards are not hidden. Full Playwright suite: 33/33.
+  - In the in-app browser after rebuilding, the computed card opacities were 1, 0.35, 0, 0, 0.35.
