@@ -37,6 +37,20 @@ const PRICE_UNITS = [
   "per-1k-characters",
   "other",
 ] as const;
+/**
+ * Capability areas a benchmark result can describe, per file category (the rows of the profile's
+ * benchmark card). A benchmark's optional `area` must be one of its category's areas; files without
+ * it fall back to a name-based mapping in `ai-model-profile-data.ts`.
+ */
+export const BENCHMARK_AREAS = {
+  "llm-agents": ["agentic-coding", "terminal", "reasoning", "knowledge-work", "multimodal"],
+  image: ["text-to-image", "editing", "text-rendering"],
+  video: ["video-audio", "video-silent", "image-to-video"],
+  music: ["vocal", "instrumental"],
+  "voice-sound": ["speech-quality", "latency", "languages"],
+} as const satisfies Record<(typeof CATEGORIES)[number], readonly string[]>;
+export type BenchmarkArea = (typeof BENCHMARK_AREAS)[keyof typeof BENCHMARK_AREAS][number];
+
 // Static pages under /ai-models/ whose names a model slug must not take.
 const RESERVED_SLUGS = ["other-models"];
 // Migrated values may omit a quote only with one of these evidence labels (instructions 5.4).
@@ -97,6 +111,8 @@ export type FileBenchmark = {
   quote: string | null;
   evidence: string | null;
   ranking: RankingCategory | null;
+  /** Benchmark-card row for this result; optional (see BENCHMARK_AREAS). */
+  area?: BenchmarkArea | null;
 };
 
 /** The body sections `/ai-models` reads, for one language. Missing sections are empty. */
@@ -108,6 +124,10 @@ export type FileSections = {
   limitations: string[];
   users: string;
   developers: string;
+  /** Optional "Common uses" section: concrete uses for each audience (empty when absent). */
+  commonUses: { users: string[]; developers: string[] };
+  /** "Update history" lines, oldest first. */
+  history: string[];
 };
 
 export type ModelFile = {
@@ -200,6 +220,8 @@ const HEADINGS = {
     bestFor: "Best for users / best for developers",
     users: "Users",
     developers: "Developers",
+    commonUses: "Common uses",
+    history: "Update history",
   },
   es: {
     language: "Español",
@@ -211,6 +233,8 @@ const HEADINGS = {
     bestFor: "Ideal para usuarios / ideal para desarrolladores",
     users: "Usuarios",
     developers: "Desarrolladores",
+    commonUses: "Usos habituales",
+    history: "Historial de actualizaciones",
   },
 } as const;
 
@@ -236,6 +260,20 @@ function bullets(text: string): string[] {
     .map(/** Drop the list marker. */ (line) => line.slice(2).trim());
 }
 
+/** Return the bullets under one `### heading` inside a section, or an empty list. */
+function subsectionBullets(text: string, heading: string): string[] {
+  const lines = text.split("\n");
+  const start = lines.findIndex(
+    /** Find the exact sub-heading. */ (line) => line === `### ${heading}`,
+  );
+  if (start === -1) return [];
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex(
+    /** Stop at the next sub-heading. */ (line) => line.startsWith("### "),
+  );
+  return bullets((end === -1 ? rest : rest.slice(0, end)).join("\n"));
+}
+
 /** Extract the sections `/ai-models` uses for one language. */
 function readSections(body: string, language: "en" | "es", check: Check): FileSections {
   const names = HEADINGS[language];
@@ -255,6 +293,7 @@ function readSections(body: string, language: "en" | "es", check: Check): FileSe
       .find(/** Match the labelled line. */ (line) => line.startsWith(`- **${label}:**`))
       ?.slice(`- **${label}:**`.length)
       .trim() ?? "";
+  const uses = section(part, names.commonUses);
   const sections: FileSections = {
     summary: section(part, names.summary),
     description: section(part, names.description),
@@ -263,6 +302,11 @@ function readSections(body: string, language: "en" | "es", check: Check): FileSe
     limitations: bullets(section(part, names.limitations)),
     users: verdict(names.users),
     developers: verdict(names.developers),
+    commonUses: {
+      users: subsectionBullets(uses, names.users),
+      developers: subsectionBullets(uses, names.developers),
+    },
+    history: bullets(section(part, names.history)),
   };
   check(sections.summary, `${language} Summary is empty`);
   check(sections.users && sections.developers, `${language} users/developers lines are missing`);
@@ -399,6 +443,13 @@ export function parseModelFile(text: string, fileName: string): ModelFile {
       `${where}: ranking key used twice`,
     );
     rankingKeys.add(benchmark.ranking);
+    const areas: readonly string[] = BENCHMARK_AREAS[data.category as keyof typeof BENCHMARK_AREAS];
+    check(
+      benchmark.area === undefined ||
+        benchmark.area === null ||
+        areas.includes(benchmark.area as string),
+      `${where}: area must be one of ${areas.join(", ")}`,
+    );
     checkEvidence(benchmark, where, check);
   }
   check(

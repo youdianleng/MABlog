@@ -97,9 +97,10 @@ test("AI model profile preserves access and evidence links", /** Verify a perman
 }) {
   await page.goto("/ai-models/mureka-v9");
   await expect(page.getByRole("heading", { level: 1, name: "Mureka V9" })).toBeVisible();
-  await expect(page.locator(".model-score-grid article")).toHaveCount(2);
-  await expect(page.getByRole("heading", { name: "Full analysis coming next." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Official access/ })).toHaveAttribute(
+  // Both music leaderboards fill a benchmark-card row; the other rows stay explicitly empty.
+  await expect(page.locator(".mp-bench-row .mp-bench-score")).toHaveCount(2);
+  await expect(page.getByText("Evidence: Independent results only")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Official page/ })).toHaveAttribute(
     "href",
     "https://www.mureka.ai/",
   );

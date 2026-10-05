@@ -6,7 +6,14 @@ import {
   type PriceUnit,
   type PublishedPrice,
 } from "./ai-model-benchmark-context";
-import type { FilePlan, FilePrice, ModelFile, Rankings } from "./ai-model-files";
+import type {
+  FileBenchmark,
+  FilePlan,
+  FilePrice,
+  FileSections,
+  ModelFile,
+  Rankings,
+} from "./ai-model-files";
 import {
   type AccessMode,
   type LocalizedText,
@@ -46,6 +53,12 @@ export type FileFacts = {
   regions: string[] | null;
   checkedAt: string;
   officialSources: ModelFile["officialSources"];
+  /** Version-free model line (instructions 5.0.1), for the version history and related models. */
+  family: string;
+  version: string | null;
+  benchmarks: FileBenchmark[];
+  commonUses: { en: FileSections["commonUses"]; es: FileSections["commonUses"] };
+  history: { en: string[]; es: string[] };
 };
 
 export type ModelView = {
@@ -115,6 +128,11 @@ function modelFromFile(file: ModelFile): ModelView {
       regions: file.regions,
       checkedAt: file.checkedAt,
       officialSources: file.officialSources,
+      family: file.family,
+      version: file.version,
+      benchmarks: file.benchmarks,
+      commonUses: { en: en.commonUses, es: es.commonUses },
+      history: { en: en.history, es: es.history },
     },
   };
 }

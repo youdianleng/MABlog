@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AiModelProfile } from "@/features/site-info/ai-model-profile";
 import { loadAiModelsData } from "@/features/site-info/ai-models-content.server";
+import { benchmarkCard, relatedModels } from "@/features/site-info/ai-model-profile-data";
 
 interface AiModelProfileRouteProps {
   params: Promise<{ slug: string }>;
@@ -25,5 +26,12 @@ export default async function AiModelProfilePage({ params }: AiModelProfileRoute
   const data = loadAiModelsData();
   const profile = data.profiles[slug];
   if (!profile) notFound();
-  return <AiModelProfile profile={profile} scoresEvaluated={data.scoresEvaluated} />;
+  return (
+    <AiModelProfile
+      profile={profile}
+      card={benchmarkCard(profile, data)}
+      related={relatedModels(profile, data)}
+      scoresEvaluated={data.scoresEvaluated}
+    />
+  );
 }

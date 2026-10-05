@@ -946,10 +946,12 @@ def test_instruction_file_keeps_its_required_structure():
         assert heading in text
     for category in ("`llm-agents`", "`image`", "`video`", "`music`", "`voice-sound`"):
         assert category in text
-    # Both body languages must list the same number of sections.
+    # Both body languages must list the same sections: ten required plus the optional
+    # "Common uses" section added in version 1.3.
     template = text.split("# English", 1)[1].split("```", 1)[0]
     english, spanish = template.split("# Español")
-    assert english.count("## ") == spanish.count("## ") == 10
+    assert english.count("## ") == spanish.count("## ") == 11
+    assert "## Common uses (optional)" in english and "## Usos habituales (opcional)" in spanish
     # The source list and the front-matter template are fenced YAML; both must stay parseable.
     blocks = re.findall(r"```yaml\n(.*?)```", text, flags=re.S)
     sources = yaml.safe_load(blocks[0])

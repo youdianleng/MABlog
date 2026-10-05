@@ -91,6 +91,63 @@ describe("model files", () => {
     );
   });
 
+  // The optional "Common uses" section and the update history are read in both languages.
+  it("reads common uses and update history", () => {
+    const base = content(glmName);
+    expect(parseModelFile(base, glmName).sections.en.commonUses).toEqual({
+      users: [],
+      developers: [],
+    });
+    // Insert the section before each language's Benchmarks heading (the first is English).
+    const englishUses = [
+      "## Common uses",
+      "",
+      "### Users",
+      "- Coding help.",
+      "",
+      "### Developers",
+      "- Code agents.",
+      "- Reviews.",
+      "",
+      "",
+    ].join("\n");
+    const spanishUses = [
+      "## Usos habituales",
+      "",
+      "### Usuarios",
+      "- Ayuda con código.",
+      "",
+      "",
+    ].join("\n");
+    const english = base.indexOf("## Benchmarks\n");
+    const spanish = base.indexOf("## Benchmarks\n", english + 1);
+    const withUses =
+      base.slice(0, english) +
+      englishUses +
+      base.slice(english, spanish) +
+      spanishUses +
+      base.slice(spanish);
+    const file = parseModelFile(withUses, glmName);
+    expect(file.sections.en.commonUses).toEqual({
+      users: ["Coding help."],
+      developers: ["Code agents.", "Reviews."],
+    });
+    expect(file.sections.en.history[0]).toMatch(/^2026-10-02/);
+    expect(file.sections.es.history.length).toBe(file.sections.en.history.length);
+  });
+
+  // A benchmark's optional area must be one of its category's benchmark-card rows.
+  it("validates benchmark areas", () => {
+    const text = content(glmName);
+    const valid = text.replace(
+      "    ranking: coding",
+      "    ranking: coding\n    area: agentic-coding",
+    );
+    expect(parseModelFile(valid, glmName).benchmarks[0].area).toBe("agentic-coding");
+    const invalid = text.replace("    ranking: coding", "    ranking: coding\n    area: vocal");
+    expect(/** Parse the altered input. */ () => parseModelFile(invalid, glmName)).toThrow(/area/);
+  });
+
   // A slug cannot take the path of a static page under /ai-models/.
   it("rejects slugs reserved for pages", () => {
     const text = content(glmName).replaceAll("glm-5-3", "other-models");

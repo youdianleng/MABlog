@@ -569,3 +569,46 @@ These entries implement the fixes from the 2026-09-30 project review. Before any
   - TypeScript, ESLint, Prettier, the comment audit, and unit tests (46/46) pass.
   - The carousel test now also asserts that exactly three cards are not hidden. Full Playwright suite: 33/33.
   - In the in-app browser after rebuilding, the computed card opacities were 1, 0.35, 0, 0, 0.35.
+
+- [x] **I113 - Redesigned model profile pages.** The site owner approved the profile design plan and asked to build it with my recommendations: no combined overall score, "Common uses" shown only when a file has it (otherwise the user/developer verdicts carry the section), and a coloured initials badge instead of provider logos (the instructions forbid logos).
+
+  **Page (`/ai-models/[slug]`), top to bottom:**
+  - **Header:** initials badge in the model's accent colour, provider, category, release date, name, a "newer release" banner naming the successor, status and access chips, headline price, and official link. A dark placement box shows the best leaderboard place, or explains why the model is not ranked yet.
+  - **Benchmark card:**
+    - an evidence-strength indicator (●●● independent only to ○○○ none) and the headline placement with its rank reason
+    - one row per capability area of the model's category, with a ten-segment bar, the native score, a filled or outlined marker for independent or self-reported results, the source, and "+N more"
+    - areas without a result say "No public result yet"
+    - a "How these bars work" note
+  - **What it can do:** summary, description, and capabilities.
+  - **What people use it for:** user and developer columns, with the verdict plus the file's "Common uses" bullets.
+  - **Plans and pricing:** API prices in their own units and plans, each with a source link.
+  - **Limitations.**
+  - **Related models:** version history timeline, same-provider cards labelled newer, previous, same line, or other line, and up to three alternatives from other providers.
+  - **Sources and update history:** collapsed.
+
+  **Data and format:**
+  - New pure module `ai-model-profile-data.ts` (`benchmarkCard`, `relatedModels`, `scoreShare`, `areaFor`, `providerInitials`).
+  - The parser reads an optional `area` on benchmarks (validated per category), an optional bilingual "Common uses / Usos habituales" section with Users/Developers sub-lists, and the update history.
+  - Instructions v1.3 documents both additions. The backend structure test now expects 11 template sections.
+  - No model file was changed; "Common uses" content can be added file by file.
+
+  **Bars are honest by construction:**
+  - percentages fill by value
+  - leaderboard indexes are shown as a ratio to that leaderboard's #1
+  - arena Elo is shown as twice the win chance against #1
+  - anything without a shared scale shows only its number
+  - nothing is averaged
+
+  **Removed:** the old profile code (placement cards, reviewed-facts block, "Full analysis coming next" notice) and about 400 lines of unused profile CSS from `site-info.css`. Shared selectors were kept.
+
+  **Areas:** `frontend/src/features/site-info/` (`ai-model-profile.tsx`, new `ai-model-profile-data.ts` (+ test), `model-profile-header.tsx`, `model-benchmark-card.tsx`, `model-profile-overview.tsx`, `model-profile-uses.tsx`, `model-profile-pricing.tsx`, `model-profile-limitations.tsx`, `model-related.tsx`, `model-profile-sources.tsx`, `model-profile-labels.ts`, `ai-model-files.ts` (+ test), `ai-models-data.ts`), `src/app/ai-models/[slug]/page.tsx`, `src/styles/model-profile.css`, `src/styles/site-info.css`, `src/app/globals.css`, `tests/model-profile.spec.ts`, `tests/footer.spec.ts`, `backend/app/services/ai_news/instructions/ai-news-instructions.md`, `backend/tests/test_ai_news.py`, `docs/architecture.md`.
+
+  **Verification:**
+  - Unit tests: 54/54. The new tests cover score scaling, area mapping, an honest self-reported card (Opus 5.5), a ranked card (Fable 5.1), version and provider relations (GPT-6 Sol and 6.1 Sol), the "Common uses" and history parsing, and area validation.
+  - TypeScript, ESLint, Prettier, and the comment audit pass. Backend: 62/62 with ruff clean.
+  - Full Playwright suite: 34/34, including a new reviewed-profile test and the updated Mureka V9 profile test.
+  - In the in-app browser: Claude Fable 5.1 (ranked, snapshot) and GPT-6 Sol (reviewed, superseded) on desktop, and Claude Opus 5.5 at 375 px with no horizontal overflow.
+
+  **Limitations:**
+  - Profiles of models whose files are still drafts (for example Claude Fable 5.1) use the built-in snapshot, so their card has only the leaderboard row and no capabilities, pricing table, or limitations until the file is reviewed.
+  - No file has "Common uses" content yet.

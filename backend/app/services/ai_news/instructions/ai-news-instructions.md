@@ -1,10 +1,11 @@
 # MAblog AI news: research and model-file instructions
 
-- **Instruction version:** 1.2
-- **Last reviewed:** 2026-10-02
+- **Instruction version:** 1.3
+- **Last reviewed:** 2026-10-05
 - **Status:** stage 2. The `/ai-models` page reads reviewed model files and `rankings.yaml`; the newsroom does not follow this file yet (stage 3).
 - **Changes in 1.1:** migration rule (section 5.4), `ranking` key replaces `primary`, optional `review_notes`, fixed format for the users/developers section, `rankings.yaml` format (section 4.1).
 - **Changes in 1.2:** recency rules. Every run starts with a freshness sweep (section 3.0) so the newest release of every model line has a file, even outside the 7-day news window. Sources are read newest-first and dates come only from the official item (section 2.3). `family` is the version-free model line, older releases get `superseded_by`, and the run report includes a freshness table. Added after a review on 2026-10-02 found Claude Opus 5.5 (2026-09-22), GPT-6 Sol and Luna (2026-09-22), and GPT-6.1 Sol (2026-09-29) missing from the files.
+- **Changes in 1.3:** profile-page support. Benchmark entries may name the benchmark-card row they belong to with `area` (section 5.2), and files may add an optional bilingual "Common uses" section with concrete uses for users and developers (section 6). Both are optional; files without them stay valid.
 - **Master copy:** `backend/app/services/ai_news/instructions/ai-news-instructions.md`. Edit only this file. Copies saved through the profile page are snapshots.
 
 This file tells an AI agent (the MABlog_IA newsroom, or any agent you run by hand) how to:
@@ -406,6 +407,7 @@ benchmarks:
     evidence: null              # only for migrated values without a quote (section 5.4)
     ranking: null               # coding | image | video | music-vocal | music-instrumental when this
                                 # entry is the score shown on that /ai-models leaderboard, else null
+    area: terminal              # optional: the benchmark-card row this result belongs to (section 5.2)
 
 review_notes: []                # optional: points the reviewer must check; empty the list when reviewed
 ---
@@ -443,6 +445,14 @@ Copy the price exactly as published. Do not convert currencies or units. If the 
   - `music`: Artificial Analysis Music Arena (Vocals and Instrumental separately)
   - `voice-sound`: Artificial Analysis Speech Arena
 - Set `ranking:` on the independent leaderboard entry that `/ai-models` shows for that leaderboard (for example `ranking: coding`). Each leaderboard key appears at most once per file; a music file usually has two (`music-vocal` and `music-instrumental`).
+- Optionally set `area:` to the row of the profile page's benchmark card that the result describes. Allowed values per category:
+  - `llm-agents`: `agentic-coding`, `terminal`, `reasoning`, `knowledge-work`, `multimodal`
+  - `image`: `text-to-image`, `editing`, `text-rendering`
+  - `video`: `video-audio`, `video-silent`, `image-to-video`
+  - `music`: `vocal`, `instrumental`
+  - `voice-sound`: `speech-quality`, `latency`, `languages`
+
+  Without `area`, the page places a result by its `ranking` key or by well-known benchmark names, and leaves it off the card when nothing fits. The card never combines results into an overall score.
 - A benchmark with no published score is left out of `benchmarks` and shown as "Not published" in the body table. Never estimate, average, or round a score.
 
 ### 5.4 Migration rule (one time, 2026-10-02)
@@ -466,6 +476,7 @@ After the front matter, write the English body, then the Spanish body. Use these
 ## Description
 ## What's new compared with the previous version
 ## Key capabilities
+## Common uses (optional)
 ## Benchmarks
 ## Pricing and availability
 ## Limitations and caveats
@@ -479,6 +490,7 @@ After the front matter, write the English body, then the Spanish body. Use these
 ## Descripción
 ## Novedades respecto a la versión anterior
 ## Capacidades clave
+## Usos habituales (opcional)
 ## Benchmarks
 ## Precios y disponibilidad
 ## Limitaciones y advertencias
@@ -493,15 +505,28 @@ What each section contains:
 2. **Description.** A fuller, neutral explanation of the model and its place in the provider's lineup.
 3. **What's new compared with the previous version.** 3–6 bullet points. Name the previous version. For a provider's first model in a category, say so.
 4. **Key capabilities.** Bullet points: modalities, context window, tools, languages, output length or resolution, and any secondary category.
-5. **Benchmarks.** A table that **must match the `benchmarks` front matter exactly**:
+5. **Common uses (optional).** Concrete things people do with the model, from the provider's own descriptions or cited evidence, as two sub-lists. The profile page shows them under its user and developer verdicts:
+
+   ```markdown
+   ## Common uses
+
+   ### Users
+   - Long coding sessions in Claude Code.
+
+   ### Developers
+   - Agents that migrate large codebases.
+   ```
+
+   In Spanish use `## Usos habituales`, `### Usuarios`, and `### Desarrolladores`. Write the heading without "(optional)".
+6. **Benchmarks.** A table that **must match the `benchmarks` front matter exactly**:
 
    | Benchmark | Score | Kind | Source | Date |
    | --------- | ----- | ---- | ------ | ---- |
 
    Add a row reading "Not published" for any preferred benchmark (section 5.2) with no score.
-6. **Pricing and availability.** API prices (matching `pricing`), plans (matching `plans`), access routes, regions, and status. Missing values say "Not published".
-7. **Limitations and caveats.** Only limitations stated by the provider or shown by cited evidence: preview status, regional limits, known weaknesses, safety restrictions, deprecations.
-8. **Best for users / best for developers.** Exactly two bullet points in this format, one sentence or short paragraph each:
+7. **Pricing and availability.** API prices (matching `pricing`), plans (matching `plans`), access routes, regions, and status. Missing values say "Not published".
+8. **Limitations and caveats.** Only limitations stated by the provider or shown by cited evidence: preview status, regional limits, known weaknesses, safety restrictions, deprecations.
+9. **Best for users / best for developers.** Exactly two bullet points in this format, one sentence or short paragraph each:
 
    ```markdown
    - **Users:** interface, learning curve, plans.
@@ -509,8 +534,8 @@ What each section contains:
    ```
 
    In Spanish use `- **Usuarios:**` and `- **Desarrolladores:**`. `/ai-models` reads these two lines.
-9. **Sources.** A numbered list of every URL used, each with its label and publication date.
-10. **Update history.** One dated line per change, for example `2026-10-12 — API output price changed from $X to $Y per 1M tokens (source: …)`. On a new file write `2026-10-05 — File created.`
+10. **Sources.** A numbered list of every URL used, each with its label and publication date.
+11. **Update history.** One dated line per change, for example `2026-10-12 — API output price changed from $X to $Y per 1M tokens (source: …)`. On a new file write `2026-10-05 — File created.`
 
 ---
 
